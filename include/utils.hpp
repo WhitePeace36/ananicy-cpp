@@ -9,6 +9,7 @@
 #include <queue>
 #include <mutex>
 #include <unistd.h>
+#include <condition_variable>
 
 template <typename T>
 class atomic_queue {
@@ -36,11 +37,21 @@ private:
 
 class InterruptHandler {
 private:
-    volatile std::atomic<bool> need_exit;
+
+    std::condition_variable exit_condition;
+    std::mutex exit_mutex;
 public:
+    volatile std::atomic<bool> need_exit;
+
     InterruptHandler(std::initializer_list<int> signals);
 
-    volatile std::atomic<bool> * should_exit();
+    template<class Rep, class Period>
+    inline void wait_for(std::chrono::duration<Rep, Period> duration) {
+        std::unique_lock<std::mutex> lock(exit_mutex);
+        exit_condition.wait_for(lock, duration);
+    }
+
+    [[nodiscard]] bool should_exit() const;
 };
 
 #endif //ANANICY_CPP_UTILS_HPP

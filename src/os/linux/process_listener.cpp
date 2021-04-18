@@ -7,25 +7,21 @@
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <fstream>
-#include <memory>
 #include <thread>
 #include <atomic>
 #include <queue>
 #include <mutex>
-#include <csignal>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <linux/netlink.h>
 #include <linux/connector.h>
 #include <linux/cn_proc.h>
 #include <iostream>
+#include <utility>
 #include "process_listener.hpp"
 
-/*
- * connect to netlink
- * returns netlink socket, or -1 on error
- */
-int nl_connect() {
+
+int connect_netlink_socket() {
 
     int nl_sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_CONNECTOR);
     if (nl_sock == -1) {
@@ -49,7 +45,7 @@ int nl_connect() {
     return nl_sock;
 }
 
-int subscribe_to_process_events(int nl_sock, bool enable) {
+int set_event_subscription(int nl_sock, bool enable) {
     struct alignas(NLMSG_ALIGNTO) nl_cn_msg {
         struct nlmsghdr nl_hdr;
         struct __attribute__ ((packed)) {
@@ -78,7 +74,7 @@ int subscribe_to_process_events(int nl_sock, bool enable) {
     return send(nl_sock, &netlink_connection_message, sizeof(nl_cn_msg), 0);
 }
 
-int handle_events(int nl_sock, atomic_queue<Process> *queue, const volatile std::atomic<bool> *need_exit) {
+int handle_events(int nl_sock, atomic_queue<Process> *queue, InterruptHandler* interruptHandler) {
     struct alignas(NLMSG_ALIGNTO) nl_cn_msg {
         struct nlmsghdr nl_hdr;
         struct __attribute__ ((packed)) {
@@ -87,9 +83,9 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue, const volatile std:
         };
     };
 
-    int status = 0;
+    ssize_t status = 0;
     nl_cn_msg netlink_connection_message = {};
-    while (!*need_exit) {
+    while (!interruptHandler->should_exit()) {
         status = recv(nl_sock, &netlink_connection_message, sizeof(netlink_connection_message), 0);
         if (status == 0) {
             return EXIT_SUCCESS;
@@ -146,12 +142,12 @@ struct ProcessListener::Socket {
 };
 
 int ProcessListener::init() {
-    int socket = nl_connect();
+    int socket = connect_netlink_socket();
 
     if (socket == -1) {
     }
 
-    const int listen_status = subscribe_to_process_events(socket, true);
+    const int listen_status = set_event_subscription(socket, true);
     if (listen_status == 0) {
         close(socket);
         throw std::runtime_error("Couldn't subscribe to process events!");
@@ -165,12 +161,12 @@ int ProcessListener::init() {
 }
 
 
-ProcessListener::ProcessListener(volatile std::atomic<bool> *need_exit) : need_exit(need_exit) {
+ProcessListener::ProcessListener(InterruptHandler* interruptHandler) : interruptHandler(interruptHandler) {
     init();
 }
 
 void ProcessListener::start() {
-    this->event_thread = std::jthread(&handle_events, this->sock->socket, &this->process_queue, this->need_exit);
+    this->event_thread = std::jthread(&handle_events, this->sock->socket, &this->process_queue, this->interruptHandler);
 }
 
 
@@ -178,6 +174,6 @@ void ProcessListener::start() {
 ProcessListener::~ProcessListener() {
     this->event_thread.join();
 
-    subscribe_to_process_events(this->sock->socket, false);
+    set_event_subscription(this->sock->socket, false);
     close(this->sock->socket);
 }

@@ -27,13 +27,14 @@ private:
 
     std::unique_ptr<Socket> sock;
     std::jthread event_thread;
+    InterruptHandler* interruptHandler;
+
 public:
-    explicit ProcessListener(volatile std::atomic<bool>* need_exit);
+    explicit ProcessListener(InterruptHandler* interruptHandler);
     ~ProcessListener();
 
     void start();
 
-    volatile std::atomic<bool> *need_exit;
     atomic_queue<Process> process_queue;
 };
 

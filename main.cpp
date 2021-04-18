@@ -22,16 +22,10 @@ using json = nlohmann::json;
 
 using namespace std::chrono_literals;
 
-volatile std::atomic<bool> need_exit = false;
-std::condition_variable exit_condition;
-std::mutex exit_mutex;
-
-
-void renicer_worker(atomic_queue<Process> *process_queue) {
-    while (!need_exit) {
-        std::unique_lock<std::mutex> lock(exit_mutex);
-        exit_condition.wait_for(lock, 10ms);
-        if (need_exit)
+void renicer_worker(atomic_queue<Process> *process_queue, InterruptHandler* interruptHandler) {
+    while (!interruptHandler->should_exit()) {
+        interruptHandler->wait_for(10ms);
+        if (interruptHandler->should_exit())
             break;
 
         while (process_queue->size() > 0) {
@@ -71,18 +65,15 @@ void load_rules_from_file(const std::filesystem::path& path, std::unordered_map<
 
 }
 
-void on_sigint(int unused) {
-    need_exit = true;
-    exit_condition.notify_all();
-}
-
 int main() {
     std::cout << "Ananicy Cpp" << std::endl;
 
-    signal(SIGINT, &on_sigint);
-    signal(SIGTERM, &on_sigint);
+    InterruptHandler ih ({
+        SIGINT,
+        SIGTERM
+    });
 
-    ProcessListener processListener(&need_exit);
+    ProcessListener processListener(&ih);
 
     processListener.start();
 
@@ -94,10 +85,9 @@ int main() {
         std::cout << "Rule: " << rule.first << ", " << rule.second.dump() << std::endl;
     }
 
-    while (!need_exit) {
-        std::unique_lock<std::mutex> lock(exit_mutex);
-        exit_condition.wait_for(lock, 5s);
-        if (need_exit)
+    while (!ih.need_exit) {
+        ih.wait_for(5s);
+        if (ih.need_exit)
             break;
 
         std::stringstream ss;

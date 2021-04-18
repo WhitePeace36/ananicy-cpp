@@ -5,8 +5,8 @@
 #include <functional>
 #include "utils.hpp"
 
-volatile std::atomic<bool> *InterruptHandler::should_exit() {
-    return &this->need_exit;
+bool InterruptHandler::should_exit() const {
+    return this->need_exit;
 }
 
 static std::function<void(int)> handler;
@@ -17,7 +17,8 @@ void on_signal (int unused) {
 InterruptHandler::InterruptHandler(std::initializer_list<int> signals) {
 
     handler = [this](int unused) -> void {
-        this->need_exit;
+        this->need_exit = true;
+        this->exit_condition.notify_all();
     };
 
     for (const int& sig : signals) {
