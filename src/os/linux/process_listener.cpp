@@ -86,6 +86,7 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue, InterruptHandler* i
     ssize_t status = 0;
     nl_cn_msg netlink_connection_message = {};
     while (!interruptHandler->should_exit()) {
+        errno = 0;
         status = recv(nl_sock, &netlink_connection_message, sizeof(netlink_connection_message), 0);
         if (status == 0) {
             return EXIT_SUCCESS;

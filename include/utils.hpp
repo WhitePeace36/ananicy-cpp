@@ -40,8 +40,8 @@ private:
 
     std::condition_variable exit_condition;
     std::mutex exit_mutex;
-public:
     volatile std::atomic<bool> need_exit;
+public:
 
     InterruptHandler(std::initializer_list<int> signals);
 

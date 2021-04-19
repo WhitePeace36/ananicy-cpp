@@ -1,22 +1,16 @@
 #define _XOPEN_SOURCE 700
 
 #include <iostream>
-#include <linux/cn_proc.h>
-#include <linux/connector.h>
-#include <linux/netlink.h>
-#include <sys/socket.h>
-#include <unistd.h>
 #include <csignal>
 #include <mutex>
 #include <queue>
-#include <atomic>
 #include <thread>
 #include <fstream>
 #include <filesystem>
 #include <nlohmann/json.hpp>
-#include <condition_variable>
 #include "utils.hpp"
 #include "process_listener.hpp"
+#include "Rules.hpp"
 
 using json = nlohmann::json;
 
@@ -34,36 +28,7 @@ void renicer_worker(atomic_queue<Process> *process_queue, InterruptHandler* inte
     }
 }
 
-/**
- * @throws std::runtime_error
- * @param path
- * @param rules
- */
-void load_rules_from_file(const std::filesystem::path& path, std::unordered_map<std::string, json> *rules) {
-    json rule;
-    std::ifstream rule_file;
-    rule_file.open(path);
-    std::string line;
-
-    while (rule_file.good()) {
-        std::getline(rule_file, line);
-
-        try {
-            rule = json::parse(line);
-        } catch (const std::exception& e) {
-            std::cerr << "Error parsing JSON: " << e.what() << std::endl;
-        }
-
-        if (rule.contains("name") && rule["name"].is_string()) {
-            rules->insert_or_assign(rule["name"], rule);
-        } else {
-            std::cerr << "Rule does not have a name, or name is not a string! "  << rule.dump() << std::endl;
-            // throw std::runtime_error("Rule does not have a name, or name is not a string!");
-        }
-    }
-
-
-}
+using std::filesystem::path;
 
 int main() {
     std::cout << "Ananicy Cpp" << std::endl;
@@ -77,17 +42,18 @@ int main() {
 
     processListener.start();
 
-    std::unordered_map<std::string, json> rules;
+    Rules rules("/etc/ananicy.d");
 
-    // load_rules_from_file(std::filesystem::path("/home/aviallon/Programming/Personnal/ananicy-cpp/test.rules"), &rules);
+    rules.load_rules_from_file(path("/etc/ananicy.d/00-cgroups.cgroups"));
 
-    for (const std::pair<std::string, json> rule : rules) {
-        std::cout << "Rule: " << rule.first << ", " << rule.second.dump() << std::endl;
-    }
+    // load_rules_from_file(std::filesystem::path("/home/aviallon/Programming/Personnal/ananicy-cpp/test.program_rules"), &program_rules);
 
-    while (!ih.need_exit) {
+    rules.show_rules();
+
+
+    while (!ih.should_exit()) {
         ih.wait_for(5s);
-        if (ih.need_exit)
+        if (ih.should_exit())
             break;
 
         std::stringstream ss;
