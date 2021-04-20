@@ -2,7 +2,7 @@
 // Created by aviallon on 19/04/2021.
 //
 
-#include "Rules.hpp"
+#include "rules.hpp"
 #include <iostream>
 #include <fstream>
 #include <spdlog/spdlog.h>
@@ -79,13 +79,13 @@ void Rules::load_rules_from_directory(const std::filesystem::path& dir_path) {
         bool valid_file = false;
 
         if (file.extension().compare(".cgroups") == 0) {
-            ss << " CGROUP!!!";
+            ss << " (CGROUP)";
             valid_file = true;
         } else if (file.extension().compare(".types") == 0) {
-            ss << " TYPES!!!";
+            ss << " (TYPES)";
             valid_file = true;
         } else if (file.extension().compare(".rules") == 0) {
-            ss << " RULES!!!";
+            ss << " (RULES)";
             valid_file = true;
         }
 
@@ -94,8 +94,7 @@ void Rules::load_rules_from_directory(const std::filesystem::path& dir_path) {
             load_rules_from_file(file);
         }
 
-        ss << std::endl;
-        spdlog::debug(ss.str());
+        spdlog::trace(ss.str());
     }
 }
 
@@ -108,4 +107,8 @@ json Rules::get_rule(const std::string &name) {
         }
     }
     return rule;
+}
+
+size_t Rules::size() const {
+    return program_rules.size();
 }
