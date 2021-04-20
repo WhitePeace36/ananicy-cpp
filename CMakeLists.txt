@@ -27,7 +27,7 @@ if(NOT TARGET spdlog)
 endif()
 
 
-add_executable(ananicy_cpp src/main.cpp src/utils.cpp include/utils.hpp src/os/linux/process_listener.cpp include/process_listener.hpp src/rules.cpp include/rules.hpp src/worker.cpp include/worker.hpp include/priority.hpp src/os/linux/priority.cpp)
+add_executable(ananicy_cpp src/main.cpp src/utils.cpp include/utils.hpp src/os/linux/process_listener.cpp include/process_listener.hpp src/rules.cpp include/rules.hpp src/worker.cpp include/worker.hpp include/priority.hpp src/os/linux/priority.cpp include/config.hpp src/config.cpp)
 
 target_link_libraries(ananicy_cpp PRIVATE "pthread" "nlohmann_json::nlohmann_json")
 target_link_libraries(ananicy_cpp PRIVATE spdlog::spdlog_header_only)

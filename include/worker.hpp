@@ -9,16 +9,18 @@
 #include "utils.hpp"
 #include "rules.hpp"
 #include "process_listener.hpp"
+#include "config.hpp"
 
 class Worker {
 public:
-    Worker(InterruptHandler* interruptHandler, Rules* rules, atomic_queue<Process>* process_queue);
+    Worker(InterruptHandler* interruptHandler, Rules* rules, Config* config, atomic_queue<Process>* process_queue);
     void start();
 
     [[nodiscard]] unsigned processed_processes() const { return processed_count; }
 private:
     InterruptHandler* interruptHandler;
     Rules* rules;
+    Config* config;
     std::jthread worker_thread;
     atomic_queue<Process>* process_queue;
     std::atomic<unsigned> processed_count;

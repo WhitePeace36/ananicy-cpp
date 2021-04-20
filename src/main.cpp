@@ -16,6 +16,7 @@
 #include "process_listener.hpp"
 #include "rules.hpp"
 #include "worker.hpp"
+#include "config.hpp"
 
 
 
@@ -39,11 +40,14 @@ int main() {
         SIGTERM
     });
 
+    Config conf("/etc/ananicy.d/ananicy.conf");
+    conf.show();
+
     ProcessListener processListener(&ih);
 
     processListener.start();
 
-    Rules rules("/etc/ananicy.d");
+    Rules rules("/etc/ananicy.d", &conf);
 
     // rules.load_rules_from_file(path("/etc/ananicy.d/00-cgroups.cgroups"));
 
@@ -51,7 +55,7 @@ int main() {
 
     rules.show_rules();
 
-    Worker worker(&ih, &rules, &processListener.process_queue);
+    Worker worker(&ih, &rules, &conf, &processListener.process_queue);
 
     worker.start();
 

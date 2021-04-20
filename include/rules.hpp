@@ -9,6 +9,7 @@
 #include <string>
 #include <filesystem>
 #include <nlohmann/json.hpp>
+#include "config.hpp"
 
 using nlohmann::json;
 
@@ -19,9 +20,10 @@ private:
     ruleset program_rules;
     ruleset type_rules;
     ruleset cgroup_rules;
+    Config* config;
 
 public:
-    explicit Rules(const std::filesystem::path& ruleset_directory);
+    explicit Rules(const std::filesystem::path& ruleset_directory, Config* config);
     void load_rule_from_string(const std::string& rule);
     void load_rules_from_file(const std::filesystem::path& path);
     void load_rules_from_directory(const std::filesystem::path& dir_path);

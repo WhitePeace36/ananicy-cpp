@@ -153,7 +153,7 @@ int ProcessListener::init() {
         const std::string pid_str = process_path.filename().string();
         if (isdigit(pid_str[0])) {
             const int pid = std::stoi(pid_str);
-            spdlog::debug("Existing process: {}", pid);
+            spdlog::trace("Existing process: {}", pid);
             const std::string command = get_command_from_pid(pid);
 
             process_queue.push(Process {

@@ -9,7 +9,7 @@
 
 using std::filesystem::path;
 
-Rules::Rules(const std::filesystem::path& ruleset_directory) {
+Rules::Rules(const std::filesystem::path& ruleset_directory, Config* config) : config(config) {
     load_rules_from_directory(ruleset_directory);
 }
 
@@ -78,13 +78,13 @@ void Rules::load_rules_from_directory(const std::filesystem::path& dir_path) {
 
         bool valid_file = false;
 
-        if (file.extension().compare(".cgroups") == 0) {
+        if (config->cgroup_load() && file.extension().compare(".cgroups") == 0) {
             ss << " (CGROUP)";
             valid_file = true;
-        } else if (file.extension().compare(".types") == 0) {
+        } else if (config->type_load() && file.extension().compare(".types") == 0) {
             ss << " (TYPES)";
             valid_file = true;
-        } else if (file.extension().compare(".rules") == 0) {
+        } else if (config->rule_load() && file.extension().compare(".rules") == 0) {
             ss << " (RULES)";
             valid_file = true;
         }
