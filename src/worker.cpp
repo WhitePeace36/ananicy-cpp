@@ -29,7 +29,7 @@ void Worker::start() {
                         processed_count++;
 
                         if (!rule.is_null()) {
-                            spdlog::debug("Rule for {}: {}", p.name, rules->get_rule(p.name).dump());
+                            spdlog::debug("Found rule for {}: {}", p.name, rule.dump());
 
                             if (rule.contains("nice")) {
                                 spdlog::info("Setting priority of {}({}) to {}", p.name, p.pid, to_string(rule["nice"]));

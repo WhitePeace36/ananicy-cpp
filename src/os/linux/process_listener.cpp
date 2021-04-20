@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <fstream>
+#include <cctype>
 #include <thread>
 #include <atomic>
 #include <queue>
@@ -17,6 +18,7 @@
 #include <linux/connector.h>
 #include <linux/cn_proc.h>
 #include <iostream>
+#include <spdlog/spdlog.h>
 #include <utility>
 #include "process_listener.hpp"
 
@@ -74,6 +76,28 @@ int set_event_subscription(int nl_sock, bool enable) {
     return send(nl_sock, &netlink_connection_message, sizeof(nl_cn_msg), 0);
 }
 
+std::string get_command_from_pid(int pid) {
+    std::ifstream pid_info;
+    std::string command = "<unknown>";
+
+    // Building path
+    try {
+        std::filesystem::path proc_path;
+        proc_path.append("/proc");
+        proc_path.append(std::to_string(pid));
+        proc_path.append("comm");
+
+        pid_info.open(proc_path);
+
+        command.clear();
+        pid_info >> command;
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
+
+    return command;
+}
+
 int handle_events(int nl_sock, atomic_queue<Process> *queue, InterruptHandler* interruptHandler) {
     struct alignas(NLMSG_ALIGNTO) nl_cn_msg {
         struct nlmsghdr nl_hdr;
@@ -106,25 +130,7 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue, InterruptHandler* i
 
             pid_t pid = netlink_connection_message.proc_ev.event_data.exec.process_pid;
 
-            std::ifstream pid_info;
-            std::string command = "<unknown>";
-
-            // Building path
-            try {
-                std::filesystem::path proc_path;
-                proc_path.append("/proc");
-                proc_path.append(std::to_string(pid));
-                proc_path.append("comm");
-
-                // std::cout << "DEBUG: Proc path: " << proc_path << std::endl;
-
-                pid_info.open(proc_path);
-
-                command.clear();
-                pid_info >> command;
-            } catch (const std::exception& e) {
-                std::cerr << e.what() << std::endl;
-            }
+            const std::string command = get_command_from_pid(pid);
 
 
             queue->push(Process {
@@ -143,6 +149,20 @@ struct ProcessListener::Socket {
 };
 
 int ProcessListener::init() {
+    for (const std::filesystem::path& process_path : std::filesystem::directory_iterator("/proc")) {
+        const std::string pid_str = process_path.filename().string();
+        if (isdigit(pid_str[0])) {
+            const int pid = std::stoi(pid_str);
+            spdlog::debug("Existing process: {}", pid);
+            const std::string command = get_command_from_pid(pid);
+
+            process_queue.push(Process {
+                .pid = pid,
+                .name = command,
+            });
+        }
+    };
+
     int socket = connect_netlink_socket();
 
     if (socket == -1) {

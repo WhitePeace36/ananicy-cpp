@@ -57,7 +57,7 @@ int main() {
 
 
     while (!ih.should_exit()) {
-        ih.wait_for(5s);
+        ih.wait_for(1min);
         if (ih.should_exit())
             break;
 

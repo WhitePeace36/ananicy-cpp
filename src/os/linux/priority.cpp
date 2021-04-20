@@ -25,7 +25,7 @@ void test_errno(const std::string& func_name, unsigned pid) {
     } else if (errno == EACCES || errno == EPERM) {
         throw std::runtime_error(fmt::format("{}: Insufficient permission to set io-priority of process {}", func_name, pid));
     } else if (errno != 0) {
-        throw std::runtime_error(fmt::format("{}: Unknown error, errno is {}", func_name, errno));
+        spdlog::error("{}: Unknown error, errno is {}({})", func_name, strerror(errno), errno);
     }
 }
 

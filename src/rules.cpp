@@ -102,7 +102,7 @@ json Rules::get_rule(const std::string &name) {
     json rule;
     if (program_rules.contains(name)) {
         rule = program_rules.at(name);
-        if (type_rules.contains(rule["type"])) {
+        if (rule.contains("type") && type_rules.contains(rule["type"])) {
             rule.merge_patch(type_rules.at(rule["type"]));
         }
     }
