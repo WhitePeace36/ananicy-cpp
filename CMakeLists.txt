@@ -21,7 +21,15 @@ else()
     endif()
 endif()
 
+if(NOT TARGET spdlog)
+    # Stand-alone build
+    find_package(spdlog REQUIRED)
+endif()
+
 
 add_executable(ananicy_cpp main.cpp src/utils.cpp include/utils.hpp src/os/linux/process_listener.cpp include/process_listener.hpp src/Rules.cpp include/Rules.hpp)
+
 target_link_libraries(ananicy_cpp PRIVATE "pthread" "nlohmann_json::nlohmann_json")
+target_link_libraries(ananicy_cpp PRIVATE spdlog::spdlog_header_only)
+
 target_include_directories(ananicy_cpp PRIVATE "${CMAKE_HOME_DIRECTORY}/include")

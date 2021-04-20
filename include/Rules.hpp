@@ -25,6 +25,7 @@ public:
     void load_rule_from_string(const std::string& rule);
     void load_rules_from_file(const std::filesystem::path& path);
     void load_rules_from_directory(const std::filesystem::path& dir_path);
+    json get_rule(const std::string& name);
 
     void show_rules();
 };

@@ -1,5 +1,8 @@
 #define _XOPEN_SOURCE 700
 
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
+#include <spdlog/spdlog.h>
+
 #include <iostream>
 #include <csignal>
 #include <mutex>
@@ -12,7 +15,11 @@
 #include "process_listener.hpp"
 #include "Rules.hpp"
 
+
+
+
 using json = nlohmann::json;
+
 
 using namespace std::chrono_literals;
 
@@ -31,6 +38,8 @@ void renicer_worker(atomic_queue<Process> *process_queue, InterruptHandler* inte
 using std::filesystem::path;
 
 int main() {
+    spdlog::set_level(spdlog::level::debug);
+
     std::cout << "Ananicy Cpp" << std::endl;
 
     InterruptHandler ih ({
@@ -56,15 +65,16 @@ int main() {
         if (ih.should_exit())
             break;
 
-        std::stringstream ss;
-        ss << "Queue length: " << processListener.process_queue.size() << std::endl;
-        std::cout << ss.str() << std::flush;
+        spdlog::debug("Queue length: {}", processListener.process_queue.size());
     }
 
     std::stringstream ss;
     ss << "Processes: ";
     while (processListener.process_queue.size() > 0) {
         Process p = processListener.process_queue.pop();
+
+        spdlog::debug("Rule for {}: {}", p.name, rules.get_rule(p.name).dump());
+
         ss << p.name << "(" << p.pid << ")";
         if (processListener.process_queue.size() > 0) {
             ss << ", ";

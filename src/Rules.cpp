@@ -5,6 +5,7 @@
 #include "Rules.hpp"
 #include <iostream>
 #include <fstream>
+#include <spdlog/spdlog.h>
 
 using std::filesystem::path;
 
@@ -52,13 +53,15 @@ void Rules::load_rules_from_file(const std::filesystem::path& path) {
 
 void Rules::show_rules() {
     for (const std::pair<std::string, json> rule : cgroup_rules) {
-        std::cout << "Cgroup: " << rule.first << ", " << rule.second.dump() << std::endl;
+        spdlog::debug("Cgroup: {}, {}", rule.first, rule.second.dump());
+        // std::cout << "Cgroup: " << rule.first << ", " << rule.second.dump() << std::endl;
     }
     for (const std::pair<std::string, json> rule : type_rules) {
-        std::cout << "Type: " << rule.first << ", " << rule.second.dump() << std::endl;
+        spdlog::debug("Type: {}, {}", rule.first, rule.second.dump());
+
     }
     for (const std::pair<std::string, json> rule : program_rules) {
-        std::cout << "Rule: " << rule.first << ", " << rule.second.dump() << std::endl;
+        spdlog::debug("Rule: {}, {}", rule.first, rule.second.dump());
     }
 }
 
@@ -92,6 +95,17 @@ void Rules::load_rules_from_directory(const std::filesystem::path& dir_path) {
         }
 
         ss << std::endl;
-        std::cout << ss.str() << std::flush;
+        spdlog::debug(ss.str());
     }
+}
+
+json Rules::get_rule(const std::string &name) {
+    json rule;
+    if (program_rules.contains(name)) {
+        rule = program_rules.at(name);
+        if (type_rules.contains(rule["type"])) {
+            rule.merge_patch(type_rules.at(rule["type"]));
+        }
+    }
+    return rule;
 }
