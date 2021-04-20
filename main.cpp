@@ -2,6 +2,8 @@
 
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 #include <spdlog/spdlog.h>
+#include <fmt/format.h>
+#include <fmt/chrono.h>
 
 #include <iostream>
 #include <csignal>
@@ -64,7 +66,7 @@ int main() {
 
     std::chrono::duration<double, std::ratio<1,1>> duration = std::chrono::system_clock::now() - start_time;
 
-    spdlog::info("Summary:\n{} processes processed, ran for {} seconds", worker.processed_processes(), duration.count());
+    spdlog::info("Summary:\n{} processes processed, ran for {:%H:%M:%S} seconds", worker.processed_processes(), duration);
 
 
     return EXIT_SUCCESS;

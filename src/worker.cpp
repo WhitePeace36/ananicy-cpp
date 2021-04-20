@@ -35,6 +35,22 @@ void Worker::start() {
                                 spdlog::info("Setting priority of {}({}) to {}", p.name, p.pid, to_string(rule["nice"]));
                                 set_priority(p.pid, rule["nice"]);
                             }
+
+                            if (rule.contains("sched")) {
+                                spdlog::info("Setting scheduler of {}({}) to {}", p.name, p.pid, to_string(rule["sched"]));
+                                set_sched(p.pid, rule["sched"]);
+                            }
+
+                            if (rule.contains("ioclass")) {
+                                spdlog::info("Setting ioclass of {}({}) to {}", p.name, p.pid, to_string(rule["ioclass"]));
+                                int io_val = 0;
+                                if (rule.contains("ionice") && rule["ionice"].is_number_integer()) {
+                                    io_val = rule["ionice"];
+                                }
+                                set_io_priority(p.pid, rule["ioclass"], io_val);
+                            }
+
+
                         }
 
                     }
