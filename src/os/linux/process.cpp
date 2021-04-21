@@ -20,7 +20,7 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <utility>
-#include "processes.hpp"
+#include "process.hpp"
 
 
 int connect_netlink_socket() {
@@ -91,8 +91,8 @@ std::string get_command_from_pid(int pid) {
 
         command.clear();
         pid_info >> command;
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    } catch (const std::filesystem::filesystem_error& e) {
+        spdlog::error("{}: filesystem error: {} (path: {})", __func__, e.what(), e.path1().string());
     }
 
     return command;
@@ -124,9 +124,6 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue, InterruptHandler* i
 
         if (netlink_connection_message.proc_ev.what == proc_event::PROC_EVENT_EXEC) {
             std::stringstream ss;
-            // ss << "exec: tid=" << netlink_connection_message.proc_ev.event_data.exec.process_pid << " pid=" <<
-            //   netlink_connection_message.proc_ev.event_data.exec.process_tgid << std::endl;
-            // std::cout << ss.str() << std::flush;
 
             pid_t pid = netlink_connection_message.proc_ev.event_data.exec.process_pid;
 
@@ -144,11 +141,11 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue, InterruptHandler* i
     return status;
 }
 
-struct ProcessListener::Socket {
+struct ProcessQueue::Socket {
     int socket;
 };
 
-int ProcessListener::init() {
+int ProcessQueue::init() {
     for (const std::filesystem::path& process_path : std::filesystem::directory_iterator("/proc")) {
         const std::string pid_str = process_path.filename().string();
         if (isdigit(pid_str[0])) {
@@ -174,25 +171,25 @@ int ProcessListener::init() {
         throw std::runtime_error("Couldn't subscribe to process events!");
     }
 
-    this->sock = std::make_unique<ProcessListener::Socket>(
-            ProcessListener::Socket { .socket = socket }
+    this->sock = std::make_unique<ProcessQueue::Socket>(
+            ProcessQueue::Socket { .socket = socket }
     );
 
     return socket;
 }
 
 
-ProcessListener::ProcessListener(InterruptHandler* interruptHandler) : interruptHandler(interruptHandler) {
+ProcessQueue::ProcessQueue(InterruptHandler* interruptHandler) : interruptHandler(interruptHandler) {
     init();
 }
 
-void ProcessListener::start() {
+void ProcessQueue::start() {
     this->event_thread = std::jthread(&handle_events, this->sock->socket, &this->process_queue, this->interruptHandler);
 }
 
 
 
-ProcessListener::~ProcessListener() {
+ProcessQueue::~ProcessQueue() {
     this->event_thread.join();
 
     set_event_subscription(this->sock->socket, false);

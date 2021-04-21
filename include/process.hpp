@@ -2,8 +2,8 @@
 // Created by aviallon on 13/04/2021.
 //
 
-#ifndef ANANICY_CPP_PROCESSES_HPP
-#define ANANICY_CPP_PROCESSES_HPP
+#ifndef ANANICY_CPP_PROCESS_HPP
+#define ANANICY_CPP_PROCESS_HPP
 
 #include <linux/cn_proc.h>
 #include <linux/connector.h>
@@ -19,7 +19,7 @@ struct Process {
 };
 
 
-class ProcessListener {
+class ProcessQueue {
 private:
     struct Socket;
 
@@ -30,12 +30,12 @@ private:
     InterruptHandler* interruptHandler;
 
 public:
-    explicit ProcessListener(InterruptHandler* interruptHandler);
-    ~ProcessListener();
+    explicit ProcessQueue(InterruptHandler* interruptHandler);
+    ~ProcessQueue();
 
     void start();
 
     atomic_queue<Process> process_queue;
 };
 
-#endif //ANANICY_CPP_PROCESSES_HPP
+#endif //ANANICY_CPP_PROCESS_HPP

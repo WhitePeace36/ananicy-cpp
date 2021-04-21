@@ -13,7 +13,7 @@
 #include <filesystem>
 #include <nlohmann/json.hpp>
 #include "utils.hpp"
-#include "process_listener.hpp"
+#include "process.hpp"
 #include "rules.hpp"
 #include "worker.hpp"
 #include "config.hpp"
@@ -45,7 +45,7 @@ int main() {
     Config conf("/etc/ananicy.d/ananicy.conf");
     conf.show();
 
-    ProcessListener processListener(&ih);
+    ProcessQueue processListener(&ih);
 
     processListener.start();
 
