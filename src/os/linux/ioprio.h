@@ -1,6 +1,9 @@
 #ifndef ANANICY_CPP_IOPRIO_H
 #define ANANICY_CPP_IOPRIO_H
 
+#include <unistd.h>
+#include <sys/syscall.h>
+
 #define IOPRIO_CLASS_SHIFT	(13)
 #define IOPRIO_PRIO_MASK	((1UL << IOPRIO_CLASS_SHIFT) - 1)
 

@@ -4,9 +4,7 @@
 
 #include <ctime>
 #include <sys/resource.h>
-#include <sys/syscall.h>
 #include <cerrno>
-#include <exception>
 #include <stdexcept>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -33,11 +31,17 @@ void test_errno(const std::string& func_name, unsigned pid) {
 
 void set_priority(unsigned pid, int nice_value) {
     errno = 0;
-    for(const auto& path : std::filesystem::directory_iterator(fmt::format("/proc/{}/task", pid))) {
-        int tid = std::stoi(path.path().filename().string());
-        if (tid > 0)
-            setpriority(PRIO_PROCESS, tid, nice_value);
+    try {
+        for(const auto& path : std::filesystem::directory_iterator(fmt::format("/proc/{}/task", pid))) {
+            int tid = std::stoi(path.path().filename().string());
+            if (tid > 0)
+                setpriority(PRIO_PROCESS, tid, nice_value);
+        }
+    } catch (const std::filesystem::filesystem_error& e) {
+        spdlog::error("{}: filesystem_error: {} (path: {})", __func__, e.what(), e.path1().string());
+        return;
     }
+
 
     test_errno(__func__, pid);
 }
