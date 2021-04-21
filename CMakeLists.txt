@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 
 if (USE_EXTERNAL_JSON)
-    find_package(nlohmann_json 3.9.1 REQUIRED)
+    find_package(nlohmann_json 3.9 REQUIRED)
 else()
     include(FetchContent)
 
@@ -28,7 +28,7 @@ endif()
 
 if(USE_EXTERNAL_SPDLOG)
     # Stand-alone build
-    find_package(spdlog REQUIRED)
+    find_package(spdlog 1.8 REQUIRED)
 else()
     include(FetchContent)
 
