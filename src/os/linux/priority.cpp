@@ -11,6 +11,7 @@
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <sched.h>
+#include <filesystem>
 #include "priority.hpp"
 
 
@@ -31,7 +32,11 @@ void test_errno(const std::string& func_name, unsigned pid) {
 
 void set_priority(unsigned pid, int nice_value) {
     errno = 0;
-    setpriority(PRIO_PROCESS, pid, nice_value);
+    for(const auto& path : std::filesystem::directory_iterator(fmt::format("/proc/{}/task", pid))) {
+        int tid = std::stoi(path.path().filename().string());
+        if (tid > 0)
+            setpriority(PRIO_PROCESS, tid, nice_value);
+    }
 
     test_errno(__func__, pid);
 }
