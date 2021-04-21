@@ -2,8 +2,8 @@
 // Created by aviallon on 13/04/2021.
 //
 
-#ifndef ANANICY_CPP_PROCESS_LISTENER_HPP
-#define ANANICY_CPP_PROCESS_LISTENER_HPP
+#ifndef ANANICY_CPP_PROCESSES_HPP
+#define ANANICY_CPP_PROCESSES_HPP
 
 #include <linux/cn_proc.h>
 #include <linux/connector.h>
@@ -38,4 +38,4 @@ public:
     atomic_queue<Process> process_queue;
 };
 
-#endif //ANANICY_CPP_PROCESS_LISTENER_HPP
+#endif //ANANICY_CPP_PROCESSES_HPP
