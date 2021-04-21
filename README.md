@@ -10,7 +10,7 @@ _Alpha status_
 - [X] Renicing
 - [X] Changing CPU scheduler
 - [X] Changing IO class and IO nice
-- [ ] Setting OOM score
+- [X] Setting OOM score
 - [ ] Cgroups
 - [ ] Systemd integration
   - [X] Unit file

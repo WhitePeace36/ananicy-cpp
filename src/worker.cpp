@@ -31,15 +31,23 @@ void Worker::start() {
                         if (!rule.is_null()) {
                             spdlog::debug("Found rule for {}: {}", p.name, rule.dump());
 
+                            bool ok = true;
+
                             if (config->apply_nice() && rule.contains("nice")) {
                                 spdlog::info("Setting priority of {}({}) to {}", p.name, p.pid, to_string(rule["nice"]));
-                                set_priority(p.pid, rule["nice"]);
+                                ok = set_priority(p.pid, rule["nice"]);
                             }
+
+                            if (!ok)
+                                continue;
 
                             if (config->apply_sched() && rule.contains("sched")) {
                                 spdlog::info("Setting scheduler of {}({}) to {}", p.name, p.pid, to_string(rule["sched"]));
-                                set_sched(p.pid, rule["sched"]);
+                                ok = set_sched(p.pid, rule["sched"]);
                             }
+
+                            if (!ok)
+                                continue;
 
                             if (config->apply_ionice() && rule.contains("ioclass")) {
                                 spdlog::info("Setting ioclass of {}({}) to {}", p.name, p.pid, to_string(rule["ioclass"]));
@@ -47,7 +55,15 @@ void Worker::start() {
                                 if (rule.contains("ionice") && rule["ionice"].is_number_integer()) {
                                     io_val = rule["ionice"];
                                 }
-                                set_io_priority(p.pid, rule["ioclass"], io_val);
+                                ok = set_io_priority(p.pid, rule["ioclass"], io_val);
+                            }
+
+                            if (!ok)
+                                continue;
+
+                            if (config->apply_oom_score_adj() && rule.contains("oom_score_adj")) {
+                                spdlog::info("Setting OOM score adjustment of {}({}) to {}", p.name, p.pid, to_string(rule["oom_score_adj"]));
+                                ok = set_oom_score_adjust(p.pid, rule["oom_score_adj"]);
                             }
 
 

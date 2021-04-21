@@ -33,6 +33,12 @@ public:
 
         return true;
     }
+    bool apply_oom_score_adj() {
+        if (config.contains("apply_oom_score_adj"))
+            return config["apply_oom_score_adj"] == "true";
+
+        return true;
+    }
     bool cgroup_load() {
         if (config.contains("cgroup_load"))
             return config["cgroup_load"] == "true";
