@@ -1,11 +1,11 @@
 [Unit]
-Description=Ananicy - ANother Auto NICe daemon
+Description=Ananicy-Cpp - ANother Auto NICe daemon in C++
 After=local-fs.target
 
 [Service]
-Type=notify
+Type=simple
 ExecStartPre=/sbin/sysctl -e kernel.sched_autogroup_enabled=0
-ExecStart=/usr/bin/ananicy-cpp start
+ExecStart=@CMAKE_INSTALL_PREFIX@/bin/ananicy-cpp
 ExecStopPost=/sbin/sysctl -e kernel.sched_autogroup_enabled=1
 Nice=19
 SuccessExitStatus=143

@@ -19,7 +19,9 @@
 #include "config.hpp"
 
 
-
+#ifdef ENABLE_SYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
 
 using json = nlohmann::json;
 
@@ -49,16 +51,15 @@ int main() {
 
     Rules rules("/etc/ananicy.d", &conf);
 
-    // rules.load_rules_from_file(path("/etc/ananicy.d/00-cgroups.cgroups"));
-
-    // load_rules_from_file(std::filesystem::path("/home/aviallon/Programming/Personnal/ananicy-cpp/test.program_rules"), &program_rules);
-
     rules.show_rules();
 
     Worker worker(&ih, &rules, &conf, &processListener.process_queue);
 
     worker.start();
 
+#ifdef ENABLE_SYSTEMD
+    sd_notify(0, "READY=1");
+#endif
 
     while (!ih.should_exit()) {
         ih.wait_for(1min);
