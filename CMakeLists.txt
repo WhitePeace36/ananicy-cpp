@@ -3,6 +3,8 @@ project(ananicy_cpp)
 
 option(USE_EXTERNAL_JSON "Use an external JSON library" OFF)
 
+set(CMAKE_CXX_FLAGS_DEBUG "-Og -g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -flto")
 set(CMAKE_CXX_STANDARD 20)
 
 if (USE_EXTERNAL_JSON)
@@ -33,3 +35,7 @@ target_link_libraries(ananicy_cpp PRIVATE "pthread" "nlohmann_json::nlohmann_jso
 target_link_libraries(ananicy_cpp PRIVATE spdlog::spdlog_header_only)
 
 target_include_directories(ananicy_cpp PRIVATE "${CMAKE_HOME_DIRECTORY}/include")
+
+include(GNUInstallDirs)
+install(TARGETS ananicy_cpp
+        RUNTIME DESTINATION bin)
