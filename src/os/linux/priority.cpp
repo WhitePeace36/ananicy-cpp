@@ -13,6 +13,7 @@
 #include <sched.h>
 #include <filesystem>
 #include "priority.hpp"
+#include "ioprio.h"
 
 
 void test_errno(const std::string& func_name, unsigned pid) {
@@ -41,44 +42,6 @@ void set_priority(unsigned pid, int nice_value) {
     test_errno(__func__, pid);
 }
 
-/** BEGIN io priority - extracted from kernel headers **/
-
-#define IOPRIO_CLASS_SHIFT	(13)
-#define IOPRIO_PRIO_MASK	((1UL << IOPRIO_CLASS_SHIFT) - 1)
-
-#define IOPRIO_PRIO_CLASS(mask)	((mask) >> IOPRIO_CLASS_SHIFT)
-#define IOPRIO_PRIO_DATA(mask)	((mask) & IOPRIO_PRIO_MASK)
-#define IOPRIO_PRIO_VALUE(class, data)	(((class) << IOPRIO_CLASS_SHIFT) | data)
-
-#define ioprio_valid(mask)	(IOPRIO_PRIO_CLASS((mask)) != IOPRIO_CLASS_NONE)
-
-enum {
-    IOPRIO_CLASS_NONE,
-    IOPRIO_CLASS_RT,
-    IOPRIO_CLASS_BE,
-    IOPRIO_CLASS_IDLE,
-};
-
-/*
- * 8 best effort priority levels are supported
- */
-#define IOPRIO_BE_NR	(8)
-
-enum {
-    IOPRIO_WHO_PROCESS = 1,
-    IOPRIO_WHO_PGRP,
-    IOPRIO_WHO_USER,
-};
-
-/*
- * Fallback BE priority
- */
-#define IOPRIO_NORM	(4)
-
-
-int ioprio_set(__priority_which_t _which, id_t _who, int _prio) {
-    return (int) syscall(SYS_ioprio_set, _which, _who, _prio);
-}
 
 void set_io_priority(unsigned pid, const std::string& io_class, int value) {
     int io_class_value = 0;
@@ -107,8 +70,6 @@ void set_io_priority(unsigned pid, const std::string& io_class, int value) {
 
     test_errno(__func__, pid);
 }
-
-/** END io priority - extracted from kernel headers **/
 
 void set_sched(unsigned pid, const std::string& sched_name) {
     int sched = 0;
