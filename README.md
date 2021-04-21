@@ -19,6 +19,7 @@ _Alpha status_
 
 ## Installation
 Almost a drop-in replacement fro Ananicy.
+
 Install ananicy, and then:
 ```
 mkdir build
