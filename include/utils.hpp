@@ -10,6 +10,8 @@
 #include <mutex>
 #include <unistd.h>
 #include <condition_variable>
+#include <optional>
+
 
 template <typename T>
 class atomic_queue {
@@ -53,5 +55,7 @@ public:
 
     [[nodiscard]] bool should_exit() const;
 };
+
+std::optional<std::string> get_env(const std::string& name);
 
 #endif //ANANICY_CPP_UTILS_HPP

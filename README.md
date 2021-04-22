@@ -11,6 +11,7 @@ _Alpha status_
 - [X] Changing CPU scheduler
 - [X] Changing IO class and IO nice
 - [X] Setting OOM score
+- [X] Change default configuration file and rules directory using environment variables (`ANANICY_CPP_{CONF,CONFDIR}`)
 - [ ] Cgroups
 - [ ] Systemd integration
   - [X] Unit file

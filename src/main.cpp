@@ -7,9 +7,8 @@
 
 #include <iostream>
 #include <csignal>
+#include <cstdlib>
 #include <mutex>
-#include <queue>
-#include <fstream>
 #include <filesystem>
 #include <nlohmann/json.hpp>
 #include "utils.hpp"
@@ -42,14 +41,17 @@ int main() {
         SIGTERM
     });
 
-    Config conf("/etc/ananicy.d/ananicy.conf");
+    const std::string config_dir_path = get_env("ANANICY_CPP_CONFDIR").value_or("/etc/ananicy.d");
+    const std::string config_path = get_env("ANANICY_CPP_CONF").value_or("/etc/ananicy.d/ananicy.conf");
+
+    Config conf(config_path);
     conf.show();
 
     ProcessQueue processListener(&ih);
 
     processListener.start();
 
-    Rules rules("/etc/ananicy.d", &conf);
+    Rules rules(config_dir_path, &conf);
 
     rules.show_rules();
 

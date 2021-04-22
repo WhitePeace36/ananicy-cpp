@@ -33,3 +33,11 @@ InterruptHandler::InterruptHandler(std::initializer_list<int> signals) {
         signal (sig, &on_signal);
     }
 }
+
+std::optional<std::string> get_env(const std::string& name) {
+    char* res = std::getenv(name.c_str());
+    if (res != nullptr) {
+        return std::string(res);
+    }
+    return {};
+}
