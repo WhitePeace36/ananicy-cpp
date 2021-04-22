@@ -29,3 +29,14 @@ void Config::show() {
         spdlog::info("Config {}: {}", item.first, item.second);
     }
 }
+
+void Config::set(const std::string &key, const std::string &value) {
+    config[key] = value;
+}
+
+std::optional<std::string> Config::get(const std::string &key) const {
+    if(config.contains(key))
+        return config.at(key);
+
+    return {};
+}
