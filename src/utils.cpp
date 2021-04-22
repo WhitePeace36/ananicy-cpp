@@ -21,17 +21,21 @@ void on_signal (int unused) {
 InterruptHandler::InterruptHandler(std::initializer_list<int> signals) {
 
     handler = [this](int unused) -> void {
-        this->need_exit = true;
-        this->exit_condition.notify_all();
-
-#ifdef ENABLE_SYSTEMD
-        sd_notify(0, "STOPPING=1");
-#endif
+        this->stop();
     };
 
     for (const int& sig : signals) {
         signal (sig, &on_signal);
     }
+}
+
+void InterruptHandler::stop() {
+    need_exit = true;
+    exit_condition.notify_all();
+
+#ifdef ENABLE_SYSTEMD
+    sd_notify(0, "STOPPING=1");
+#endif
 }
 
 std::optional<std::string> get_env(const std::string& name) {

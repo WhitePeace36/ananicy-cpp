@@ -54,6 +54,7 @@ public:
     }
 
     [[nodiscard]] bool should_exit() const;
+    void stop();
 };
 
 std::optional<std::string> get_env(const std::string& name);
