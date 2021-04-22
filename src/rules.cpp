@@ -22,7 +22,7 @@ void Rules::load_rule_from_string(const std::string& line) {
     try {
         rule = json::parse(line);
     } catch (const std::exception& e) {
-        std::cerr << "Error parsing JSON: " << e.what() << std::endl;
+        spdlog::warn("Error parsing JSON: {}", e.what());
         return;
     }
 
@@ -34,8 +34,7 @@ void Rules::load_rule_from_string(const std::string& line) {
     } else if (rule.contains("cgroup") && rule["cgroup"].is_string()) { /* Cgroup rule */
         cgroup_rules.insert_or_assign(rule["cgroup"], rule);
     } else {
-        std::cerr << "Rule does not have a name, or name is not a string! "  << rule.dump() << std::endl;
-        // throw std::runtime_error("Rule does not have a name, or name is not a string!");
+        spdlog::error("Rule does not have a name, or name is not a string: {}", rule.dump());
     }
 }
 
