@@ -1,22 +1,21 @@
 #define _XOPEN_SOURCE 700
 
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
-#include <spdlog/spdlog.h>
-#include <fmt/format.h>
 #include <fmt/chrono.h>
+#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
-#include <iostream>
-#include <csignal>
-#include <cstdlib>
-#include <mutex>
-#include <filesystem>
-#include <nlohmann/json.hpp>
-#include "utils.hpp"
+#include "config.hpp"
 #include "process.hpp"
 #include "rules.hpp"
+#include "utils.hpp"
 #include "worker.hpp"
-#include "config.hpp"
-
+#include <csignal>
+#include <cstdlib>
+#include <filesystem>
+#include <iostream>
+#include <mutex>
+#include <nlohmann/json.hpp>
 
 #ifdef ENABLE_SYSTEMD
 #include <systemd/sd-daemon.h>
@@ -24,57 +23,56 @@
 
 using json = nlohmann::json;
 
-
 using namespace std::chrono_literals;
 
 using std::filesystem::path;
 
 int main() {
-    spdlog::set_level(spdlog::level::debug);
+  spdlog::set_level(spdlog::level::debug);
 
-    auto start_time = std::chrono::system_clock::now();
+  auto start_time = std::chrono::system_clock::now();
 
-    std::cout << "Ananicy Cpp" << std::endl;
+  std::cout << "Ananicy Cpp" << std::endl;
 
-    InterruptHandler ih ({
-        SIGINT,
-        SIGTERM
-    });
+  InterruptHandler ih({SIGINT, SIGTERM});
 
-    const std::string config_dir_path = get_env("ANANICY_CPP_CONFDIR").value_or("/etc/ananicy.d");
-    const std::string config_path = get_env("ANANICY_CPP_CONF").value_or("/etc/ananicy.d/ananicy.conf");
+  const std::string config_dir_path =
+      get_env("ANANICY_CPP_CONFDIR").value_or("/etc/ananicy.d");
+  const std::string config_path =
+      get_env("ANANICY_CPP_CONF").value_or("/etc/ananicy.d/ananicy.conf");
 
-    Config conf(config_path);
-    conf.show();
+  Config conf(config_path);
+  conf.show();
 
-    ProcessQueue processListener(&ih);
+  ProcessQueue processListener(&ih);
 
-    processListener.start();
+  processListener.start();
 
-    Rules rules(config_dir_path, &conf);
+  Rules rules(config_dir_path, &conf);
 
-    rules.show_rules();
+  rules.show_rules();
 
-    Worker worker(&ih, &rules, &conf, &processListener.process_queue);
+  Worker worker(&ih, &rules, &conf, &processListener.process_queue);
 
-    worker.start();
+  worker.start();
 
 #ifdef ENABLE_SYSTEMD
-    sd_notify(0, "READY=1");
+  sd_notify(0, "READY=1");
 #endif
 
-    while (!ih.should_exit()) {
-        ih.wait_for(1min);
-        if (ih.should_exit())
-            break;
+  while (!ih.should_exit()) {
+    ih.wait_for(1min);
+    if (ih.should_exit())
+      break;
 
-        spdlog::debug("Processed processes: {}", worker.processed_processes());
-    }
+    spdlog::debug("Processed processes: {}", worker.processed_processes());
+  }
 
-    std::chrono::duration<double, std::ratio<1,1>> duration = std::chrono::system_clock::now() - start_time;
+  std::chrono::duration<double, std::ratio<1, 1>> duration =
+      std::chrono::system_clock::now() - start_time;
 
-    spdlog::info("Summary:\n{} processes processed, ran for {:%H:%M:%S} seconds", worker.processed_processes(), duration);
+  spdlog::info("Summary:\n{} processes processed, ran for {:%H:%M:%S} seconds",
+               worker.processed_processes(), duration);
 
-
-    return EXIT_SUCCESS;
+  return EXIT_SUCCESS;
 }
