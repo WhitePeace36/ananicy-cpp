@@ -64,11 +64,7 @@ else()
             GIT_REPOSITORY https://github.com/nlohmann/json
             GIT_TAG v3.9.1)
 
-    FetchContent_GetProperties(json)
-    if(NOT json_POPULATED)
-        FetchContent_Populate(json)
-        add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
+    FetchContent_MakeAvailable(json)
 endif()
 target_link_libraries(ananicy-cpp PRIVATE "nlohmann_json::nlohmann_json")
 set(CMAKE_MESSAGE_CONTEXT "")
@@ -82,11 +78,8 @@ else()
     FetchContent_Declare(fmtlib
             GIT_REPOSITORY https://github.com/fmtlib/fmt
             GIT_TAG 7.1.3)
-    FetchContent_GetProperties(fmtlib)
-    if(NOT fmtlib_POPULATED)
-        FetchContent_Populate(fmtlib)
-        add_subdirectory(${fmtlib_SOURCE_DIR} ${fmtlib_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
+
+    FetchContent_MakeAvailable(fmtlib)
 endif()
 target_link_libraries(ananicy-cpp PRIVATE fmt)
 
@@ -102,11 +95,7 @@ else()
             GIT_REPOSITORY https://github.com/gabime/spdlog
             GIT_TAG v1.8.5)
 
-    FetchContent_GetProperties(spdlog)
-    if(NOT spdlog_POPULATED)
-        FetchContent_Populate(spdlog)
-        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
+    FetchContent_MakeAvailable(spdlog)
 endif()
 target_link_libraries(ananicy-cpp PRIVATE spdlog::spdlog)
 set(CMAKE_MESSAGE_CONTEXT "")
