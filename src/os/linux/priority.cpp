@@ -11,7 +11,6 @@
 #include <sched.h>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
-#include <sys/resource.h>
 
 bool test_errno(const std::string &func_name, unsigned pid) {
   if (errno == 0) {

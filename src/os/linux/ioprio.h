@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <sys/resource.h>
 
 #define IOPRIO_CLASS_SHIFT	(13)
 #define IOPRIO_PRIO_MASK	((1UL << IOPRIO_CLASS_SHIFT) - 1)
