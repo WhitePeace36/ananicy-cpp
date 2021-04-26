@@ -11,6 +11,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -flto")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_MESSAGE_CONTEXT_SHOW ON)
 
+include(FetchContent)
+
 
 list(APPEND SOURCES
         src/main.cpp
@@ -42,9 +44,15 @@ else()
 endif()
 
 add_executable(ananicy-cpp ${HEADERS} ${SOURCES})
-target_link_libraries(ananicy-cpp PRIVATE "pthread")
 
-include(FetchContent)
+
+# threading support
+message(STATUS "Configuring threads")
+set(CMAKE_MESSAGE_CONTEXT "threads")
+find_package(Threads REQUIRED)
+target_link_libraries(ananicy-cpp PRIVATE Threads::Threads)
+set(CMAKE_MESSAGE_CONTEXT "")
+
 
 # nlohmann_json
 message(STATUS "Configuring nlohmann_json")
@@ -101,12 +109,14 @@ else()
     endif()
 endif()
 target_link_libraries(ananicy-cpp PRIVATE spdlog::spdlog)
+set(CMAKE_MESSAGE_CONTEXT "")
 
 if(ENABLE_SYSTEMD)
+    set(CMAKE_MESSAGE_CONTEXT "systemd")
     message(STATUS "Systemd support is enabled, configuring")
     add_compile_definitions(ENABLE_SYSTEMD=1)
     target_link_libraries(ananicy-cpp PRIVATE "systemd")
-
+    set(CMAKE_MESSAGE_CONTEXT "")
 endif()
 
 target_include_directories(ananicy-cpp PRIVATE "${CMAKE_HOME_DIRECTORY}/include")
