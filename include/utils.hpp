@@ -54,4 +54,6 @@ public:
 
 std::optional<std::string> get_env(const std::string &name);
 
+std::string get_error_string(int error_number);
+
 #endif // ANANICY_CPP_UTILS_HPP
