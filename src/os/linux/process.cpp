@@ -24,9 +24,10 @@
 
 int connect_netlink_socket() {
 
+    errno = 0;
   int nl_sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_CONNECTOR);
   if (nl_sock == -1) {
-    perror("socket");
+      spdlog::error("Couldn't create netlink socket, errno = {}", get_error_string(errno));
     return -1;
   }
 
@@ -36,9 +37,10 @@ int connect_netlink_socket() {
       .nl_groups = CN_IDX_PROC,
   };
 
+  errno = 0;
   int rc = bind(nl_sock, (struct sockaddr *)&sa_nl, sizeof(sa_nl));
   if (rc == -1) {
-    std::cerr << "bind failed" << std::endl;
+      spdlog::error("Couldn't bind to socket: {}", get_error_string(errno));
     close(nl_sock);
     return -1;
   }
@@ -120,7 +122,7 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue,
       if (errno == EINTR) {
         continue;
       }
-      std::cerr << "netlink received" << std::endl;
+      spdlog::error("Bad netlink status: {}", get_error_string(errno));
       return EXIT_FAILURE;
     }
 
