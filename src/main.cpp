@@ -16,6 +16,7 @@
 #include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
+#include <argparse.h>
 
 #ifdef ENABLE_SYSTEMD
 #include <systemd/sd-daemon.h>
@@ -27,10 +28,36 @@ using namespace std::chrono_literals;
 
 using std::filesystem::path;
 
-int main() {
+int main(int argc, char **argv) {
   spdlog::set_level(spdlog::level::debug);
 
   auto start_time = std::chrono::system_clock::now();
+
+  argparse::ArgumentParser parser("ananicy-cpp", "ANother Auto NIce daemon, fully written in C++");
+  parser.add_argument().names({"-v", "--verbose"}).description("Increase verbosity level");
+  parser.add_argument().names({"-h", "--help"}).description("Print this help and exit");
+  parser.add_argument().name("--benchmark").description("Should we activate benchmark mode or not");
+
+  auto err = parser.parse(argc, argv);
+  if (err) {
+      spdlog::critical("Argument parsing error: {}", err.what());
+      parser.print_help();
+      return EXIT_FAILURE;
+  }
+
+  if (parser.exists("help")) {
+      parser.print_help();
+      return EXIT_SUCCESS;
+  }
+
+  if (parser.exists("verbose")){
+      spdlog::info("Verbose flag set!");
+  }
+
+  if (parser.exists("benchmark")) {
+      spdlog::warn("Benchmark enabled!");
+  }
+
 
   std::cout << "Ananicy Cpp" << std::endl;
 
@@ -62,11 +89,12 @@ int main() {
 
   while (!ih.should_exit()) {
     ih.wait_for(1min);
-    if (ih.should_exit())
+    if (ih.should_exit() || parser.exists("benchmark"))
       break;
 
     spdlog::debug("Processed processes: {}", worker.processed_processes());
   }
+  ih.stop();
 
   std::chrono::duration<double, std::ratio<1, 1>> duration =
       std::chrono::system_clock::now() - start_time;
