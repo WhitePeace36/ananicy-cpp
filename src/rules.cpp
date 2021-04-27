@@ -56,8 +56,8 @@ void Rules::load_rules_from_file(const std::filesystem::path &path) {
 void Rules::show_rules() {
   for (const std::pair<std::string, json> rule : cgroup_rules) {
     spdlog::debug("Cgroup: {}, {}", rule.first, rule.second.dump());
-    // std::cout << "Cgroup: " << rule.first << ", " << rule.second.dump() <<
-    // std::endl;
+    // std::cout << "Cgroup: " << rule.first << ", " << rule.second.dump()
+    // << std::endl;
   }
   for (const std::pair<std::string, json> rule : type_rules) {
     spdlog::debug("Type: {}, {}", rule.first, rule.second.dump());
@@ -67,7 +67,8 @@ void Rules::show_rules() {
   }
 }
 
-void Rules::load_rules_from_directory(const std::filesystem::path &dir_path) { // NOLINT(misc-no-recursion)
+void Rules::load_rules_from_directory(
+    const std::filesystem::path &dir_path) { // NOLINT(misc-no-recursion)
   for (const path &file : std::filesystem::directory_iterator(dir_path)) {
     std::stringstream ss;
     ss << "Found file " << file.filename();

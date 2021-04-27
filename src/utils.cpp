@@ -2,10 +2,10 @@
 // Created by aviallon on 13/04/2021.
 //
 #include "utils.hpp"
-#include <csignal>
-#include <functional>
 #include <cerrno>
-#include <string.h>
+#include <csignal>
+#include <cstring>
+#include <functional>
 
 #ifdef ENABLE_SYSTEMD
 #include <systemd/sd-daemon.h>
@@ -43,7 +43,7 @@ std::optional<std::string> get_env(const std::string &name) {
 }
 
 std::string get_error_string(int error_number) {
-    std::string msg;
-    msg.append(strerror(error_number));
-    return msg;
+  std::string msg;
+  msg.append(strerror(error_number));
+  return msg;
 }

@@ -10,13 +10,13 @@
 #include "rules.hpp"
 #include "utils.hpp"
 #include "worker.hpp"
+#include <argparse.h>
 #include <csignal>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
-#include <argparse.h>
 
 #ifdef ENABLE_SYSTEMD
 #include <systemd/sd-daemon.h>
@@ -33,31 +33,37 @@ int main(int argc, char **argv) {
 
   auto start_time = std::chrono::system_clock::now();
 
-  argparse::ArgumentParser parser("ananicy-cpp", "ANother Auto NIce daemon, fully written in C++");
-  parser.add_argument().names({"-v", "--verbose"}).description("Increase verbosity level");
-  parser.add_argument().names({"-h", "--help"}).description("Print this help and exit");
-  parser.add_argument().name("--benchmark").description("Should we activate benchmark mode or not");
+  argparse::ArgumentParser parser(
+      "ananicy-cpp", "ANother Auto NIce daemon, fully written in C++");
+  parser.add_argument()
+      .names({"-v", "--verbose"})
+      .description("Increase verbosity level");
+  parser.add_argument()
+      .names({"-h", "--help"})
+      .description("Print this help and exit");
+  parser.add_argument()
+      .name("--benchmark")
+      .description("Should we activate benchmark mode or not");
 
   auto err = parser.parse(argc, argv);
   if (err) {
-      spdlog::critical("Argument parsing error: {}", err.what());
-      parser.print_help();
-      return EXIT_FAILURE;
+    spdlog::critical("Argument parsing error: {}", err.what());
+    parser.print_help();
+    return EXIT_FAILURE;
   }
 
   if (parser.exists("help")) {
-      parser.print_help();
-      return EXIT_SUCCESS;
+    parser.print_help();
+    return EXIT_SUCCESS;
   }
 
-  if (parser.exists("verbose")){
-      spdlog::info("Verbose flag set!");
+  if (parser.exists("verbose")) {
+    spdlog::info("Verbose flag set!");
   }
 
   if (parser.exists("benchmark")) {
-      spdlog::warn("Benchmark enabled!");
+    spdlog::warn("Benchmark enabled!");
   }
-
 
   std::cout << "Ananicy Cpp" << std::endl;
 

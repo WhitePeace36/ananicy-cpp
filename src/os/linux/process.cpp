@@ -24,10 +24,11 @@
 
 int connect_netlink_socket() {
 
-    errno = 0;
+  errno = 0;
   int nl_sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_CONNECTOR);
   if (nl_sock == -1) {
-      spdlog::error("Couldn't create netlink socket, errno = {}", get_error_string(errno));
+    spdlog::error("Couldn't create netlink socket, errno = {}",
+                  get_error_string(errno));
     return -1;
   }
 
@@ -40,7 +41,7 @@ int connect_netlink_socket() {
   errno = 0;
   int rc = bind(nl_sock, (struct sockaddr *)&sa_nl, sizeof(sa_nl));
   if (rc == -1) {
-      spdlog::error("Couldn't bind to socket: {}", get_error_string(errno));
+    spdlog::error("Couldn't bind to socket: {}", get_error_string(errno));
     close(nl_sock);
     return -1;
   }
