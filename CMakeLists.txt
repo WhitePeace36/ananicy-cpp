@@ -1,15 +1,71 @@
 cmake_minimum_required(VERSION 3.17)
-project(ananicy-cpp)
+
+set(VERSION "0.0.0")
+set(COMMIT_HASH "")
+set(FULL_VERSION "${VERSION}")
+if(VERSION STREQUAL "0.0.0")
+    message(STATUS "No version defined, fetching one from git")
+    find_package(Git)
+    if(Git_FOUND)
+        message(STATUS "Git found: ${GIT_EXECUTABLE}")
+
+        execute_process(
+                COMMAND ${GIT_EXECUTABLE} describe --long
+                OUTPUT_VARIABLE OUTPUT
+                RESULT_VARIABLE STATUS
+        )
+        if (STATUS EQUAL 0)
+            string(REGEX REPLACE "v([^-]+)-([0-9]+)-([a-zA-Z0-9]+).+" "\\1.r\\2.\\3" FULL_VERSION "${OUTPUT}")
+            set(VERSION ${CMAKE_MATCH_1})
+            set(COMMIT_COUNT ${CMAKE_MATCH_2})
+            set(COMMIT_HASH ${CMAKE_MATCH_3})
+            message(STATUS "Version from git: ${FULL_VERSION}")
+        endif()
+    endif()
+endif()
+message("Version: ${VERSION}")
+
+project(ananicy-cpp VERSION ${VERSION})
 
 option(USE_EXTERNAL_JSON "Use an external JSON library" OFF)
 option(USE_EXTERNAL_SPDLOG "Use external Spdlog library" OFF)
 option(USE_EXTERNAL_FMTLIB "Use external fmt library" OFF)
 option(ENABLE_SYSTEMD "Include systemd headers and install service file" ON)
+option(OPTIMIZE_FOR_NATIVE_MICROARCH "Enable -march=native flag on the CXX compiler. This makes build NOT portable." OFF)
 
-set(CMAKE_CXX_FLAGS_DEBUG "-Og -g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -flto")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_MESSAGE_CONTEXT_SHOW ON)
+
+set(CMAKE_CXX_FLAGS_DEBUG "")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
+configure_file(include/version.hpp.in ${CMAKE_SOURCE_DIR}/include/version.hpp @ONLY)
+
+# Compiler checks
+message(STATUS "Checking compiler flags support")
+set(CMAKE_MESSAGE_CONTEXT "compiler checks")
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-g3" CXX_ACCEPTS_G3)
+check_cxx_compiler_flag("-g" CXX_ACCEPTS_G)
+check_cxx_compiler_flag("-Og" CXX_ACCEPTS_OG)
+check_cxx_compiler_flag("-flto" CXX_ACCEPTS_FLTO)
+set(CMAKE_MESSAGE_CONTEXT "")
+
+if(CXX_ACCEPTS_G3)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3")
+elseif(CXX_ACCEPTS_G)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+endif()
+
+if(CXX_ACCEPTS_OG)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
+else()
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O1")
+endif()
+
+if(CXX_ACCEPTS_FLTO)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
+endif()
 
 include(FetchContent)
 
@@ -27,7 +83,8 @@ list(APPEND HEADERS
         include/process.hpp
         include/rules.hpp
         include/utils.hpp
-        include/worker.hpp)
+        include/worker.hpp
+        include/version.hpp)
 
 list(APPEND LINUX_SOURCES
         src/os/linux/priority.cpp
@@ -69,21 +126,36 @@ endif()
 target_link_libraries(ananicy-cpp PRIVATE "nlohmann_json::nlohmann_json")
 set(CMAKE_MESSAGE_CONTEXT "")
 
-# fmt
-message(STATUS "Configuring fmtlib")
-set(CMAKE_MESSAGE_CONTEXT "fmtlib")
-if(USE_EXTERNAL_FMTLIB)
-    find_package(fmt)
-else()
-    FetchContent_Declare(fmtlib
-            GIT_REPOSITORY https://github.com/fmtlib/fmt
-            GIT_TAG 7.1.3)
-
-    FetchContent_MakeAvailable(fmtlib)
+# std::format
+include(CheckCXXSymbolExists)
+message(STATUS "stdlib checks")
+set(CMAKE_MESSAGE_CONTEXT "std")
+check_cxx_symbol_exists(std::format "format" HAVE_STD_FORMAT)
+if(NOT HAVE_STD_FORMAT)
+    message(STATUS "std::format not available, using fmtlib as a replacement")
 endif()
-target_link_libraries(ananicy-cpp PRIVATE fmt)
-
 set(CMAKE_MESSAGE_CONTEXT "")
+
+# fmt
+if (NOT HAVE_STD_FORMAT)
+    message(STATUS "Configuring fmtlib")
+    set(CMAKE_MESSAGE_CONTEXT "fmtlib")
+    if(USE_EXTERNAL_FMTLIB)
+        find_package(fmt)
+    else()
+        FetchContent_Declare(fmtlib
+                GIT_REPOSITORY https://github.com/fmtlib/fmt
+                GIT_TAG 7.1.3)
+
+        FetchContent_MakeAvailable(fmtlib)
+    endif()
+    target_link_libraries(ananicy-cpp PRIVATE fmt)
+    target_include_directories(ananicy-cpp PRIVATE polyfills/format)
+    target_sources(ananicy-cpp PRIVATE polyfills/format/format)
+    set(CMAKE_MESSAGE_CONTEXT "")
+endif()
+
+
 # spdlog
 message(STATUS "Configuring spdlog")
 set(CMAKE_MESSAGE_CONTEXT "spdlog")

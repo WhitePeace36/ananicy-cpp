@@ -1,0 +1,18 @@
+#ifndef STD_POLYFILL_HPP
+#define STD_POLYFILL_HPP
+
+/** Polyfills std::format from fmtlib (this is fine because the author of both std::format and fmtlib are the same person) **/
+#include <fmt/format.h>
+#include <fmt/core.h>
+#include <fmt/ranges.h>
+#include <fmt/chrono.h>
+#include <fmt/color.h>
+#include <fmt/locale.h>
+#include <fmt/os.h>
+
+// This is the kind of things you usually not do
+namespace std {
+    using namespace fmt;
+}
+
+#endif

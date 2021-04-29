@@ -1,8 +1,7 @@
 #define _XOPEN_SOURCE 700
 
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
-#include <fmt/chrono.h>
-#include <fmt/format.h>
+#include <format>
 #include <spdlog/spdlog.h>
 
 #include "config.hpp"
@@ -10,6 +9,7 @@
 #include "rules.hpp"
 #include "utils.hpp"
 #include "worker.hpp"
+#include "version.hpp"
 #include <argparse.h>
 #include <csignal>
 #include <cstdlib>
@@ -28,7 +28,7 @@ using namespace std::chrono_literals;
 
 using std::filesystem::path;
 
-int main(int argc, char **argv) {
+int main(const int argc, const char **argv) {
   spdlog::set_level(spdlog::level::debug);
 
   auto start_time = std::chrono::system_clock::now();
@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
     spdlog::warn("Benchmark enabled!");
   }
 
-  std::cout << "Ananicy Cpp" << std::endl;
+  std::cout << std::format("Ananicy Cpp v{}.{}.{}", MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION) << std::endl;
 
   InterruptHandler ih({SIGINT, SIGTERM});
 

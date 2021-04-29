@@ -6,7 +6,7 @@
 #include "ioprio.h"
 #include <cerrno>
 #include <filesystem>
-#include <fmt/format.h>
+#include <format>
 #include <fstream>
 #include <sched.h>
 #include <spdlog/spdlog.h>
@@ -22,7 +22,7 @@ bool test_errno(const std::string &func_name, unsigned pid) {
     spdlog::warn("{}: Process not found: {}", func_name, pid);
     return false;
   } else if (errno == EACCES || errno == EPERM) {
-    throw std::runtime_error(fmt::format(
+    throw std::runtime_error(std::format(
         "{}: Insufficient permission to set io-priority of process {}",
         func_name, pid));
   } else if (errno != 0) {
@@ -38,7 +38,7 @@ bool set_priority(unsigned pid, int nice_value) {
   errno = 0;
   try {
     for (const auto &path : std::filesystem::directory_iterator(
-             fmt::format("/proc/{}/task", pid))) {
+             std::format("/proc/{}/task", pid))) {
       int tid = std::stoi(path.path().filename().string());
       if (tid > 0)
         setpriority(PRIO_PROCESS, tid, nice_value);
@@ -106,7 +106,7 @@ bool set_oom_score_adjust(unsigned pid, int value) {
 
   try {
     std::filesystem::path oom_score_path(
-        fmt::format("/proc/{}/oom_score_adj", pid));
+        std::format("/proc/{}/oom_score_adj", pid));
 
     std::ofstream oom_score_file;
     oom_score_file.open(oom_score_path);
