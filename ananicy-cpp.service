@@ -7,7 +7,7 @@ Type=simple
 ExecStartPre=/sbin/sysctl -e kernel.sched_autogroup_enabled=0
 ExecStart=@CMAKE_INSTALL_PREFIX@/bin/ananicy-cpp
 ExecStopPost=/sbin/sysctl -e kernel.sched_autogroup_enabled=1
-Nice=19
+Nice=-5
 SuccessExitStatus=143
 OOMScoreAdjust=-999
 Restart=always
