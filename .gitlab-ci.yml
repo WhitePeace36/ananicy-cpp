@@ -1,0 +1,15 @@
+---
+image: gcc
+
+default:
+  before_script:
+    - apt-get -y update
+    - apt-get -y install cmake git
+
+build:
+  stage: build
+  script:
+    - mkdir build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - cmake --build .
