@@ -39,7 +39,7 @@ set(CMAKE_MESSAGE_CONTEXT_SHOW ON)
 set(CMAKE_CXX_FLAGS_DEBUG "")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
-configure_file(include/version.hpp.in ${CMAKE_SOURCE_DIR}/include/version.hpp @ONLY)
+configure_file(include/version.hpp.in ${CMAKE_SOURCE_DIR}/include/version.hpp)
 
 # Compiler checks
 message(STATUS "Checking compiler flags support")
@@ -117,6 +117,7 @@ set(CMAKE_MESSAGE_CONTEXT "nlohmann_json")
 if (USE_EXTERNAL_JSON)
     find_package(nlohmann_json 3.9 REQUIRED)
 else()
+    set(JSON_BuildTests Off)
     FetchContent_Declare(json
             GIT_REPOSITORY https://github.com/nlohmann/json
             GIT_TAG v3.9.1)
@@ -186,7 +187,6 @@ if(NOT argparse_POPULATED)
     file(COPY ${argparse_SOURCE_DIR}/argparse.h DESTINATION ${argparse_BINARY_DIR}/include)
     message(STATUS "Add argparse.h include dir to target's includes")
     target_include_directories(ananicy-cpp PRIVATE ${argparse_BINARY_DIR}/include)
-    # add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
 endif()
 set(CMAKE_MESSAGE_CONTEXT "")
 
