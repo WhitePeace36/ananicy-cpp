@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17)
 
-set(VERSION "0.0.0")
+set(VERSION "0.0.0" CACHE STRING "Override this value to specify the version string used by CMake and Ananicy-cpp")
 set(COMMIT_HASH "")
 set(FULL_VERSION "${VERSION}")
 if(VERSION STREQUAL "0.0.0")
