@@ -4,7 +4,7 @@ image: gcc
 default:
   before_script:
     - apt-get -y update
-    - apt-get -y install cmake git
+    - apt-get -y install cmake git systemd
 
 build:
   stage: build
