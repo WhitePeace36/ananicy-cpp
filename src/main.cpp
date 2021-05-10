@@ -8,8 +8,8 @@
 #include "process.hpp"
 #include "rules.hpp"
 #include "utils.hpp"
-#include "worker.hpp"
 #include "version.hpp"
+#include "worker.hpp"
 #include <argparse.h>
 #include <csignal>
 #include <cstdlib>
@@ -65,7 +65,9 @@ int main(const int argc, const char **argv) {
     spdlog::warn("Benchmark enabled!");
   }
 
-  std::cout << std::format("Ananicy Cpp v{}.{}.{}", MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION) << std::endl;
+  std::cout << std::format("Ananicy Cpp v{}.{}.{}", MAJOR_VERSION,
+                           MINOR_VERSION, PATCH_VERSION)
+            << std::endl;
 
   InterruptHandler ih({SIGINT, SIGTERM});
 

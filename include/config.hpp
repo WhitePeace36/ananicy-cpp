@@ -6,8 +6,8 @@
 #define ANANICY_CPP_CONFIG_HPP
 
 #include <filesystem>
-#include <unordered_map>
 #include <optional>
+#include <unordered_map>
 
 class Config {
 public:
