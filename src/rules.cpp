@@ -105,7 +105,9 @@ json Rules::get_rule(const std::string &name) {
   if (program_rules.contains(name)) {
     rule = program_rules.at(name);
     if (rule.contains("type") && type_rules.contains(rule["type"])) {
-      rule.merge_patch(type_rules.at(rule["type"]));
+        json type_rule = type_rules.at(rule["type"]); // We create a copy of the type rule to avoid overwriting it
+        type_rule.merge_patch(rule); // We then merge the rule into it, overriding parameters from the type with those explicitly specified in the rule
+        rule.merge_patch(type_rule); // We then merge it back into the rule
     }
   }
   return rule;
