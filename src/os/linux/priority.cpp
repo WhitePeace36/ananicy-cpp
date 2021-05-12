@@ -12,7 +12,7 @@
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 
-bool test_errno(const std::string &func_name, unsigned pid) {
+int test_errno(const std::string &func_name, unsigned pid) {
   if (errno == 0) {
     spdlog::debug("{}: Successfully applied to {}", func_name, pid);
     return true;
@@ -28,7 +28,7 @@ bool test_errno(const std::string &func_name, unsigned pid) {
   } else if (errno != 0) {
     spdlog::error("{}: Unknown error, errno is {}({})", func_name,
                   strerror(errno), errno);
-    return true;
+    return -1;
   }
 
   return false;
@@ -88,13 +88,15 @@ bool set_io_priority(unsigned pid, const std::string &io_class, int value) {
 }
 
 bool set_sched(unsigned pid, const std::string &sched_name) {
-  int sched = 0;
+  int         sched = 0;
+  sched_param param = {};
   if (sched_name == "idle") {
     sched = SCHED_IDLE;
   } else if (sched_name == "normal" || sched_name == "other") {
     sched = SCHED_OTHER;
   } else if (sched_name == "rr") {
     sched = SCHED_RR;
+    param.sched_priority = 1;
   } else if (sched_name == "fifo") {
     sched = SCHED_FIFO;
   } else if (sched_name == "deadline") {
@@ -103,10 +105,14 @@ bool set_sched(unsigned pid, const std::string &sched_name) {
     sched = SCHED_BATCH;
   }
   errno = 0;
-  const sched_param param = {};
   sched_setscheduler(pid, sched, &param);
 
-  return test_errno(__func__, pid);
+  const int success = test_errno(__func__, pid);
+  if (success == -1)
+    spdlog::error("{}: Error info: sched_name: {}, pid: {}", __func__,
+                  sched_name, pid);
+
+  return success;
 }
 
 bool set_oom_score_adjust(unsigned pid, int value) {
