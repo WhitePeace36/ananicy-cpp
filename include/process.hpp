@@ -6,13 +6,10 @@
 #define ANANICY_CPP_PROCESS_HPP
 
 #include "utils.hpp"
-#include <linux/cn_proc.h>
-#include <linux/connector.h>
-#include <linux/netlink.h>
 #include <string>
-#include <sys/socket.h>
 #include <thread>
-#include <unistd.h>
+
+pid_t get_pid();
 
 struct Process {
   pid_t       pid;
@@ -34,6 +31,7 @@ public:
   ~ProcessQueue();
 
   void start();
+  void full_scan();
 
   atomic_queue<Process> process_queue;
 };

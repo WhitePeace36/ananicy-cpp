@@ -4,23 +4,19 @@
 
 #include "process.hpp"
 #include "utils.hpp"
-#include <atomic>
 #include <cctype>
 #include <condition_variable>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <linux/cn_proc.h>
 #include <linux/connector.h>
 #include <linux/netlink.h>
 #include <mutex>
-#include <nlohmann/json.hpp>
 #include <queue>
 #include <spdlog/spdlog.h>
 #include <sys/socket.h>
 #include <thread>
 #include <unistd.h>
-#include <utility>
 
 int connect_netlink_socket() {
 
@@ -129,10 +125,9 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue,
 
     auto ev_type = netlink_connection_message.proc_ev.what;
 
-    if (ev_type ==
-        proc_event::PROC_EVENT_EXEC
-        || ev_type == proc_event::PROC_EVENT_FORK
-        || ev_type == proc_event::PROC_EVENT_COMM) {
+    if (ev_type == proc_event::PROC_EVENT_EXEC ||
+        ev_type == proc_event::PROC_EVENT_FORK ||
+        ev_type == proc_event::PROC_EVENT_COMM) {
       std::stringstream ss;
 
       pid_t pid =
@@ -152,20 +147,7 @@ struct ProcessQueue::Socket {
 };
 
 int ProcessQueue::init() {
-  for (const std::filesystem::path &process_path :
-       std::filesystem::directory_iterator("/proc")) {
-    const std::string pid_str = process_path.filename().string();
-    if (isdigit(pid_str[0])) {
-      const int pid = std::stoi(pid_str);
-      spdlog::trace("Existing process: {}", pid);
-      const std::string command = get_command_from_pid(pid);
-
-      process_queue.push(Process{
-          .pid = pid,
-          .name = command,
-      });
-    }
-  };
+  full_scan();
 
   int socket = connect_netlink_socket();
 
@@ -201,3 +183,22 @@ ProcessQueue::~ProcessQueue() {
   set_event_subscription(this->sock->socket, false);
   close(this->sock->socket);
 }
+
+void ProcessQueue::full_scan() {
+  for (const std::filesystem::path &process_path :
+       std::filesystem::directory_iterator("/proc")) {
+    const std::string pid_str = process_path.filename().string();
+    if (isdigit(pid_str[0])) {
+      const int pid = std::stoi(pid_str);
+      spdlog::trace("Existing process: {}", pid);
+      const std::string command = get_command_from_pid(pid);
+
+      process_queue.push(Process{
+          .pid = pid,
+          .name = command,
+      });
+    }
+  };
+}
+
+pid_t get_pid() { return getpid(); }
