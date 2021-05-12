@@ -23,7 +23,7 @@ void Rules::load_rule_from_string(const std::string &line) {
   try {
     rule = json::parse(line);
   } catch (const std::exception &e) {
-    spdlog::warn("Error parsing JSON: {}", e.what());
+    spdlog::warn("Error parsing JSON: {}, line: {}", e.what(), line);
     return;
   }
 
@@ -56,8 +56,6 @@ void Rules::load_rules_from_file(const std::filesystem::path &path) {
 void Rules::show_rules() {
   for (const std::pair<std::string, json> rule : cgroup_rules) {
     spdlog::debug("Cgroup: {}, {}", rule.first, rule.second.dump());
-    // std::cout << "Cgroup: " << rule.first << ", " << rule.second.dump()
-    // << std::endl;
   }
   for (const std::pair<std::string, json> rule : type_rules) {
     spdlog::debug("Type: {}, {}", rule.first, rule.second.dump());
