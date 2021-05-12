@@ -10,7 +10,6 @@
 #include <mutex>
 #include <optional>
 #include <queue>
-#include <unistd.h>
 
 template <typename T> class atomic_queue {
 public:
