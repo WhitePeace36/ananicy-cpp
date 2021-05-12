@@ -17,6 +17,7 @@
 #include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
+#include <priority.hpp>
 
 #ifdef ENABLE_SYSTEMD
 #include <systemd/sd-daemon.h>
@@ -29,7 +30,11 @@ using namespace std::chrono_literals;
 using std::filesystem::path;
 
 int main(const int argc, const char **argv) {
-  spdlog::set_level(spdlog::level::debug);
+  if constexpr (std::string_view(BUILD_TYPE) == "Debug") {
+    spdlog::set_level(spdlog::level::debug);
+  } else {
+    spdlog::set_level(spdlog::level::info);
+  }
 
   auto start_time = std::chrono::system_clock::now();
 
@@ -45,6 +50,13 @@ int main(const int argc, const char **argv) {
       .name("--benchmark")
       .description("Should we activate benchmark mode or not");
 
+  parser.add_argument()
+      .name("--manualscanning")
+      .description(
+          "Scan for all processes at a regular interval by reading the "
+          "procfs.\n"
+          "Not recommended unless Ananicy-Cpp doesn't work as expected.");
+
   auto err = parser.parse(argc, argv);
   if (err) {
     spdlog::critical("Argument parsing error: {}", err.what());
@@ -58,11 +70,18 @@ int main(const int argc, const char **argv) {
   }
 
   if (parser.exists("verbose")) {
-    spdlog::info("Verbose flag set!");
+    spdlog::debug("Verbose flag set!");
+    spdlog::set_level(spdlog::level::debug);
   }
 
   if (parser.exists("benchmark")) {
     spdlog::warn("Benchmark enabled!");
+  }
+
+  if (parser.exists("manualscanning")) {
+    spdlog::debug("Manual scanning enabled! Increasing Ananicy Nice value to "
+                  "prevent lag.");
+    set_priority(get_pid(), 19);
   }
 
   std::cout << std::format("Ananicy Cpp v{}.{}.{}", MAJOR_VERSION,
@@ -100,6 +119,10 @@ int main(const int argc, const char **argv) {
     if (ih.should_exit() || parser.exists("benchmark"))
       break;
 
+    if (parser.exists("manualscanning")) {
+      spdlog::info("Starting full-scan");
+      processListener.full_scan();
+    }
     spdlog::debug("Processed processes: {}", worker.processed_processes());
   }
   ih.stop();
