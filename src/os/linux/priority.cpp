@@ -44,9 +44,16 @@ bool set_priority(unsigned pid, int nice_value) {
         setpriority(PRIO_PROCESS, tid, nice_value);
     }
   } catch (const std::filesystem::filesystem_error &e) {
-    spdlog::error("{}: filesystem_error: {} (path: {})", __func__, e.what(),
+    spdlog::debug("{}: filesystem_error: {} (path: {})", __func__, e.what(),
                   e.path1().string());
     return false;
+  } catch (const std::filesystem::__cxx11::filesystem_error &e) {
+    spdlog::debug("{}: filesystem_error: {} (path: {})", __func__, e.what(),
+                  e.path1().string());
+    return false;
+  } catch (const std::exception &e) {
+    spdlog::critical("{}: unknown exception: {} (path: {})", __func__,
+                     e.what());
   }
 
   return test_errno(__func__, pid);
