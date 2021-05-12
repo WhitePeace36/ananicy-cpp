@@ -14,7 +14,7 @@
 
 bool test_errno(const std::string &func_name, unsigned pid) {
   if (errno == 0) {
-    spdlog::info("{}: Successfully applied to {}", func_name, pid);
+    spdlog::debug("{}: Successfully applied to {}", func_name, pid);
     return true;
   }
 
