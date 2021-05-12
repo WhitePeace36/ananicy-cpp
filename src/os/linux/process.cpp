@@ -127,8 +127,12 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue,
       return EXIT_FAILURE;
     }
 
-    if (netlink_connection_message.proc_ev.what ==
-        proc_event::PROC_EVENT_EXEC) {
+    auto ev_type = netlink_connection_message.proc_ev.what;
+
+    if (ev_type ==
+        proc_event::PROC_EVENT_EXEC
+        || ev_type == proc_event::PROC_EVENT_FORK
+        || ev_type == proc_event::PROC_EVENT_COMM) {
       std::stringstream ss;
 
       pid_t pid =
