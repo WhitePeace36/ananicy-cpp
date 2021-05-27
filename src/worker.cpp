@@ -17,14 +17,11 @@ Worker::Worker(InterruptHandler *interruptHandler, Rules *rules, Config *config,
 
 void Worker::start() {
   std::function<void()> worker([this]() {
+    std::optional<Process> proc;
     while (!interruptHandler->should_exit()) {
-      interruptHandler->wait_for(10ms);
-      if (interruptHandler->should_exit())
-        break;
-
-      while (process_queue->size() > 0) {
-        Process p = process_queue->pop();
-        json    rule = rules->get_rule(p.name);
+      while ((proc = process_queue->poll(500ms)).has_value()) {
+        Process &p = proc.value();
+        json     rule = rules->get_rule(p.name);
 
         processed_count++;
 
