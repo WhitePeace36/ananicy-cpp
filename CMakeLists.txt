@@ -40,7 +40,7 @@ set(CMAKE_MESSAGE_CONTEXT_SHOW ON)
 set(CMAKE_CXX_FLAGS_DEBUG "")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
-configure_file(include/version.hpp.in ${CMAKE_SOURCE_DIR}/include/version.hpp)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/version.hpp)
 
 # Compiler checks
 message(STATUS "Checking compiler flags support")

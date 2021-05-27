@@ -37,41 +37,48 @@ void Worker::start() {
 
           bool ok = true;
 
-          if (config->apply_nice() && rule.contains("nice")) {
-            spdlog::debug("Setting priority of {}({}) to {}", p.name, p.pid,
-                          to_string(rule["nice"]));
-            ok = set_priority(p.pid, rule["nice"]);
-          }
-
-          if (!ok)
-            continue;
-
-          if (config->apply_sched() && rule.contains("sched")) {
-            spdlog::debug("Setting scheduler of {}({}) to {}", p.name, p.pid,
-                          to_string(rule["sched"]));
-            ok = set_sched(p.pid, rule["sched"]);
-          }
-
-          if (!ok)
-            continue;
-
-          if (config->apply_ionice() && rule.contains("ioclass")) {
-            spdlog::debug("Setting ioclass of {}({}) to {}", p.name, p.pid,
-                          to_string(rule["ioclass"]));
-            int io_val = 0;
-            if (rule.contains("ionice") && rule["ionice"].is_number_integer()) {
-              io_val = rule["ionice"];
+          try {
+            if (config->apply_nice() && rule.contains("nice")) {
+              spdlog::debug("Setting priority of {}({}) to {}", p.name, p.pid,
+                            to_string(rule["nice"]));
+              ok = set_priority(p.pid, rule["nice"]);
             }
-            ok = set_io_priority(p.pid, rule["ioclass"], io_val);
-          }
 
-          if (!ok)
-            continue;
+            if (!ok)
+              continue;
 
-          if (config->apply_oom_score_adj() && rule.contains("oom_score_adj")) {
-            spdlog::debug("Setting OOM score adjustment of {}({}) to {}",
-                          p.name, p.pid, to_string(rule["oom_score_adj"]));
-            ok = set_oom_score_adjust(p.pid, rule["oom_score_adj"]);
+            if (config->apply_sched() && rule.contains("sched")) {
+              spdlog::debug("Setting scheduler of {}({}) to {}", p.name, p.pid,
+                            to_string(rule["sched"]));
+              ok = set_sched(p.pid, rule["sched"]);
+            }
+
+            if (!ok)
+              continue;
+
+            if (config->apply_ionice() && rule.contains("ioclass")) {
+              spdlog::debug("Setting ioclass of {}({}) to {}", p.name, p.pid,
+                            to_string(rule["ioclass"]));
+              int io_val = 0;
+              if (rule.contains("ionice") &&
+                  rule["ionice"].is_number_integer()) {
+                io_val = rule["ionice"];
+              }
+              ok = set_io_priority(p.pid, rule["ioclass"], io_val);
+            }
+
+            if (!ok)
+              continue;
+
+            if (config->apply_oom_score_adj() &&
+                rule.contains("oom_score_adj")) {
+              spdlog::debug("Setting OOM score adjustment of {}({}) to {}",
+                            p.name, p.pid, to_string(rule["oom_score_adj"]));
+              ok = set_oom_score_adjust(p.pid, rule["oom_score_adj"]);
+            }
+          } catch (const std::exception &e) {
+            spdlog::critical("{}: unhandled exception: {} (comm: {}, pid: {})",
+                             __func__, e.what(), p.name, p.pid);
           }
         }
       }

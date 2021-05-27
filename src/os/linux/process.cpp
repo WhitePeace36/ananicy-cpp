@@ -5,7 +5,6 @@
 #include "process.hpp"
 #include "utils.hpp"
 #include <cctype>
-#include <condition_variable>
 #include <filesystem>
 #include <fstream>
 #include <linux/cn_proc.h>
@@ -23,8 +22,8 @@ int connect_netlink_socket() {
   errno = 0;
   int nl_sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_CONNECTOR);
   if (nl_sock == -1) {
-    spdlog::error("Couldn't create netlink socket, errno = {}",
-                  get_error_string(errno));
+    [[unlikely]] spdlog::error("Couldn't create netlink socket, errno = {}",
+                               get_error_string(errno));
     return -1;
   }
 
@@ -37,7 +36,8 @@ int connect_netlink_socket() {
   errno = 0;
   int rc = bind(nl_sock, (struct sockaddr *)&sa_nl, sizeof(sa_nl));
   if (rc == -1) {
-    spdlog::error("Couldn't bind to socket: {}", get_error_string(errno));
+    [[unlikely]] spdlog::error("Couldn't bind to socket: {}",
+                               get_error_string(errno));
     close(nl_sock);
     return -1;
   }
@@ -123,20 +123,24 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue,
       return EXIT_FAILURE;
     }
 
-    auto ev_type = netlink_connection_message.proc_ev.what;
+    pid_t pid = 0;
 
-    if (ev_type == proc_event::PROC_EVENT_EXEC ||
-        ev_type == proc_event::PROC_EVENT_FORK ||
-        ev_type == proc_event::PROC_EVENT_COMM) {
-      std::stringstream ss;
-
-      pid_t pid =
-          netlink_connection_message.proc_ev.event_data.exec.process_pid;
-
-      const std::string command = get_command_from_pid(pid);
-
-      queue->push(Process{.pid = pid, .name = command});
+    switch (netlink_connection_message.proc_ev.what) {
+    case proc_event::PROC_EVENT_FORK:
+      pid = netlink_connection_message.proc_ev.event_data.fork.child_pid;
+      break;
+    case proc_event::PROC_EVENT_EXEC:
+      pid = netlink_connection_message.proc_ev.event_data.exec.process_pid;
+      break;
+    case proc_event::PROC_EVENT_COMM:
+      pid = netlink_connection_message.proc_ev.event_data.comm.process_pid;
+      break;
+    default:
+      break; // we don't care
     }
+
+    if (pid != 0)
+      queue->push(Process{.pid = pid, .name = get_command_from_pid(pid)});
   }
 
   return status;
@@ -152,11 +156,12 @@ int ProcessQueue::init() {
   int socket = connect_netlink_socket();
 
   if (socket == -1) {
+    [[unlikely]] throw std::runtime_error("Couldn't open netlink socket!");
   }
 
   const int listen_status = set_event_subscription(socket, true);
   if (listen_status == 0) {
-    close(socket);
+    [[unlikely]] close(socket);
     throw std::runtime_error("Couldn't subscribe to process events!");
   }
 
