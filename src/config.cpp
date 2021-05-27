@@ -3,11 +3,18 @@
 //
 
 #include "config.hpp"
+#include <filesystem>
 #include <fstream>
 #include <spdlog/spdlog.h>
 
 Config::Config(const std::filesystem::path &config_path) {
   config = std::unordered_map<std::string, std::string>();
+
+  if (!exists(config_path)) {
+    spdlog::error("{}: file {} does not exist", __func__, config_path.string());
+    return;
+  }
+
   std::ifstream is_file;
   is_file.open(config_path);
 

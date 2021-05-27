@@ -11,6 +11,11 @@ using std::filesystem::path;
 
 Rules::Rules(const std::filesystem::path &ruleset_directory, Config *config)
     : config(config) {
+  if (!exists(ruleset_directory)) {
+    spdlog::error("{}: directory {} does not exist", __func__,
+                  ruleset_directory.string());
+    return;
+  }
   load_rules_from_directory(ruleset_directory);
 }
 
