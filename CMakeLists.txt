@@ -39,6 +39,7 @@ set(CMAKE_MESSAGE_CONTEXT_SHOW ON)
 
 set(CMAKE_CXX_FLAGS_DEBUG "")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/version.hpp)
 
@@ -54,8 +55,10 @@ set(CMAKE_MESSAGE_CONTEXT "")
 
 if(CXX_ACCEPTS_G3)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_DEBUG} -g3")
 elseif(CXX_ACCEPTS_G)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_DEBUG} -g")
 endif()
 
 if(CXX_ACCEPTS_OG)
@@ -95,12 +98,14 @@ list(APPEND HEADERS
         include/rules.hpp
         include/utils.hpp
         include/worker.hpp
-        include/version.hpp)
+        include/version.hpp
+        include/backtrace.hpp)
 
 list(APPEND LINUX_SOURCES
         src/os/linux/priority.cpp
         src/os/linux/process.cpp
-        src/os/linux/ioprio.h)
+        src/os/linux/ioprio.h
+        src/os/linux/backtrace.cpp)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     message(STATUS "Linux system detected, adding specific sources files")

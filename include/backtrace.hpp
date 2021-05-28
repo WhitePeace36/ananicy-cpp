@@ -1,0 +1,9 @@
+#ifndef ANANICY_CPP_BACKTRACE_HPP
+#define ANANICY_CPP_BACKTRACE_HPP
+
+namespace backtrace_handler {
+void terminate_handler();
+void print_trace();
+} // namespace backtrace_handler
+
+#endif // ANANICY_CPP_BACKTRACE_HPP
