@@ -85,6 +85,9 @@ std::string get_command_from_pid(int pid) {
     proc_path.append(std::to_string(pid));
     proc_path.append("comm");
 
+    if (!exists(proc_path))
+      return command;
+
     pid_info.open(proc_path);
 
     command.clear();
@@ -139,8 +142,12 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue,
       break; // we don't care
     }
 
-    if (pid != 0)
-      queue->push(Process{.pid = pid, .name = get_command_from_pid(pid)});
+    try {
+      if (pid != 0)
+        queue->push(Process{.pid = pid, .name = get_command_from_pid(pid)});
+    } catch (std::exception &e) {
+      spdlog::error("{}: unhandled error: {}", __func__, e.what());
+    }
   }
 
   return status;
