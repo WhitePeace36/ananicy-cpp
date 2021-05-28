@@ -48,7 +48,7 @@ int connect_netlink_socket() {
 int set_event_subscription(int nl_sock, bool enable) {
   struct alignas(NLMSG_ALIGNTO) nl_cn_msg {
     struct nlmsghdr nl_hdr;
-    struct __attribute__((packed)) {
+    struct [[gnu::packed]] {
       struct cn_msg         cn_msg;
       enum proc_cn_mcast_op cn_mcast;
     };
@@ -101,7 +101,7 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue,
                   InterruptHandler *interruptHandler) {
   struct alignas(NLMSG_ALIGNTO) nl_cn_msg {
     struct nlmsghdr nl_hdr;
-    struct __attribute__((packed)) {
+    struct [[gnu::packed]] {
       struct cn_msg     cn_msg;
       struct proc_event proc_ev;
     };
