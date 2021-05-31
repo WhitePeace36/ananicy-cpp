@@ -36,6 +36,29 @@ systemctl enable --now ananicy-cpp.service
 ```
 and it should be done.
 
+## Configuration
+
+Add rules in `/etc/ananicy.d`. This path can be overridden with `ANANICY_CPP_CONFDIR`
+environment variable.  
+Rules are defined in files ending with `.rules`.
+For instance, to add a rule for GCC, you could do the following:
+
+- Create the `/etc/ananicy.d/10-compilers` folder.
+- Create the `/etc/ananicy.d/10-compilers/gcc.rules` file
+- Add `{"name": "gcc", "nice": 19, "sched": "batch", "ioclass": "idle"}` to the file.
+
+You can then (re)start `ananicy-cpp.service`.
+
+### Types
+
+To avoid repeating yourself, you can add types.
+It must be defined in a `.types` file.
+The syntax is the following:
+`{"type": "my_type", "nice": 19, "other_parameter": "value"}`
+
+It can then be used in any rule by simply adding the `type` property to the rule.
+For instance, `{"name": "gcc", "type": "compiler"}`
+
 ## Why rewritting ananicy?
 I mostly used Ananicy on older computers to improve interactivity. However, having Ananicy use megabytes of RAM
 and a decent amount of CPU time troubled me. Thus I decided to rewrite it in C++, using an event based approach.
