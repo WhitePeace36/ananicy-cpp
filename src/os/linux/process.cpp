@@ -6,6 +6,7 @@
 #include "utils.hpp"
 #include <cctype>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <linux/cn_proc.h>
 #include <linux/connector.h>
@@ -80,10 +81,7 @@ std::string get_command_from_pid(int pid) {
 
   // Building path
   try {
-    std::filesystem::path proc_path;
-    proc_path.append("/proc");
-    proc_path.append(std::to_string(pid));
-    proc_path.append("comm");
+    std::filesystem::path proc_path(std::format("/proc/{}/comm", pid));
 
     if (!exists(proc_path))
       return command;
