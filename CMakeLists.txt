@@ -51,6 +51,7 @@ check_cxx_compiler_flag("-g3" CXX_ACCEPTS_G3)
 check_cxx_compiler_flag("-g" CXX_ACCEPTS_G)
 check_cxx_compiler_flag("-Og" CXX_ACCEPTS_OG)
 check_cxx_compiler_flag("-flto" CXX_ACCEPTS_FLTO)
+check_cxx_compiler_flag("-fsanitize=undefined" CXX_ACCEPTS_SANITIZE)
 set(CMAKE_MESSAGE_CONTEXT "")
 
 if(CXX_ACCEPTS_G3)
@@ -69,6 +70,10 @@ endif()
 
 if(CXX_ACCEPTS_FLTO)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
+endif()
+
+if(CXX_ACCEPTS_SANITIZE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
 endif()
 
 if(STATIC)
