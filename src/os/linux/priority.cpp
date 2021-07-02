@@ -95,13 +95,14 @@ bool set_sched(unsigned pid, const std::string &sched_name) {
     param.sched_priority = 1;
   } else if (sched_name == "fifo") {
     sched = SCHED_FIFO;
+    param.sched_priority = 1;
   } else if (sched_name == "deadline") {
     sched = SCHED_DEADLINE;
   } else if (sched_name == "batch") {
     sched = SCHED_BATCH;
   }
   errno = 0;
-  sched_setscheduler(pid, sched, &param);
+  sched_setscheduler(static_cast<pid_t>(pid), sched, &param);
 
   const int success = test_errno(__func__, pid);
   if (success == -1)
