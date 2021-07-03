@@ -182,21 +182,22 @@ ProcessQueue::ProcessQueue(InterruptHandler *interruptHandler)
 }
 
 void ProcessQueue::start() {
-  this->event_thread = std::jthread([this]() -> void {
-    int ret = EXIT_FAILURE;
-    while (ret == EXIT_FAILURE) {
-      ret = handle_events(this->sock->socket, &this->process_queue,
-                          this->interruptHandler);
+  this->event_thread =
+      std::jthread([this](const std::stop_token &stop_token) -> void {
+        int ret = EXIT_FAILURE;
+        while (ret == EXIT_FAILURE && !stop_token.stop_requested()) {
+          ret = handle_events(this->sock->socket, &this->process_queue,
+                              this->interruptHandler);
 
-      if (ret == EXIT_SUCCESS)
-        break;
+          if (ret == EXIT_SUCCESS || stop_token.stop_requested())
+            break;
 
-      spdlog::warn("restarting socket connection!");
-      set_event_subscription(this->sock->socket, false);
-      close(this->sock->socket);
-      this->init();
-    };
-  });
+          spdlog::warn("restarting socket connection!");
+          set_event_subscription(this->sock->socket, false);
+          close(this->sock->socket);
+          this->init();
+        };
+      });
 }
 
 ProcessQueue::~ProcessQueue() {
