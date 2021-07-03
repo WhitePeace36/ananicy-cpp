@@ -53,13 +53,16 @@ int ioprio_set(__priority_which_t _which, id_t _who, int _prio) {
 struct [[gnu::packed]] sched_attr {
   uint32_t size;
 
-  uint32_t sched_policy;
+  uint32_t sched_policy; // SCHED_(FIFO,RR,DEADLINE,OTHER,BATCH,IDLE, etc.)
   uint64_t sched_flags;
 
-  int32_t sched_nice;
+  int32_t sched_nice; // For non-realtime policies
 
-  uint32_t sched_priority;
+  uint32_t sched_priority; // For realtime policies
 
+  /**
+   * SCHED_DEADLINE specific stuff
+   */
   uint64_t sched_runtime;
   uint64_t sched_deadline;
   uint64_t sched_period;
