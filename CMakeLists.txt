@@ -109,7 +109,7 @@ list(APPEND HEADERS
 list(APPEND LINUX_SOURCES
         src/os/linux/priority.cpp
         src/os/linux/process.cpp
-        src/os/linux/ioprio.h
+        src/os/linux/syscalls.h
         src/os/linux/backtrace.cpp)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")

@@ -1,9 +1,13 @@
-#ifndef ANANICY_CPP_IOPRIO_H
-#define ANANICY_CPP_IOPRIO_H
+#ifndef ANANICY_CPP_SYSCALLS_H
+#define ANANICY_CPP_SYSCALLS_H
 
 #include <sys/resource.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+
+/**
+ * ioprio_set
+ */
 
 #define IOPRIO_CLASS_SHIFT (13)
 #define IOPRIO_PRIO_MASK   ((1UL << IOPRIO_CLASS_SHIFT) - 1)
@@ -42,4 +46,33 @@ int ioprio_set(__priority_which_t _which, id_t _who, int _prio) {
   return (int)syscall(SYS_ioprio_set, _which, _who, _prio);
 }
 
-#endif // ANANICY_CPP_IOPRIO_H
+/**
+ * sched_(set|get)attr
+ */
+
+struct [[gnu::packed]] sched_attr {
+  uint32_t size;
+
+  uint32_t sched_policy;
+  uint64_t sched_flags;
+
+  int32_t sched_nice;
+
+  uint32_t sched_priority;
+
+  uint64_t sched_runtime;
+  uint64_t sched_deadline;
+  uint64_t sched_period;
+};
+
+int sched_setattr(pid_t pid, const struct sched_attr *attr,
+                  unsigned int flags) {
+  return (int)syscall(__NR_sched_setattr, pid, attr, flags);
+}
+
+int sched_getattr(pid_t pid, struct sched_attr *attr, unsigned int size,
+                  unsigned int flags) {
+  return (int)syscall(__NR_sched_getattr, pid, attr, size, flags);
+}
+
+#endif // ANANICY_CPP_SYSCALLS_H

@@ -3,7 +3,7 @@
 //
 
 #include "priority.hpp"
-#include "ioprio.h"
+#include "syscalls.h"
 #include <cerrno>
 #include <filesystem>
 #include <format>
@@ -12,36 +12,36 @@
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 
-int test_errno(const std::string &func_name, unsigned pid) {
-  if (errno == 0) {
+int test_errno(int errcode, const std::string &func_name, unsigned pid) {
+  if (errcode == 0) {
     spdlog::debug("{}: Successfully applied to {}", func_name, pid);
     return true;
   }
 
-  if (errno == ESRCH) {
+  if (errcode == ESRCH) {
     spdlog::warn("{}: Process not found: {}", func_name, pid);
     return false;
-  } else if (errno == EACCES || errno == EPERM) {
+  } else if (errcode == EACCES || errcode == EPERM) {
     throw std::runtime_error(std::format(
         "{}: Insufficient permission to set io-priority of process {}",
         func_name, pid));
-  } else if (errno != 0) {
+  } else {
     spdlog::error("{}: Unknown error, errno is {}({})", func_name,
-                  strerror(errno), errno);
+                  strerror(errcode), errcode);
     return -1;
   }
-
-  return false;
 }
 
 bool set_priority(unsigned pid, int nice_value) {
-  errno = 0;
+  int errcode = 0;
   try {
     for (const auto &path : std::filesystem::directory_iterator(
              std::format("/proc/{}/task", pid))) {
       int tid = std::stoi(path.path().filename().string());
+      errno = 0;
       if (tid > 0)
         setpriority(PRIO_PROCESS, tid, nice_value);
+      errcode = errno;
     }
   } catch (const std::filesystem::filesystem_error &e) {
     spdlog::debug("{}: filesystem_error: {} (path: {})", __func__, e.what(),
@@ -52,7 +52,7 @@ bool set_priority(unsigned pid, int nice_value) {
                      e.what());
   }
 
-  return test_errno(__func__, pid);
+  return test_errno(errcode, __func__, pid);
 }
 
 bool set_io_priority(unsigned pid, const std::string &io_class, int value) {
@@ -80,7 +80,7 @@ bool set_io_priority(unsigned pid, const std::string &io_class, int value) {
   errno = 0;
   ioprio_set(IOPRIO_WHO_PROCESS, pid, io_prio);
 
-  return test_errno(__func__, pid);
+  return test_errno(errno, __func__, pid);
 }
 
 bool set_sched(unsigned pid, const std::string &sched_name) {
@@ -97,14 +97,20 @@ bool set_sched(unsigned pid, const std::string &sched_name) {
     sched = SCHED_FIFO;
     param.sched_priority = 1;
   } else if (sched_name == "deadline") {
-    sched = SCHED_DEADLINE;
+    spdlog::warn("deadline scheduler is not available yet (due to its "
+                 "different behavior)");
+    //    sched = SCHED_DEADLINE;
+    //    param.sched_priority = 1;
   } else if (sched_name == "batch") {
     sched = SCHED_BATCH;
+  } else {
+    spdlog::error("Invalid scheduler '{}'", __func__, sched_name);
+    return false;
   }
   errno = 0;
   sched_setscheduler(static_cast<pid_t>(pid), sched, &param);
 
-  const int success = test_errno(__func__, pid);
+  const int success = test_errno(errno, __func__, pid);
   if (success == -1)
     spdlog::error("{}: Error info: sched_name: {}, pid: {}", __func__,
                   sched_name, pid);
