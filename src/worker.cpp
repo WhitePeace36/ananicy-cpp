@@ -16,9 +16,10 @@ Worker::Worker(InterruptHandler *interruptHandler, Rules *rules, Config *config,
 }
 
 void Worker::start() {
-  std::function<void()> worker([this]() {
+  std::function<void(std::stop_token)> worker([this](
+                                                  std::stop_token stop_token) {
     std::optional<Process> proc;
-    while (!interruptHandler->should_exit()) {
+    while (!interruptHandler->should_exit() && !stop_token.stop_requested()) {
       while ((proc = process_queue->poll(500ms)).has_value()) {
         Process &p = proc.value();
         json     rule = rules->get_rule(p.name);
