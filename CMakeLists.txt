@@ -104,6 +104,7 @@ list(APPEND HEADERS
         include/utils.hpp
         include/worker.hpp
         include/version.hpp
+        include/service.hpp
         include/backtrace.hpp)
 
 list(APPEND LINUX_SOURCES
@@ -119,6 +120,14 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     message(FATAL_ERROR "macOS (Darwin) system detected, but is not supported yet. Please contribute to this project at https://gitlab.com/aviallon/ananicy-cpp if you need it.")
 else()
     message(FATAL_ERROR "${CMAKE_SYSTEM_NAME} system detected, but is not supported yet. Please contribute to this project at https://gitlab.com/aviallon/ananicy-cpp if you need it.")
+endif()
+
+if(ENABLE_SYSTEMD)
+    list(APPEND SOURCES
+            src/platform/systemd/service.cpp)
+else()
+    list(APPEND SOURCES
+            src/platform/generic/service.cpp)
 endif()
 
 add_executable(ananicy-cpp ${HEADERS} ${SOURCES})

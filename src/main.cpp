@@ -5,8 +5,10 @@
 #include <spdlog/spdlog.h>
 
 #include "config.hpp"
+#include "priority.hpp"
 #include "process.hpp"
 #include "rules.hpp"
+#include "service.hpp"
 #include "utils.hpp"
 #include "version.hpp"
 #include "worker.hpp"
@@ -17,11 +19,6 @@
 #include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
-#include <priority.hpp>
-
-#ifdef ENABLE_SYSTEMD
-#include <systemd/sd-daemon.h>
-#endif
 
 using json = nlohmann::json;
 
@@ -37,6 +34,8 @@ int main(const int argc, const char **argv) {
   }
 
   auto start_time = std::chrono::system_clock::now();
+
+  service::set_status(service::STARTING);
 
   argparse::ArgumentParser parser(
       "ananicy-cpp", "ANother Auto NIce daemon, fully written in C++");
@@ -110,9 +109,7 @@ int main(const int argc, const char **argv) {
 
   worker.start();
 
-#ifdef ENABLE_SYSTEMD
-  sd_notify(0, "READY=1");
-#endif
+  service::set_status(service::STARTED);
 
   while (!ih.should_exit()) {
     ih.wait_for(1min);
@@ -125,6 +122,7 @@ int main(const int argc, const char **argv) {
     }
     spdlog::debug("Processed processes: {}", worker.processed_processes());
   }
+  service::set_status(service::STOPPING);
   ih.stop();
 
   std::chrono::duration<double, std::ratio<1, 1>> duration =
