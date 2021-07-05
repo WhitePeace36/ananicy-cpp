@@ -46,9 +46,12 @@ void Worker::start() {
               continue;
 
             if (config->apply_sched() && rule.contains("sched")) {
+              unsigned rt_prio = rule.contains("rtprio")
+                                     ? static_cast<unsigned>(rule["rtprio"])
+                                     : 1u;
               spdlog::debug("Setting scheduler of {}({}) to {}", p.name, p.pid,
                             to_string(rule["sched"]));
-              ok = set_sched(p.pid, rule["sched"]);
+              ok = set_sched(p.pid, rule["sched"], rt_prio);
             }
 
             if (!ok)

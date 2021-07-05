@@ -83,7 +83,7 @@ bool set_io_priority(unsigned pid, const std::string &io_class, int value) {
   return test_errno(errno, __func__, pid);
 }
 
-bool set_sched(unsigned pid, const std::string &sched_name) {
+bool set_sched(unsigned pid, const std::string &sched_name, unsigned rt_prio) {
   int         sched = 0;
   sched_param param = {};
   if (sched_name == "idle") {
@@ -92,10 +92,10 @@ bool set_sched(unsigned pid, const std::string &sched_name) {
     sched = SCHED_OTHER;
   } else if (sched_name == "rr") {
     sched = SCHED_RR;
-    param.sched_priority = 1;
+    param.sched_priority = static_cast<int>(rt_prio);
   } else if (sched_name == "fifo") {
     sched = SCHED_FIFO;
-    param.sched_priority = 1;
+    param.sched_priority = static_cast<int>(rt_prio);
   } else if (sched_name == "deadline") {
     spdlog::warn("deadline scheduler is not available yet (due to its "
                  "different behavior)");

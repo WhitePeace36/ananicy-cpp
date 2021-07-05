@@ -12,7 +12,8 @@
 [[maybe_unused]] bool set_io_priority(unsigned pid, const std::string &io_class,
                                       int value);
 
-[[maybe_unused]] bool set_sched(unsigned pid, const std::string &sched_name);
+[[maybe_unused]] bool set_sched(unsigned pid, const std::string &sched_name,
+                                unsigned rt_prio);
 
 [[maybe_unused]] bool set_oom_score_adjust(unsigned pid, int value);
 
