@@ -1,7 +1,7 @@
 # Ananicy Cpp
 [Ananicy](https://github.com/Nefelim4ag/Ananicy) rewritten in C++ for much lower CPU and memory usage.
 
-_Alpha status_
+_Alpha+ status_
 
 ## What works
 
@@ -20,9 +20,11 @@ _Alpha status_
 - [ ] Something else... ?
 
 ## Installation
-Almost a drop-in replacement fro Ananicy.
 
-Install ananicy, and then:
+### Linux
+Almost a drop-in replacement from Ananicy.
+
+If you want pre-made community rules, install the original ananicy, and then:
 ```
 mkdir build
 cd build
@@ -36,6 +38,15 @@ To enable the systemd service, just run:
 systemctl enable --now ananicy-cpp.service
 ```
 and it should be done.
+
+### Distro-specific
+#### Arch-based distros
+
+There is an AUR package named `ananicy-cpp`, which is maintained by me.
+You can simply use your preferred AUR-helper to install it.
+
+There is also binaries in `chaotic-aur`, although `ananicy-cpp` is quite fast to build.
+
 
 ## Configuration
 
