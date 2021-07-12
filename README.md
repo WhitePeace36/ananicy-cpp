@@ -17,6 +17,7 @@ _Alpha+ status_
   - [X] Unit file
   - [ ] Hardening unit file (In progress)
   - [X] Working sd_notify
+- [ ] CLI compatibility with Ananicy
 - [ ] Something else... ?
 
 ## Installation
