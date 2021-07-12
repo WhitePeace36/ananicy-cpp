@@ -15,7 +15,8 @@ _Alpha status_
 - [ ] Cgroups
 - [ ] Systemd integration
   - [X] Unit file
-  - [ ] Working sd_notify
+  - [ ] Hardening unit file (In progress)
+  - [X] Working sd_notify
 - [ ] Something else... ?
 
 ## Installation
