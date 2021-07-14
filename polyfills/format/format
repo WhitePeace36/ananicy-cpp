@@ -7,7 +7,6 @@
 #include <fmt/ranges.h>
 #include <fmt/chrono.h>
 #include <fmt/color.h>
-#include <fmt/locale.h>
 #include <fmt/os.h>
 
 // This is the kind of things you usually not do

@@ -172,11 +172,11 @@ if (NOT HAVE_STD_FORMAT)
     message(STATUS "Configuring fmtlib")
     set(CMAKE_MESSAGE_CONTEXT "fmtlib")
     if(USE_EXTERNAL_FMTLIB)
-        find_package(fmt)
+        find_package(fmt 8 REQUIRED)
     else()
         FetchContent_Declare(fmtlib
                 GIT_REPOSITORY https://github.com/fmtlib/fmt
-                GIT_TAG 7.1.3)
+                GIT_TAG 8.0.1)
 
         FetchContent_MakeAvailable(fmtlib)
     endif()
@@ -196,7 +196,8 @@ if(USE_EXTERNAL_SPDLOG)
 else()
     FetchContent_Declare(spdlog
             GIT_REPOSITORY https://github.com/gabime/spdlog
-            GIT_TAG v1.8.5)
+            GIT_TAG 7636f1f65981237d850fc22fcc234ac7d3255509 #v1.8.5+ (fixes build with fmt 8.0+
+            )
 
     FetchContent_MakeAvailable(spdlog)
 endif()
