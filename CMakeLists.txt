@@ -94,7 +94,9 @@ list(APPEND SOURCES
         src/utils.cpp
         src/rules.cpp
         src/worker.cpp
-        src/config.cpp)
+        src/config.cpp
+        src/argparse/argument_parser.cpp
+        src/argparse/argument.cpp)
 
 list(APPEND HEADERS
         include/config.hpp
@@ -105,7 +107,8 @@ list(APPEND HEADERS
         include/worker.hpp
         include/version.hpp
         include/service.hpp
-        include/backtrace.hpp)
+        include/backtrace.hpp
+        include/argument_parser.hpp)
 
 list(APPEND LINUX_SOURCES
         src/platform/linux/priority.cpp
