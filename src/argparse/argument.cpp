@@ -68,20 +68,30 @@ argument &argument::name(const std::string &name_value) {
     actual_name = name_value[1];
     m_short_names.emplace_back(actual_name[0]);
   } else {
-    // std::cout << "New long argument with name: " << name_value << std::endl;
+    //    std::cout << "New long argument with name: " << name_value <<
+    //    std::endl;
     actual_name = name_value.substr(2);
     m_long_names.emplace_back(actual_name);
   }
-  if (m_name.empty())
+  if (m_name.empty() || m_name == "<undefined>") {
+    //    std::cout << "Setting " << id << " name to " << actual_name <<
+    //    std::endl;
     m_name = actual_name;
+  }
 
   return *this;
 }
 
 argument::operator std::string() const {
-  return std::format("Argument-{}: {} {}, long: {}, short: {}", id,
+  return std::format("Argument-{}: {} {}, long: {}, short: {}, value: {}", id,
                      demangle_symbol(m_value_type), m_name, get_long_names(),
-                     get_short_names());
+                     get_short_names(), get_value().value_or("<undefined>"));
+}
+
+std::optional<std::string> argument::get_description() const {
+  if (m_description.empty())
+    return {};
+  return std::optional<std::string>(m_description);
 }
 
 } // namespace argparse

@@ -11,6 +11,18 @@
 
 namespace argparse {
 
+class argparse_error {
+private:
+  std::optional<std::string> error_message = {};
+
+public:
+  argparse_error() = default;
+  explicit(false) argparse_error(std::string message)
+      : error_message(message){};
+  explicit(false) operator bool() const { return error_message.has_value(); }
+  std::string     what() const { return error_message.value_or(""); }
+};
+
 class argument {
   static std::atomic<unsigned> _id;
 
@@ -41,6 +53,7 @@ public:
   [[nodiscard]] std::string                get_name() const;
   [[nodiscard]] std::type_index            get_type() const;
   [[nodiscard]] std::optional<std::string> get_value() const;
+  [[nodiscard]] std::optional<std::string> get_description() const;
 
   [[nodiscard]] bool is_positional() const;
   [[nodiscard]] bool is_flag() const;
@@ -58,15 +71,16 @@ class argument_parser {
 
 public:
   argument_parser();
-  void parse_args(const std::vector<std::string> &args);
-  void parse_args(int argc, const char **argv);
+  argparse_error parse_args(const std::vector<std::string> &args);
+  argparse_error parse_args(int argc, const char **argv);
 
   argument &add_argument();
   argument &add_argument(const argument &argument);
   argument &add_argument(std::string name);
 
-  // std::optional<argument> operator[] (const std::string& name);
   std::optional<argument> get_arg(const std::string &name);
+
+  void print_help();
 
   bool operator[](const std::string &name);
 
