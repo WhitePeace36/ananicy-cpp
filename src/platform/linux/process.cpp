@@ -2,7 +2,7 @@
 // Created by aviallon on 13/04/2021.
 //
 
-#include "process.hpp"
+#include "core/process.hpp"
 #include "utils.hpp"
 #include <cctype>
 #include <filesystem>

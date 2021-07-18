@@ -2,7 +2,7 @@
 // Created by aviallon on 19/04/2021.
 //
 
-#include "rules.hpp"
+#include "core/rules.hpp"
 #include <fstream>
 #include <iostream>
 #include <spdlog/spdlog.h>

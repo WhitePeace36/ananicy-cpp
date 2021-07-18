@@ -2,8 +2,8 @@
 // Created by aviallon on 20/04/2021.
 //
 
-#include "worker.hpp"
-#include "priority.hpp"
+#include "core/worker.hpp"
+#include "core/priority.hpp"
 #include <chrono>
 #include <spdlog/spdlog.h>
 using namespace std::chrono_literals;

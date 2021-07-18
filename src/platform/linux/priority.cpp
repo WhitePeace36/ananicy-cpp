@@ -2,7 +2,7 @@
 // Created by aviallon on 20/04/2021.
 //
 
-#include "priority.hpp"
+#include "core/priority.hpp"
 #include "syscalls.h"
 #include <cerrno>
 #include <filesystem>

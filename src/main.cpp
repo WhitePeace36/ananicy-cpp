@@ -4,15 +4,15 @@
 #include <format>
 #include <spdlog/spdlog.h>
 
-#include "argument_parser.hpp"
 #include "config.hpp"
-#include "priority.hpp"
-#include "process.hpp"
-#include "rules.hpp"
+#include "core/priority.hpp"
+#include "core/process.hpp"
+#include "core/rules.hpp"
+#include "core/worker.hpp"
 #include "service.hpp"
+#include "utility/argument_parser.hpp"
 #include "utils.hpp"
 #include "version.hpp"
-#include "worker.hpp"
 #include <csignal>
 #include <cstdlib>
 #include <filesystem>

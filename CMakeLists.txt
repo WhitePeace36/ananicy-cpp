@@ -95,20 +95,20 @@ list(APPEND SOURCES
         src/rules.cpp
         src/worker.cpp
         src/config.cpp
-        src/argparse/argument_parser.cpp
-        src/argparse/argument.cpp)
+        src/argument_parsing/argument_parser.cpp
+        src/argument_parsing/argument.cpp)
 
 list(APPEND HEADERS
         include/config.hpp
-        include/priority.hpp
-        include/process.hpp
-        include/rules.hpp
+        include/core/priority.hpp
+        include/core/process.hpp
+        include/core/rules.hpp
         include/utils.hpp
-        include/worker.hpp
+        include/core/worker.hpp
         include/version.hpp
         include/service.hpp
-        include/backtrace.hpp
-        include/argument_parser.hpp)
+        include/utility/backtrace.hpp
+        include/utility/argument_parser.hpp)
 
 list(APPEND LINUX_SOURCES
         src/platform/linux/priority.cpp
