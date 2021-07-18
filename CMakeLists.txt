@@ -94,7 +94,9 @@ list(APPEND SOURCES
         src/utils.cpp
         src/rules.cpp
         src/worker.cpp
-        src/config.cpp)
+        src/config.cpp
+        src/argparse/argument_parser.cpp
+        src/argparse/argument.cpp)
 
 list(APPEND HEADERS
         include/config.hpp
@@ -105,7 +107,8 @@ list(APPEND HEADERS
         include/worker.hpp
         include/version.hpp
         include/service.hpp
-        include/backtrace.hpp)
+        include/backtrace.hpp
+        include/argument_parser.hpp)
 
 list(APPEND LINUX_SOURCES
         src/platform/linux/priority.cpp
@@ -208,22 +211,6 @@ endif()
 target_link_libraries(ananicy-cpp PRIVATE spdlog::spdlog)
 set(CMAKE_MESSAGE_CONTEXT "")
 
-
-# argparse
-message(STATUS "Configuring argparse")
-set(CMAKE_MESSAGE_CONTEXT "argparse")
-FetchContent_Declare(argparse
-        GIT_REPOSITORY https://github.com/jamolnng/argparse
-        GIT_TAG cb70333358d0324961399546ed842a2233e17bbb)
-# FetchContent_MakeAvailable(argparse)
-if(NOT argparse_POPULATED)
-    FetchContent_Populate(argparse)
-    message(STATUS "Copy argparse.h to an include directory")
-    file(COPY ${argparse_SOURCE_DIR}/argparse.h DESTINATION ${argparse_BINARY_DIR}/include)
-    message(STATUS "Add argparse.h include dir to target's includes")
-    target_include_directories(ananicy-cpp PRIVATE ${argparse_BINARY_DIR}/include)
-endif()
-set(CMAKE_MESSAGE_CONTEXT "")
 
 if(ENABLE_SYSTEMD)
     message(STATUS "Configuring systemd")

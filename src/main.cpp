@@ -4,6 +4,7 @@
 #include <format>
 #include <spdlog/spdlog.h>
 
+#include "argument_parser.hpp"
 #include "config.hpp"
 #include "priority.hpp"
 #include "process.hpp"
@@ -12,7 +13,6 @@
 #include "utils.hpp"
 #include "version.hpp"
 #include "worker.hpp"
-#include <argparse.h>
 #include <csignal>
 #include <cstdlib>
 #include <filesystem>
@@ -37,47 +37,49 @@ int main(const int argc, const char **argv) {
 
   service::set_status(service::STARTING);
 
-  argparse::ArgumentParser parser(
-      "ananicy-cpp", "ANother Auto NIce daemon, fully written in C++");
+  argparse::argument_parser parser(
+      "ananicy-cpp" /*, "ANother Auto NIce daemon, fully written in C++"*/);
+
   parser.add_argument()
-      .names({"-v", "--verbose"})
+      .name("--verbose")
+      .name("-v")
       .description("Increase verbosity level");
-  parser.add_argument()
-      .names({"-h", "--help"})
-      .description("Print this help and exit");
+  parser.add_argument().name("--help").name("-h").description(
+      "Print this help and exit");
   parser.add_argument()
       .name("--benchmark")
       .description("Should we activate benchmark mode or not");
 
   parser.add_argument()
+      .name("--manual-scanning")
       .name("--manualscanning")
       .description(
           "Scan for all processes at a regular interval by reading the "
           "procfs.\n"
           "Not recommended unless Ananicy-Cpp doesn't work as expected.");
 
-  auto err = parser.parse(argc, argv);
+  argparse::argparse_error err = parser.parse_args(argc, argv);
   if (err) {
     spdlog::critical("Argument parsing error: {}", err.what());
     parser.print_help();
     return EXIT_FAILURE;
   }
 
-  if (parser.exists("help")) {
+  if (parser["help"]) {
     parser.print_help();
     return EXIT_SUCCESS;
   }
 
-  if (parser.exists("verbose")) {
+  if (parser["verbose"]) {
     spdlog::debug("Verbose flag set!");
     spdlog::set_level(spdlog::level::debug);
   }
 
-  if (parser.exists("benchmark")) {
+  if (parser["benchmark"]) {
     spdlog::warn("Benchmark enabled!");
   }
 
-  if (parser.exists("manualscanning")) {
+  if (parser["manual-scanning"]) {
     spdlog::debug("Manual scanning enabled! Increasing Ananicy Nice value to "
                   "prevent lag.");
     set_priority(get_pid(), 19);
@@ -113,10 +115,10 @@ int main(const int argc, const char **argv) {
 
   while (!ih.should_exit()) {
     ih.wait_for(1min);
-    if (ih.should_exit() || parser.exists("benchmark"))
+    if (ih.should_exit() || parser["benchmark"])
       break;
 
-    if (parser.exists("manualscanning")) {
+    if (parser["manual-scanning"]) {
       spdlog::info("Starting full-scan");
       processListener.full_scan();
     }
