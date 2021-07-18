@@ -103,7 +103,7 @@ list(APPEND HEADERS
         include/core/priority.hpp
         include/core/process.hpp
         include/core/rules.hpp
-        include/utils.hpp
+        include/utility/utils.hpp
         include/core/worker.hpp
         include/version.hpp
         include/service.hpp

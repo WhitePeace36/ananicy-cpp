@@ -11,7 +11,7 @@
 #include "core/worker.hpp"
 #include "service.hpp"
 #include "utility/argument_parser.hpp"
-#include "utils.hpp"
+#include "utility/utils.hpp"
 #include "version.hpp"
 #include <csignal>
 #include <cstdlib>
