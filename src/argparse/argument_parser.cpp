@@ -130,7 +130,8 @@ argparse_error argument_parser::parse_args(const int argc, const char **argv) {
   return parse_args(args);
 }
 
-argument_parser::argument_parser() {
+argument_parser::argument_parser(const std::string &program_name)
+    : m_program_name(program_name) {
   add_argument("command").positional().type(typeid(std::string));
 }
 
@@ -156,24 +157,40 @@ bool argument_parser::operator[](const std::string &name) {
   return arg->get_value().value() == "true";
 }
 
+std::string argument_parser::get_program_name() {
+  if (m_program_name.empty())
+    return get_arg("command")->get_value().value_or("???");
+
+  return m_program_name;
+}
+
 void argument_parser::print_help() {
   std::string help_message;
   std::format_to(std::back_inserter(help_message),
-                 "Usage: {} [options] positionals\n",
-                 get_arg("command")->get_value().value_or("???"));
+                 "Usage: {} [options...] positionals\n"
+                 "Options:\n",
+                 get_program_name());
   for (const auto &arg_pair : m_args) {
     const auto &arg = arg_pair.second;
     if (arg.is_positional())
       continue;
-    std::string options;
-    for (const auto &long_name : arg.get_long_names()) {
-      std::format_to(std::back_inserter(options), "--{}, ", long_name);
-    }
+    std::vector<std::string> option_names;
     for (const auto &short_name : arg.get_short_names()) {
-      std::format_to(std::back_inserter(options), "-{}, ", short_name);
+      option_names.push_back(std::string("-") + short_name);
     }
-    std::format_to(std::back_inserter(help_message), "{}\t\t{}\n", options,
-                   arg.get_description().value_or(""));
+    for (const auto &long_name : arg.get_long_names()) {
+      option_names.push_back(std::string("--").append(long_name));
+    }
+    std::string option_string;
+    for (auto iterator = option_names.begin(); iterator != option_names.end();
+         ++iterator) {
+      option_string.append(*iterator);
+      if (iterator + 1 != option_names.end()) {
+        option_string.append(", ");
+      }
+    }
+    std::format_to(std::back_inserter(help_message), "{:32}\t\t{}\n",
+                   option_string, arg.get_description().value_or(""));
   }
   std::cout << help_message << std::flush;
 }

@@ -68,9 +68,10 @@ public:
 
 class argument_parser {
   std::map<unsigned, argument> m_args{};
+  std::string                  m_program_name = "";
 
 public:
-  argument_parser();
+  argument_parser(const std::string &program_name = "");
   argparse_error parse_args(const std::vector<std::string> &args);
   argparse_error parse_args(int argc, const char **argv);
 
@@ -79,6 +80,7 @@ public:
   argument &add_argument(std::string name);
 
   std::optional<argument> get_arg(const std::string &name);
+  std::string             get_program_name();
 
   void print_help();
 

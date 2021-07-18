@@ -37,9 +37,8 @@ int main(const int argc, const char **argv) {
 
   service::set_status(service::STARTING);
 
-  argparse::argument_parser parser /*(
-           "ananicy-cpp", "ANother Auto NIce daemon, fully written in C++")*/
-      ;
+  argparse::argument_parser parser(
+      "ananicy-cpp" /*, "ANother Auto NIce daemon, fully written in C++"*/);
 
   parser.add_argument()
       .name("--verbose")
