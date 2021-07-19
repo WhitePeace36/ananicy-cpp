@@ -105,6 +105,7 @@ list(APPEND HEADERS
         include/core/rules.hpp
         include/utility/utils.hpp
         include/core/worker.hpp
+        include/core/cgroups.hpp
         include/version.hpp
         include/service.hpp
         include/utility/backtrace.hpp
@@ -114,7 +115,8 @@ list(APPEND LINUX_SOURCES
         src/platform/linux/priority.cpp
         src/platform/linux/process.cpp
         src/platform/linux/syscalls.h
-        src/platform/linux/backtrace.cpp)
+        src/platform/linux/backtrace.cpp
+        src/platform/linux/cgroups.cpp)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     message(STATUS "Linux system detected, adding specific sources files")

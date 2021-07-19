@@ -38,6 +38,12 @@ public:
 
     return true;
   }
+  bool apply_cgroups() {
+    if (config.contains("apply_cgroup"))
+      return config["apply_cgroup"] == "true";
+
+    return true;
+  }
   bool cgroup_load() {
     if (config.contains("cgroup_load"))
       return config["cgroup_load"] == "true";

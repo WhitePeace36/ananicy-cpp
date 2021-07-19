@@ -107,6 +107,9 @@ int main(const int argc, const char **argv) {
 
   rules.show_rules();
 
+  spdlog::info("Creating Cgroups...");
+  rules.create_cgroups();
+
   Worker worker(&ih, &rules, &conf, &processListener.process_queue);
 
   worker.start();

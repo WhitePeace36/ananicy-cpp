@@ -3,6 +3,7 @@
 //
 
 #include "core/worker.hpp"
+#include "core/cgroups.hpp"
 #include "core/priority.hpp"
 #include <chrono>
 #include <spdlog/spdlog.h>
@@ -76,6 +77,12 @@ void Worker::start() {
               spdlog::debug("Setting OOM score adjustment of {}({}) to {}",
                             p.name, p.pid, to_string(rule["oom_score_adj"]));
               ok = set_oom_score_adjust(p.pid, rule["oom_score_adj"]);
+            }
+
+            if (config->apply_cgroups() && rule.contains("cgroup")) {
+              spdlog::debug("Adding process {}({}) to cgroup {}", p.name, p.pid,
+                            to_string(rule["cgroup"]));
+              ok = control_groups::add_pid_to_cgroup(p.pid, rule["cgroup"]);
             }
           } catch (const std::exception &e) {
             spdlog::critical("{}: unhandled exception: {} (comm: {}, pid: {})",
