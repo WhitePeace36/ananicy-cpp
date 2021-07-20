@@ -6,6 +6,7 @@
 #include "core/cgroups.hpp"
 #include <fstream>
 #include <iostream>
+#include <queue>
 #include <spdlog/spdlog.h>
 
 using std::filesystem::path;
@@ -60,47 +61,58 @@ void Rules::load_rules_from_file(const std::filesystem::path &path) {
 }
 
 void Rules::show_rules() {
-  for (const std::pair<std::string, json> rule : cgroup_rules) {
+  for (const auto &rule : cgroup_rules) {
     spdlog::debug("Cgroup: {}, {}", rule.first, rule.second.dump());
   }
-  for (const std::pair<std::string, json> rule : type_rules) {
+  for (const auto &rule : type_rules) {
     spdlog::debug("Type: {}, {}", rule.first, rule.second.dump());
   }
-  for (const std::pair<std::string, json> rule : program_rules) {
+  for (const auto &rule : program_rules) {
     spdlog::debug("Rule: {}, {}", rule.first, rule.second.dump());
   }
 }
 
 void Rules::load_rules_from_directory(
     const std::filesystem::path &dir_path) { // NOLINT(misc-no-recursion)
-  for (const path &file : std::filesystem::directory_iterator(dir_path)) {
-    std::stringstream ss;
-    ss << "Found file " << file.filename();
+  std::queue<path> directories;
+  directories.emplace(dir_path);
 
-    if (std::filesystem::is_directory(file)) {
-      ss << " (directory)";
+  while (!directories.empty()) {
+    const path directory = directories.front();
+    spdlog::debug("Scanning directory {}", directory.string());
+    directories.pop();
 
-      load_rules_from_directory(file);
+    for (const path &file : std::filesystem::directory_iterator(directory)) {
+      std::stringstream ss;
+      ss << "Found file " << file.filename();
+
+      if (std::filesystem::is_directory(file)) {
+        ss << " (directory)";
+
+        directories.emplace(file);
+      }
+
+      bool valid_file = false;
+
+      if (config->cgroup_load() && file.extension().compare(".cgroups") == 0) {
+        ss << " (CGROUP)";
+        valid_file = true;
+      } else if (config->type_load() &&
+                 file.extension().compare(".types") == 0) {
+        ss << " (TYPES)";
+        valid_file = true;
+      } else if (config->rule_load() &&
+                 file.extension().compare(".rules") == 0) {
+        ss << " (RULES)";
+        valid_file = true;
+      }
+
+      if (valid_file) {
+        load_rules_from_file(file);
+      }
+
+      spdlog::trace(ss.str());
     }
-
-    bool valid_file = false;
-
-    if (config->cgroup_load() && file.extension().compare(".cgroups") == 0) {
-      ss << " (CGROUP)";
-      valid_file = true;
-    } else if (config->type_load() && file.extension().compare(".types") == 0) {
-      ss << " (TYPES)";
-      valid_file = true;
-    } else if (config->rule_load() && file.extension().compare(".rules") == 0) {
-      ss << " (RULES)";
-      valid_file = true;
-    }
-
-    if (valid_file) {
-      load_rules_from_file(file);
-    }
-
-    spdlog::trace(ss.str());
   }
 }
 
