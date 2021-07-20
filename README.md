@@ -13,11 +13,12 @@ _Alpha+ status_
 - [X] Setting OOM score
 - [X] Change default configuration file and rules directory using environment variables (`ANANICY_CPP_{CONF,CONFDIR}`)
 - [X] Cgroups
+- [ ] Autogroup
 - [ ] Systemd integration
   - [X] Unit file
-  - [ ] Hardening unit file (In progress)
+  - [X] Hardening unit file
   - [X] Working sd_notify
-- [ ] CLI compatibility with Ananicy
+- [X] CLI compatibility with Ananicy
 - [ ] Something else... ?
 
 ## Installation
