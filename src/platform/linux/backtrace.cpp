@@ -5,7 +5,7 @@
 #include <iostream>
 #include <stdexcept>
 
-const static int BACKTRACE_LENGTH = 10;
+const static int BACKTRACE_LENGTH = 20;
 
 namespace backtrace_handler {
 [[maybe_unused]] static const bool set_terminate =

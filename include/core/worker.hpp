@@ -16,6 +16,10 @@ public:
   Worker(InterruptHandler *interruptHandler, Rules *rules, Config *config,
          atomic_queue<Process> *process_queue);
   void start();
+  void stop() {
+    worker_thread.request_stop();
+    worker_thread.join();
+  }
 
   [[nodiscard]] unsigned processed_processes() const { return processed_count; }
 

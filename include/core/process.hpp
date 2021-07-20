@@ -31,6 +31,11 @@ public:
   ~ProcessQueue();
 
   void start();
+  void stop() {
+    event_thread.request_stop();
+    event_thread.join();
+  }
+
   void full_scan();
 
   atomic_queue<Process> process_queue;

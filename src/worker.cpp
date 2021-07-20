@@ -17,7 +17,7 @@ Worker::Worker(InterruptHandler *interruptHandler, Rules *rules, Config *config,
 }
 
 void Worker::start() {
-  std::function<void(std::stop_token)> worker([this](
+  std::function<void(std::stop_token)> worker([this, func_name = __func__](
                                                   std::stop_token stop_token) {
     std::optional<Process> proc;
     while (!interruptHandler->should_exit() && !stop_token.stop_requested()) {
@@ -86,7 +86,7 @@ void Worker::start() {
             }
           } catch (const std::exception &e) {
             spdlog::critical("{}: unhandled exception: {} (comm: {}, pid: {})",
-                             __func__, e.what(), p.name, p.pid);
+                             func_name, e.what(), p.name, p.pid);
           }
         }
       }

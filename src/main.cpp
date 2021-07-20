@@ -130,6 +130,8 @@ int main(const int argc, const char **argv) {
     spdlog::debug("Processed processes: {}", worker.processed_processes());
   }
   service::set_status(service::STOPPING);
+  worker.stop();
+  processListener.stop();
   ih.stop();
 
   std::chrono::duration<double, std::ratio<1, 1>> duration =
