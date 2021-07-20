@@ -29,7 +29,7 @@ using std::filesystem::path;
 
 int main(const int argc, const char **argv) {
   if constexpr (std::string_view(BUILD_TYPE) == "Debug") {
-    spdlog::set_level(spdlog::level::debug);
+    spdlog::set_level(spdlog::level::trace);
   } else {
     spdlog::set_level(spdlog::level::info);
   }
@@ -129,9 +129,15 @@ int main(const int argc, const char **argv) {
     }
     spdlog::debug("Processed processes: {}", worker.processed_processes());
   }
+  spdlog::info("Stopping Ananicy Cpp...");
   service::set_status(service::STOPPING);
-  worker.stop();
+
   processListener.stop();
+  spdlog::debug("Stopped process listener");
+
+  worker.stop();
+  spdlog::debug("Stopped process worker");
+
   ih.stop();
 
   std::chrono::duration<double, std::ratio<1, 1>> duration =
