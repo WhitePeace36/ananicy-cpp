@@ -8,7 +8,7 @@
 #include <spdlog/spdlog.h>
 
 inline std::filesystem::path get_cgroup_path(const std::string &cgroup_name) {
-  return {std::format("/sys/fs/cgroup/{:s}", cgroup_name)};
+  return control_groups::get_cgroup_version().path.append(cgroup_name);
 }
 
 int control_groups::create_cgroup(const std::string &name) {
