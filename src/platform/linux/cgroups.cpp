@@ -106,21 +106,27 @@ control_groups::cgroup_info control_groups::get_cgroup_version() {
   if (!info.has_value()) {
     std::string  cgroup_path;
     std::fstream mtab("/etc/mtab");
-    while (mtab.good()) {
+    while (mtab) {
       std::string word;
       mtab >> word;
       if (word.starts_with("cgroup2")) {
         mtab >> cgroup_path;
         info = {.path = cgroup_path,
                 .version = cgroup_info::cgroup_version::v2};
+        spdlog::trace("Found cgroup v2 at {}", cgroup_path);
         break;
       } else if (word.starts_with("cgroup")) {
         if (!info.has_value()) {
           mtab >> cgroup_path;
           info = {.path = cgroup_path,
                   .version = cgroup_info::cgroup_version::v1};
+          spdlog::trace("Found cgroup v1 at {}", cgroup_path);
         }
       }
+    }
+    if (!info.has_value()) {
+      spdlog::debug("No cgroup info, setting defaults");
+      info = {.path = {""}, .version = cgroup_info::cgroup_version::none};
     }
     spdlog::debug("Cgroup info: {}, path: {}", info->version,
                   info->path.string());
