@@ -5,6 +5,7 @@
 #include <spdlog/spdlog.h>
 
 #include "config.hpp"
+#include "core/cgroups.hpp"
 #include "core/priority.hpp"
 #include "core/process.hpp"
 #include "core/rules.hpp"
@@ -107,6 +108,7 @@ int main(const int argc, const char **argv) {
 
   rules.show_rules();
 
+  control_groups::get_cgroup_version();
   spdlog::info("Creating Cgroups...");
   rules.create_cgroups();
 
