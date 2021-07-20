@@ -60,7 +60,7 @@ void Rules::load_rules_from_file(const std::filesystem::path &path) {
   }
 }
 
-void Rules::show_rules() {
+void Rules::show_all_rules() {
   for (const auto &rule : cgroup_rules) {
     spdlog::debug("Cgroup: {}, {}", rule.first, rule.second.dump());
   }
@@ -70,6 +70,24 @@ void Rules::show_rules() {
   for (const auto &rule : program_rules) {
     spdlog::debug("Rule: {}, {}", rule.first, rule.second.dump());
   }
+}
+
+void Rules::show_rules(rule_type type) {
+  const auto &rules = (type == rule_type::types)     ? type_rules
+                      : (type == rule_type::cgroups) ? cgroup_rules
+                                                     : program_rules;
+
+  json rules_display;
+
+  for (const auto &rule : rules) {
+    if (type == rule_type::rules) {
+      rules_display[rule.first] = get_rule(rule.first);
+    } else {
+      rules_display[rule.first] = rule.second;
+    }
+  }
+
+  std::cout << rules_display.dump(4) << std::endl;
 }
 
 void Rules::load_rules_from_directory(

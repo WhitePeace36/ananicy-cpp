@@ -34,7 +34,10 @@ public:
 
   size_t size() const;
 
-  void show_rules();
+  void show_all_rules();
+
+  enum rule_type { rules, types, cgroups };
+  void show_rules(rule_type type);
 };
 
 #endif // ANANICY_CPP_RULES_HPP
