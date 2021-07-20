@@ -8,7 +8,7 @@
 #include "config.hpp"
 #include "process.hpp"
 #include "rules.hpp"
-#include "utils.hpp"
+#include "utility/utils.hpp"
 #include <thread>
 
 class Worker {

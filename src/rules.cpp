@@ -3,6 +3,7 @@
 //
 
 #include "core/rules.hpp"
+#include "core/cgroups.hpp"
 #include <fstream>
 #include <iostream>
 #include <spdlog/spdlog.h>
@@ -100,6 +101,16 @@ void Rules::load_rules_from_directory(
     }
 
     spdlog::trace(ss.str());
+  }
+}
+
+void Rules::create_cgroups() {
+  for (const auto &cgroup_rule : cgroup_rules) {
+    control_groups::create_cgroup(cgroup_rule.first);
+    if (cgroup_rule.second.contains("CPUQuota")) {
+      control_groups::set_cgroup_cpu_quota(
+          cgroup_rule.first, cgroup_rule.second["CPUQuota"].get<unsigned>());
+    }
   }
 }
 

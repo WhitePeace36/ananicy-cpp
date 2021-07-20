@@ -5,7 +5,7 @@
 #ifndef ANANICY_CPP_PROCESS_HPP
 #define ANANICY_CPP_PROCESS_HPP
 
-#include "utils.hpp"
+#include "utility/utils.hpp"
 #include <string>
 #include <thread>
 

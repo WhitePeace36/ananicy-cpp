@@ -30,6 +30,8 @@ public:
   void load_rules_from_directory(const std::filesystem::path &dir_path);
   json get_rule(const std::string &name);
 
+  void create_cgroups();
+
   size_t size() const;
 
   void show_rules();

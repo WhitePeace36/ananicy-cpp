@@ -5,13 +5,14 @@
 #include <spdlog/spdlog.h>
 
 #include "config.hpp"
+#include "core/cgroups.hpp"
 #include "core/priority.hpp"
 #include "core/process.hpp"
 #include "core/rules.hpp"
 #include "core/worker.hpp"
 #include "service.hpp"
 #include "utility/argument_parser.hpp"
-#include "utils.hpp"
+#include "utility/utils.hpp"
 #include "version.hpp"
 #include <csignal>
 #include <cstdlib>
@@ -106,6 +107,10 @@ int main(const int argc, const char **argv) {
   Rules rules(config_dir_path, &conf);
 
   rules.show_rules();
+
+  control_groups::get_cgroup_version();
+  spdlog::info("Creating Cgroups...");
+  rules.create_cgroups();
 
   Worker worker(&ih, &rules, &conf, &processListener.process_queue);
 
