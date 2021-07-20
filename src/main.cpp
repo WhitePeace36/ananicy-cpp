@@ -100,7 +100,7 @@ int main(const int argc, const char **argv) {
   Config conf(config_path);
   conf.show();
 
-  ProcessQueue processListener(&ih);
+  ProcessQueue processListener;
 
   processListener.start();
 
@@ -112,7 +112,7 @@ int main(const int argc, const char **argv) {
   spdlog::info("Creating Cgroups...");
   rules.create_cgroups();
 
-  Worker worker(&ih, &rules, &conf, &processListener.process_queue);
+  Worker worker(&rules, &conf, &processListener.process_queue);
 
   worker.start();
 

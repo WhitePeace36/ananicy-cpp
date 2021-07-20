@@ -215,10 +215,7 @@ int ProcessQueue::init() {
   return socket;
 }
 
-ProcessQueue::ProcessQueue(InterruptHandler *interruptHandler)
-    : interruptHandler(interruptHandler) {
-  init();
-}
+ProcessQueue::ProcessQueue() { init(); }
 
 void ProcessQueue::start() {
   this->event_thread =

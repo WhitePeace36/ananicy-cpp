@@ -24,10 +24,9 @@ private:
 
   std::unique_ptr<Socket> sock;
   std::jthread            event_thread;
-  InterruptHandler *      interruptHandler;
 
 public:
-  explicit ProcessQueue(InterruptHandler *interruptHandler);
+  ProcessQueue();
   ~ProcessQueue();
 
   void start();

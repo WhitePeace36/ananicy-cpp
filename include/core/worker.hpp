@@ -13,8 +13,7 @@
 
 class Worker {
 public:
-  Worker(InterruptHandler *interruptHandler, Rules *rules, Config *config,
-         atomic_queue<Process> *process_queue);
+  Worker(Rules *rules, Config *config, atomic_queue<Process> *process_queue);
   void start();
   void stop() {
     worker_thread.request_stop();
@@ -24,7 +23,6 @@ public:
   [[nodiscard]] unsigned processed_processes() const { return processed_count; }
 
 private:
-  InterruptHandler *     interruptHandler;
   Rules *                rules;
   Config *               config;
   std::jthread           worker_thread;
