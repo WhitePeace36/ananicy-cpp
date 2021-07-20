@@ -43,6 +43,12 @@ int connect_netlink_socket() {
     return -1;
   }
 
+  /* Timeout after some time, to avoid blocking forever */
+  struct timeval tv {
+    .tv_sec = 0, .tv_usec = 500 * 1000
+  };
+  setsockopt(nl_sock, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv));
+
   return nl_sock;
 }
 
@@ -130,7 +136,7 @@ std::string get_command_from_pid(int pid) {
 }
 
 int handle_events(int nl_sock, atomic_queue<Process> *queue,
-                  InterruptHandler *interruptHandler) {
+                  const std::stop_token &stop_token) {
   struct alignas(NLMSG_ALIGNTO) nl_cn_msg {
     struct nlmsghdr nl_hdr;
     struct [[gnu::packed]] {
@@ -141,17 +147,19 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue,
 
   ssize_t   status = 0;
   nl_cn_msg netlink_connection_message = {};
-  while (!interruptHandler->should_exit()) {
+  while (!stop_token.stop_requested()) {
     errno = 0;
     status = recv(nl_sock, &netlink_connection_message,
                   sizeof(netlink_connection_message), 0);
+    const auto errnum = errno;
     if (status == 0) {
       return EXIT_SUCCESS;
     } else if (status == -1) {
-      if (errno == EINTR) {
+      if (errnum == EINTR || errnum == ETIMEDOUT || errnum == EAGAIN) {
         continue;
       }
-      spdlog::error("Bad netlink status: {}", get_error_string(errno));
+      spdlog::error("Bad netlink status ({}): {}", errnum,
+                    get_error_string(errnum));
       return EXIT_FAILURE;
     }
 
@@ -218,7 +226,7 @@ void ProcessQueue::start() {
         int ret = EXIT_FAILURE;
         while (ret == EXIT_FAILURE && !stop_token.stop_requested()) {
           ret = handle_events(this->sock->socket, &this->process_queue,
-                              this->interruptHandler);
+                              stop_token);
 
           if (ret == EXIT_SUCCESS || stop_token.stop_requested())
             break;
@@ -231,15 +239,7 @@ void ProcessQueue::start() {
       });
 }
 
-ProcessQueue::~ProcessQueue() {
-  if (!this->event_thread.get_stop_token().stop_requested()) {
-    this->event_thread.request_stop();
-    this->event_thread.join();
-  }
-
-  set_event_subscription(this->sock->socket, false);
-  close(this->sock->socket);
-}
+ProcessQueue::~ProcessQueue() { stop(); }
 
 void ProcessQueue::full_scan() {
   for (const std::filesystem::path &process_path :
@@ -256,6 +256,15 @@ void ProcessQueue::full_scan() {
       });
     }
   };
+}
+
+void ProcessQueue::stop() {
+  if (!this->event_thread.get_stop_token().stop_requested()) {
+    this->event_thread.request_stop();
+    this->event_thread.join();
+  }
+  set_event_subscription(this->sock->socket, false);
+  close(this->sock->socket);
 }
 
 pid_t get_pid() { return getpid(); }
