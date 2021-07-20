@@ -76,8 +76,7 @@ int set_event_subscription(int nl_sock, bool enable) {
 }
 
 std::string get_command_from_pid(int pid) {
-  std::ifstream pid_info;
-  std::string   command = "<unknown>";
+  std::string command = "<unknown>";
 
   // Building path
   try {
@@ -86,10 +85,42 @@ std::string get_command_from_pid(int pid) {
     if (!exists(proc_path))
       return command;
 
-    pid_info.open(proc_path);
+    std::fstream pid_info(proc_path);
 
     command.clear();
     pid_info >> command;
+
+    /* Workaround for:
+     * https://stackoverflow.com/questions/23534263/what-is-the-maximum-allowed-limit-on-the-length-of-a-process-name
+     */
+    if (command.length() == 16 - 1) {
+      std::fstream cmdline_file(std::format("/proc/{}/cmdline", pid));
+      std::string  cmdline;
+
+      std::getline(cmdline_file, cmdline);
+
+      size_t command_pos = cmdline.find(command);
+      if (command_pos != std::string::npos) {
+        spdlog::trace("{}: pid: {}, Cmdline: {}", __func__, pid, cmdline);
+
+        size_t command_pos_end = command_pos;
+        while (cmdline[command_pos_end + 1] != '\0' &&
+               command_pos_end + 1 < cmdline.length()) {
+          command_pos_end++;
+        }
+        spdlog::trace(
+            "{}: command_pos = {}, command_pos_end = {}, cmdline.length = {}",
+            __func__, command_pos, command_pos_end, cmdline.length());
+        const std::string &new_command =
+            cmdline.substr(command_pos, command_pos_end - command_pos + 1);
+        spdlog::debug("Fixed command: new: {:s}, original: {:s}", new_command,
+                      command);
+        command = new_command;
+      } else {
+        spdlog::trace("Couldn't find command '{}' in cmdline '{}'", command,
+                      cmdline);
+      }
+    }
   } catch (const std::filesystem::filesystem_error &e) {
     spdlog::error("{}: filesystem error: {} (path: {})", __func__, e.what(),
                   e.path1().string());
@@ -201,8 +232,10 @@ void ProcessQueue::start() {
 }
 
 ProcessQueue::~ProcessQueue() {
-  this->event_thread.request_stop();
-  this->event_thread.join();
+  if (!this->event_thread.get_stop_token().stop_requested()) {
+    this->event_thread.request_stop();
+    this->event_thread.join();
+  }
 
   set_event_subscription(this->sock->socket, false);
   close(this->sock->socket);
