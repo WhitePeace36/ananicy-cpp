@@ -7,6 +7,7 @@
 #include <string>
 #include <typeindex>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace argparse {
@@ -20,7 +21,20 @@ public:
   explicit(false) argparse_error(std::string message)
       : error_message(message){};
   explicit(false) operator bool() const { return error_message.has_value(); }
-  std::string     what() const { return error_message.value_or(""); }
+  [[nodiscard]] std::string what() const { return error_message.value_or(""); }
+};
+
+class argument_value {
+private:
+  std::optional<std::string> m_value;
+  std::type_index            m_type;
+
+public:
+  argument_value(std::optional<std::string> value, std::type_index type)
+      : m_value(std::move(value)), m_type(type) {}
+
+  operator std::optional<std::string>() const { return m_value; }
+  operator bool() const;
 };
 
 class argument {
@@ -71,7 +85,7 @@ class argument_parser {
   std::string                  m_program_name = "";
 
 public:
-  argument_parser(const std::string &program_name = "");
+  argument_parser(std::string program_name = "");
   argparse_error parse_args(const std::vector<std::string> &args);
   argparse_error parse_args(int argc, const char **argv);
 
@@ -84,7 +98,7 @@ public:
 
   void print_help();
 
-  bool operator[](const std::string &name);
+  argument_value operator[](const std::string &name);
 
   template <typename T>
   std::optional<T> operator[](const std::string &name) = delete;

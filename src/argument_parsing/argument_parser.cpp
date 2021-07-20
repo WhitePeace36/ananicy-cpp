@@ -6,6 +6,7 @@
 #include <iostream>
 #include <queue>
 #include <spdlog/spdlog.h>
+#include <utility>
 
 namespace argparse {
 
@@ -130,8 +131,8 @@ argparse_error argument_parser::parse_args(const int argc, const char **argv) {
   return parse_args(args);
 }
 
-argument_parser::argument_parser(const std::string &program_name)
-    : m_program_name(program_name) {
+argument_parser::argument_parser(std::string program_name)
+    : m_program_name(std::move(program_name)) {
   add_argument("command").positional().type(typeid(std::string));
 }
 
@@ -144,17 +145,23 @@ std::optional<argument> argument_parser::get_arg(const std::string &name) {
   return {};
 }
 
-bool argument_parser::operator[](const std::string &name) {
+argument_value argument_parser::operator[](const std::string &name) {
   const auto &arg = get_arg(name);
-  if (!arg.has_value())
+
+  if (!arg.has_value()) {
+    throw std::runtime_error(std::format("Unknown argument: {}", name));
+  }
+
+  return argument_value(arg->get_value(), arg->get_type());
+}
+
+argument_value::operator bool() const {
+  if (!m_value.has_value())
     return false;
-  if (arg->get_type() != typeid(bool))
+  if (m_type != typeid(bool))
     return false;
 
-  if (!arg->get_value().has_value())
-    return false;
-
-  return arg->get_value().value() == "true";
+  return m_value == "true";
 }
 
 std::string argument_parser::get_program_name() {
@@ -165,34 +172,46 @@ std::string argument_parser::get_program_name() {
 }
 
 void argument_parser::print_help() {
-  std::string help_message;
-  std::format_to(std::back_inserter(help_message),
-                 "Usage: {} [options...] positionals\n"
-                 "Options:\n",
-                 get_program_name());
+  std::string help_options_message;
+  std::string help_positionals_message;
   for (const auto &arg_pair : m_args) {
     const auto &arg = arg_pair.second;
-    if (arg.is_positional())
-      continue;
-    std::vector<std::string> option_names;
-    for (const auto &short_name : arg.get_short_names()) {
-      option_names.push_back(std::string("-") + short_name);
-    }
-    for (const auto &long_name : arg.get_long_names()) {
-      option_names.push_back(std::string("--").append(long_name));
-    }
-    std::string option_string;
-    for (auto iterator = option_names.begin(); iterator != option_names.end();
-         ++iterator) {
-      option_string.append(*iterator);
-      if (iterator + 1 != option_names.end()) {
-        option_string.append(", ");
+    if (arg.is_positional()) {
+      if (arg.get_name() == "command")
+        continue;
+
+      std::format_to(std::back_inserter(help_positionals_message),
+                     "\t{:32}\t\t{}\n", arg.get_name(),
+                     arg.get_description().value_or(""));
+    } else {
+      std::vector<std::string> option_names;
+      for (const auto &short_name : arg.get_short_names()) {
+        option_names.push_back(std::string("-") + short_name);
       }
+      for (const auto &long_name : arg.get_long_names()) {
+        option_names.push_back(std::string("--").append(long_name));
+      }
+      std::string option_string;
+      for (auto iterator = option_names.begin(); iterator != option_names.end();
+           ++iterator) {
+        option_string.append(*iterator);
+        if (iterator + 1 != option_names.end()) {
+          option_string.append(", ");
+        }
+      }
+      std::format_to(std::back_inserter(help_options_message),
+                     "\t{:32}\t\t{}\n", option_string,
+                     arg.get_description().value_or(""));
     }
-    std::format_to(std::back_inserter(help_message), "{:32}\t\t{}\n",
-                   option_string, arg.get_description().value_or(""));
   }
-  std::cout << help_message << std::flush;
+  std::cout << std::format("Usage: {} [options...] positionals\n"
+                           "Options:\n"
+                           "{}\n"
+                           "Positionals:\n"
+                           "{}\n",
+                           get_program_name(), help_options_message,
+                           help_positionals_message)
+            << std::flush;
 }
 
 } // namespace argparse
