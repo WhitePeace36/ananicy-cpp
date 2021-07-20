@@ -12,7 +12,7 @@ _Alpha+ status_
 - [X] Changing IO class and IO nice
 - [X] Setting OOM score
 - [X] Change default configuration file and rules directory using environment variables (`ANANICY_CPP_{CONF,CONFDIR}`)
-- [ ] Cgroups
+- [X] Cgroups
 - [ ] Systemd integration
   - [X] Unit file
   - [ ] Hardening unit file (In progress)
