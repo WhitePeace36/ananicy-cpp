@@ -6,11 +6,6 @@
 #include <csignal>
 #include <cstring>
 #include <functional>
-
-#ifdef ENABLE_SYSTEMD
-#include <systemd/sd-daemon.h>
-#endif
-
 bool InterruptHandler::should_exit() const { return this->need_exit; }
 
 static std::function<void(int)> handler;
@@ -28,10 +23,6 @@ InterruptHandler::InterruptHandler(std::initializer_list<int> signals) {
 void InterruptHandler::stop() {
   need_exit = true;
   exit_condition.notify_all();
-
-#ifdef ENABLE_SYSTEMD
-  sd_notify(0, "STOPPING=1");
-#endif
 }
 
 std::optional<std::string> get_env(const std::string &name) {
