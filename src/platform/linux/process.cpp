@@ -151,11 +151,11 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue,
     errno = 0;
     status = recv(nl_sock, &netlink_connection_message,
                   sizeof(netlink_connection_message), 0);
-    const auto errnum = errno;
+    const int errnum = errno;
     if (status == 0) {
       return EXIT_SUCCESS;
     } else if (status == -1) {
-      if (errnum == EINTR || errnum == ETIMEDOUT || errnum == EAGAIN) {
+      if (errnum == EINTR || errnum == EAGAIN) {
         continue;
       }
       spdlog::error("Bad netlink status ({}): {}", errnum,
@@ -180,8 +180,10 @@ int handle_events(int nl_sock, atomic_queue<Process> *queue,
     }
 
     try {
-      if (pid != 0)
+      if (pid != 0) {
+        spdlog::trace("Pushing new process: pid = {}", pid);
         queue->push(Process{.pid = pid, .name = get_command_from_pid(pid)});
+      }
     } catch (std::exception &e) {
       spdlog::error("{}: unhandled error: {}", __func__, e.what());
     }
@@ -222,6 +224,7 @@ void ProcessQueue::start() {
       std::jthread([this](const std::stop_token &stop_token) -> void {
         int ret = EXIT_FAILURE;
         while (ret == EXIT_FAILURE && !stop_token.stop_requested()) {
+          spdlog::trace("Starting handle_events");
           ret = handle_events(this->sock->socket, &this->process_queue,
                               stop_token);
 

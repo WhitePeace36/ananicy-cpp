@@ -91,7 +91,9 @@ int main(const int argc, const char **argv) {
 
   if (parser["verbose"]) {
     spdlog::debug("Verbose flag set!");
-    spdlog::set_level(spdlog::level::debug);
+    const int loglevel =
+        std::max(0, (spdlog::get_level() - 1)) % spdlog::level::n_levels;
+    spdlog::set_level(static_cast<spdlog::level::level_enum>(loglevel));
   }
 
   if (parser["benchmark"]) {
