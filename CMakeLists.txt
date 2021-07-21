@@ -205,6 +205,7 @@ else()
             )
 
     if(USE_EXTERNAL_FMTLIB)
+        message("Using external fmtlib")
         set(SPDLOG_FMT_EXTERNAL_HO ON CACHE INTERNAL "Make spdlog use external, header-only fmtlib")
     endif()
 
