@@ -6,6 +6,7 @@
 #include <iostream>
 #include <optional>
 #include <spdlog/spdlog.h>
+#include <thread>
 
 inline std::filesystem::path get_cgroup_path(const std::string &cgroup_name) {
   return control_groups::get_cgroup_version().path.append(cgroup_name);
@@ -54,12 +55,14 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
       path          cpu_weight_path = get_cgroup_path(name).append("cpu.max");
       std::ofstream cpu_weight_file(cpu_weight_path);
       unsigned      max_period = 100000u;
-      unsigned      period = max_period * std::clamp(quota, 0u, 100u) / 100u;
+      unsigned      period = max_period * std::thread::hardware_concurrency() *
+                        std::clamp(quota, 0u, 100u) / 100u;
       cpu_weight_file << std::format("{} {}", period, max_period) << std::endl;
       std::string content_check;
       std::getline(std::ifstream{cpu_weight_path}, content_check);
-      spdlog::debug("Set {} cpu quota to {:d} successfully: '{}' ({})", name,
-                    quota, content_check, cpu_weight_path.string());
+      spdlog::debug(
+          "Set {} cpu quota to {:d} (period: {:d}) successfully: '{}' ({})",
+          name, quota, period, content_check, cpu_weight_path.string());
     } catch (const std::filesystem::filesystem_error &e) {
       spdlog::error("{}: cgroup error: {} at {}", __func__, e.what(),
                     e.path1().string());
