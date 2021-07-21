@@ -25,7 +25,6 @@ ProtectClock=true
 ProtectKernelLogs=true
 ProtectKernelModules=true
 ProtectKernelTunables=true
-PrivateNetwork=true
 
 CapabilityBoundingSet=~CAP_SYS_PTRACE CAP_CHOWN CAP_FSETID CAP_SETFCAP CAP_SETUID CAP_SETGID CAP_SETPCAP
 ProcSubset=pid
@@ -47,6 +46,10 @@ SystemCallFilter=~@debug @module @mount @reboot @swap @clock @obsolete @cpu-emul
 # Required to see other processes
 PrivateUsers=false
 ProtectProc=default
+
+# Required for the process-listener socket to work
+PrivateNetwork=false
+
 
 # Required for control groups (obviously)
 ProtectControlGroups=false
