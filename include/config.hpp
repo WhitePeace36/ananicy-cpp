@@ -7,6 +7,7 @@
 
 #include <filesystem>
 #include <optional>
+#include <spdlog/spdlog.h>
 #include <unordered_map>
 
 class Config {
@@ -61,6 +62,29 @@ public:
       return config["rule_load"] == "true";
 
     return true;
+  }
+
+  spdlog::level::level_enum loglevel() {
+    using spdlog::level::level_enum;
+    if (config.contains("loglevel")) {
+      if (config["loglevel"] == "trace") {
+        return level_enum::trace;
+      } else if (config["loglevel"] == "debug") {
+        return level_enum::debug;
+      } else if (config["loglevel"] == "info") {
+        return level_enum::info;
+      } else if (config["loglevel"] == "warn") {
+        return level_enum::warn;
+      } else if (config["loglevel"] == "error") {
+        return level_enum::err;
+      } else if (config["loglevel"] == "critical") {
+        return level_enum::critical;
+      } else {
+        return level_enum::info;
+      }
+    }
+
+    return level_enum::info;
   }
 
   void show();

@@ -74,6 +74,16 @@ int main(const int argc, const char **argv) {
     return EXIT_FAILURE;
   }
 
+  const std::string config_dir_path =
+      get_env("ANANICY_CPP_CONFDIR").value_or("/etc/ananicy.d");
+  const std::string config_path =
+      get_env("ANANICY_CPP_CONF").value_or("/etc/ananicy.d/ananicy.conf");
+
+  Config conf(config_path);
+  conf.show();
+
+  spdlog::set_level(conf.loglevel());
+
   if (parser["help"]) {
     parser.print_help();
     return EXIT_SUCCESS;
@@ -101,18 +111,6 @@ int main(const int argc, const char **argv) {
             << std::endl;
 
   InterruptHandler ih({SIGINT, SIGTERM});
-
-  const std::string config_dir_path =
-      get_env("ANANICY_CPP_CONFDIR").value_or("/etc/ananicy.d");
-  const std::string config_path =
-      get_env("ANANICY_CPP_CONF").value_or("/etc/ananicy.d/ananicy.conf");
-
-  Config conf(config_path);
-  conf.show();
-
-  ProcessQueue processListener;
-
-  processListener.start();
 
   Rules rules(config_dir_path, &conf);
 
@@ -154,6 +152,10 @@ int main(const int argc, const char **argv) {
   control_groups::get_cgroup_version();
   spdlog::info("Creating Cgroups...");
   rules.create_cgroups();
+
+  ProcessQueue processListener;
+
+  processListener.start();
 
   Worker worker(&rules, &conf, &processListener.process_queue);
 

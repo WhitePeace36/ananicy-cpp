@@ -239,6 +239,8 @@ void ProcessQueue::start() {
 ProcessQueue::~ProcessQueue() { stop(); }
 
 void ProcessQueue::full_scan() {
+  spdlog::info("Doing a full scan");
+  unsigned n_process_found = 0;
   for (const std::filesystem::path &process_path :
        std::filesystem::directory_iterator("/proc")) {
     const std::string pid_str = process_path.filename().string();
@@ -251,8 +253,11 @@ void ProcessQueue::full_scan() {
           .pid = pid,
           .name = command,
       });
+      n_process_found++;
     }
-  };
+  }
+
+  spdlog::debug("Full scan found {:d} processes", n_process_found);
 }
 
 void ProcessQueue::stop() {
