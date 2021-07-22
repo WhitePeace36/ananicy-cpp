@@ -95,8 +95,8 @@ list(APPEND SOURCES
         src/rules.cpp
         src/worker.cpp
         src/config.cpp
-        src/argument_parsing/argument_parser.cpp
-        src/argument_parsing/argument.cpp)
+        src/utility/argument_parsing/argument_parser.cpp
+        src/utility/argument_parsing/argument.cpp)
 
 list(APPEND HEADERS
         include/config.hpp
