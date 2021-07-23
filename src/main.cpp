@@ -20,6 +20,7 @@
 #include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
+#include <utility/process_info.hpp>
 
 using json = nlohmann::json;
 
@@ -135,9 +136,7 @@ int main(const int argc, const char **argv) {
     } else if (sub_action == "cgroups") {
       rules.show_rules(Rules::cgroups);
     } else if (sub_action == "proc") {
-      std::cout << "Ananicy Cpp doesn't use a proc map cache, so nothing to "
-                   "display here."
-                << std::endl;
+      std::cout << process_info::get_process_info_map().dump(4) << std::endl;
     } else if (sub_action == "autogroup") {
       std::cout << "Autogroups are not implemented yet." << std::endl;
     } else {
