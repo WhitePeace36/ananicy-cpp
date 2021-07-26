@@ -1,5 +1,8 @@
 #include <utility/process_info.hpp>
 
+#include "core/priority.hpp"
+#include "syscalls.h"
+
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -52,6 +55,35 @@ nlohmann::json parse_proc_status(unsigned pid) {
   return status;
 }
 
+static std::string get_sched_policy_name(unsigned sched_policy) {
+  switch (sched_policy & 0xFF) {
+  case SCHED_RR:
+    return "rr";
+  case SCHED_DEADLINE:
+    return "deadline";
+  case SCHED_FIFO:
+    return "fifo";
+  case SCHED_OTHER:
+    return "normal";
+  case SCHED_BATCH:
+    return "batch";
+  case SCHED_IDLE:
+    return "idle";
+  case SCHED_ISO:
+    return "iso";
+  default:
+    return "unknown";
+  }
+}
+
+static sched_attr get_sched_attributes(unsigned int pid) {
+
+  ::sched_attr attr{};
+  sched_getattr(static_cast<pid_t>(pid), &attr, sizeof(attr), 0);
+
+  return attr;
+}
+
 static std::optional<process_info> get_process_info(unsigned pid) {
   if (!exists(std::filesystem::path(std::format("/proc/{}", pid))))
     return std::optional<process_info>();
@@ -82,17 +114,24 @@ static std::optional<process_info> get_process_info(unsigned pid) {
     std::getline(std::fstream(std::format("/proc/{}/stat", pid)), stat);
     info["stat"] = stat;
 
-    info["stat_name"] = nullptr;
-    info["nice"] = nullptr;
+    auto stat_name_begin = stat.find_first_of('(');
+    auto stat_name_end = stat.find_first_of(')');
+
+    info["stat_name"] =
+        stat.substr(stat_name_begin, stat_name_end - stat_name_begin);
 
     std::string autogroup_value;
     std::getline(std::fstream(std::format("/proc/{}/autogroup", pid)),
                  autogroup_value);
     info["autogroup"] = get_autogroup_from_str(autogroup_value);
 
-    info["sched"] = nullptr;
-    info["rtprio"] = nullptr;
-    info["ionice"] = nullptr;
+    ::sched_attr sched_info = get_sched_attributes(pid);
+
+    info["sched"] = get_sched_policy_name(sched_info.sched_policy);
+    info["rtprio"] = static_cast<unsigned>(sched_info.sched_priority);
+    info["nice"] = static_cast<int>(sched_info.sched_nice);
+
+    info["ionice"] = ioprio_get(IOPRIO_WHO_PROCESS, pid);
 
     unsigned oom_score_adj = 0;
     std::fstream(std::fstream(std::format("/proc/{}/oom_score_adj", pid))) >>
