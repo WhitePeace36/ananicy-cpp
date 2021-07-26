@@ -26,8 +26,26 @@ static autogroup get_autogroup_from_str(const std::string &str) {
           {"nice", std::stol(str.substr(begin_nice_num, end_nice_num))}};
 }
 
-std::map<unsigned, autogroup> get_autogroup_map() {
-  std::map<unsigned, autogroup> autogroup_map = {};
+nlohmann::json get_autogroup_map() {
+  nlohmann::json autogroup_map = {};
+
+  const auto process_info_map = get_process_info_map();
+
+  for (nlohmann::json process_info : process_info_map) {
+    if (process_info["autogroup"] != nullptr) {
+      std::string autogroup_num =
+          std::to_string(static_cast<int>(process_info["autogroup"]["group"]));
+      if (!autogroup_map.contains(autogroup_num)) {
+        autogroup_map[autogroup_num] = nlohmann::json::object();
+        autogroup_map[autogroup_num]["nice"] =
+            process_info["autogroup"]["nice"];
+        autogroup_map[autogroup_num]["proc"] = nlohmann::json::object();
+      }
+      process_info.erase("autogroup");
+      std::string pid = std::to_string(static_cast<int>(process_info["pid"]));
+      autogroup_map[autogroup_num]["proc"][pid] = process_info;
+    }
+  }
 
   return autogroup_map;
 }

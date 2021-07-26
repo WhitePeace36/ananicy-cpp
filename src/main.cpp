@@ -135,7 +135,7 @@ int main(const int argc, const char **argv) {
     } else if (sub_action == "proc") {
       std::cout << process_info::get_process_info_map().dump(4) << std::endl;
     } else if (sub_action == "autogroup") {
-      std::cout << "Autogroups are not implemented yet." << std::endl;
+      std::cout << process_info::get_autogroup_map().dump(4) << std::endl;
     } else {
       spdlog::critical("Unknown sub-action for dump: {}", sub_action.value());
       std::exit(EXIT_FAILURE);

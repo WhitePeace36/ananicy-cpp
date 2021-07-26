@@ -9,6 +9,6 @@ using autogroup = nlohmann::json;
 
 using process_info = nlohmann::json;
 
-std::map<unsigned, autogroup> get_autogroup_map();
-nlohmann::json                get_process_info_map();
+nlohmann::json get_autogroup_map();
+nlohmann::json get_process_info_map();
 } // namespace process_info
