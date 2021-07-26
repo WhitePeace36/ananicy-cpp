@@ -1,4 +1,4 @@
-#define _XOPEN_SOURCE 700
+#define _XOPEN_SOURCE 700 // NOLINT(bugprone-reserved-identifier)
 
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 #include <format>
@@ -19,9 +19,7 @@
 #include <filesystem>
 #include <iostream>
 #include <mutex>
-#include <nlohmann/json.hpp>
-
-using json = nlohmann::json;
+#include <utility/process_info.hpp>
 
 using namespace std::chrono_literals;
 
@@ -103,7 +101,7 @@ int main(const int argc, const char **argv) {
   if (parser["manual-scanning"]) {
     spdlog::debug("Manual scanning enabled! Increasing Ananicy Nice value to "
                   "prevent lag.");
-    set_priority(get_pid(), 19);
+    priority::set_priority(get_pid(), 19);
   }
 
   service::set_status(service::STARTING);
@@ -135,9 +133,7 @@ int main(const int argc, const char **argv) {
     } else if (sub_action == "cgroups") {
       rules.show_rules(Rules::cgroups);
     } else if (sub_action == "proc") {
-      std::cout << "Ananicy Cpp doesn't use a proc map cache, so nothing to "
-                   "display here."
-                << std::endl;
+      std::cout << process_info::get_process_info_map().dump(4) << std::endl;
     } else if (sub_action == "autogroup") {
       std::cout << "Autogroups are not implemented yet." << std::endl;
     } else {
