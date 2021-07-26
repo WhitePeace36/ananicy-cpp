@@ -1,7 +1,7 @@
 # Ananicy Cpp
 [Ananicy](https://github.com/Nefelim4ag/Ananicy) rewritten in C++ for much lower CPU and memory usage.
 
-_Alpha+ status_
+_Beta status_
 
 ## What works
 
@@ -13,7 +13,9 @@ _Alpha+ status_
 - [X] Setting OOM score
 - [X] Change default configuration file and rules directory using environment variables (`ANANICY_CPP_{CONF,CONFDIR}`)
 - [X] Cgroups
-- [ ] Autogroup
+  - [ ] V1
+  - [X] V2
+- [X] Autogroup
 - [X] Systemd integration
   - [X] Unit file
   - [X] Hardening unit file
