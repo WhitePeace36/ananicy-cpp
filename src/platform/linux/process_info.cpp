@@ -51,7 +51,6 @@ nlohmann::json parse_proc_status(unsigned pid) {
     }
     status[name] = value;
   }
-  std::cerr << __func__ << ":\n" << status.dump(4) << std::endl;
   return status;
 }
 
@@ -152,11 +151,6 @@ static std::optional<process_info> get_process_info(unsigned pid) {
     }
 
     info["cmdline"] = cmdline;
-
-    //    if (status["Tgid"] != status["Pid"]) {
-    //      std::cout << "Found different process:\n" << info.dump(4) <<
-    //      std::endl; std::exit(10);
-    //    }
 
   } catch (const std::filesystem::filesystem_error &e) {
     spdlog::trace("{}: Error getting {} infos: {} ({}, {})", __func__, pid,
