@@ -1,4 +1,4 @@
-#define _XOPEN_SOURCE 700
+#define _XOPEN_SOURCE 700 // NOLINT(bugprone-reserved-identifier)
 
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 #include <format>
@@ -19,10 +19,7 @@
 #include <filesystem>
 #include <iostream>
 #include <mutex>
-#include <nlohmann/json.hpp>
 #include <utility/process_info.hpp>
-
-using json = nlohmann::json;
 
 using namespace std::chrono_literals;
 
