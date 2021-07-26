@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 /**
- * ioprio_set
+ * ioprio_(get|set)
  */
 
 #define IOPRIO_CLASS_SHIFT (13)
@@ -42,8 +42,12 @@ enum {
  */
 #define IOPRIO_NORM (4)
 
-int ioprio_set(__priority_which_t _which, id_t _who, int _prio) {
+static int ioprio_set(__priority_which_t _which, id_t _who, int _prio) {
   return (int)syscall(SYS_ioprio_set, _which, _who, _prio);
+}
+
+static int ioprio_get(__priority_which_t _which, id_t _who) {
+  return (int)syscall(SYS_ioprio_get, _which, _who);
 }
 
 /**
@@ -68,13 +72,13 @@ struct [[gnu::packed]] sched_attr {
   uint64_t sched_period;
 };
 
-int sched_setattr(pid_t pid, const struct sched_attr *attr,
-                  unsigned int flags) {
+static int sched_setattr(pid_t pid, const struct sched_attr *attr,
+                         unsigned int flags) {
   return (int)syscall(__NR_sched_setattr, pid, attr, flags);
 }
 
-int sched_getattr(pid_t pid, struct sched_attr *attr, unsigned int size,
-                  unsigned int flags) {
+static int sched_getattr(pid_t pid, struct sched_attr *attr, unsigned int size,
+                         unsigned int flags) {
   return (int)syscall(__NR_sched_getattr, pid, attr, size, flags);
 }
 
