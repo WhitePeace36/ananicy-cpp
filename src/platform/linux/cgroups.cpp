@@ -9,22 +9,46 @@
 #include <thread>
 
 inline std::filesystem::path get_cgroup_path(const std::string &cgroup_name) {
-  return control_groups::get_cgroup_version().path.append(cgroup_name);
+  auto  cgroup_info = control_groups::get_cgroup_version();
+  auto &base_path = cgroup_info.path;
+
+  std::filesystem::path cgroup_path;
+  switch (cgroup_info.version) {
+  case control_groups::cgroup_info::none:
+    break;
+  case control_groups::cgroup_info::v1:
+    cgroup_path.append("cpu").append(cgroup_name);
+    break;
+  case control_groups::cgroup_info::v2:
+    cgroup_path.append(cgroup_name);
+    break;
+  }
+  return cgroup_path;
 }
 
 int control_groups::create_cgroup(const std::string &name) {
   using namespace std::filesystem;
+
+  path cgroup_path;
+
   switch (get_cgroup_version().version) {
 
   case cgroup_info::none:
+    cgroup_path = get_cgroup_path(name);
     spdlog::warn(
         "Cgroups are not available on this platform (or are not enabled)");
     break;
   case cgroup_info::v1:
-    spdlog::warn("Cgroups v1 are not supported yet");
-    break;
+    cgroup_path = get_cgroup_path(name);
+    if (exists(cgroup_path)) {
+      spdlog::warn("cgroup v1 {:s} already exists, ignoring.", name);
+      return false;
+    }
+    spdlog::debug("Creating cgroup (v1) {:s} at {:s}", name,
+                  cgroup_path.string());
+
+    return create_directory(cgroup_path);
   case cgroup_info::v2:
-    path cgroup_path = get_cgroup_path(name);
     if (exists(cgroup_path)) {
       spdlog::warn("cgroup {:s} already exists, ignoring.", name);
       return false;
@@ -47,8 +71,26 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
     errors = 1;
     break;
   case cgroup_info::v1:
-    spdlog::trace("{}: Skipping because no cgroup v1 support yet", __func__);
-    errors = 1;
+    try {
+      path cpu_quota_path = get_cgroup_path(name).append("cpu.cfs_quota_us");
+      path cpu_period_path = get_cgroup_path(name).append("cpu.cfs_period_us");
+      unsigned period_us = 1000u * 1000u; // maximum is 1s
+      unsigned quota_us = period_us * std::thread::hardware_concurrency() *
+                          std::clamp(quota, 0u, 100u) / 100u;
+      std::ofstream{cpu_quota_path} << quota_us << std::endl;
+      std::ofstream{cpu_period_path} << period_us << std::endl;
+
+      std::string content_check;
+      std::getline(std::ifstream{cpu_quota_path}, content_check);
+
+      spdlog::debug(
+          "Set {} cpu quota to {:d} (period: {:d}) successfully: '{}' ({})",
+          name, quota, period_us, content_check, cpu_quota_path.string());
+    } catch (const std::filesystem::filesystem_error &e) {
+      spdlog::error("{}: cgroup v1 error: {} at {}", __func__, e.what(),
+                    e.path1().string());
+      errors = 1;
+    }
     break;
   case cgroup_info::v2:
     try {
@@ -85,8 +127,16 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
     errors = 1;
     break;
   case cgroup_info::v1:
-    spdlog::trace("{}: Skipping because no cgroup v1 support yet", __func__);
-    errors = 1;
+    try {
+      path cpu_procs_path = get_cgroup_path(cgroup_name).append("tasks");
+      std::ofstream(cpu_procs_path) << std::max(pid, 0) << std::endl;
+      spdlog::debug("Added pid {:d} to {} successfully", pid,
+                    cpu_procs_path.string());
+    } catch (const std::filesystem::filesystem_error &e) {
+      spdlog::error("{}: cgroup v1 error: {} at {}", __func__, e.what(),
+                    e.path1().string());
+      errors = 1;
+    }
     break;
   case cgroup_info::v2:
     try {
