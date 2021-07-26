@@ -148,7 +148,7 @@ static std::optional<process_info> get_process_info(unsigned pid) {
     std::getline(std::fstream(std::format("/proc/{}/stat", pid)), stat);
     info["stat"] = stat;
 
-    auto stat_name_begin = stat.find_first_of('(');
+    auto stat_name_begin = stat.find_first_of('(') + 1;
     auto stat_name_end = stat.find_first_of(')');
 
     info["stat_name"] =
