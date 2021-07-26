@@ -12,7 +12,7 @@
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 
-int test_errno(int errcode, const std::string &func_name, unsigned pid) {
+static int test_errno(int errcode, const std::string &func_name, unsigned pid) {
   if (errcode == 0) {
     spdlog::debug("{}: Successfully applied to {}", func_name, pid);
     return true;
@@ -31,6 +31,8 @@ int test_errno(int errcode, const std::string &func_name, unsigned pid) {
     return -1;
   }
 }
+
+namespace priority {
 
 bool set_priority(unsigned pid, int nice_value) {
   int errcode = 0;
@@ -141,3 +143,5 @@ bool set_oom_score_adjust(unsigned pid, int value) {
 
   return true;
 }
+
+} // namespace priority

@@ -39,7 +39,7 @@ void Worker::start() {
                 if (config->apply_nice() && rule.contains("nice")) {
                   spdlog::debug("Setting priority of {}({}) to {}", p.name,
                                 p.pid, to_string(rule["nice"]));
-                  ok = set_priority(p.pid, rule["nice"]);
+                  ok = priority::set_priority(p.pid, rule["nice"]);
                 }
 
                 if (!ok)
@@ -51,7 +51,7 @@ void Worker::start() {
                                          : 1u;
                   spdlog::debug("Setting scheduler of {}({}) to {}", p.name,
                                 p.pid, to_string(rule["sched"]));
-                  ok = set_sched(p.pid, rule["sched"], rt_prio);
+                  ok = priority::set_sched(p.pid, rule["sched"], rt_prio);
                 }
 
                 if (!ok)
@@ -65,7 +65,8 @@ void Worker::start() {
                       rule["ionice"].is_number_integer()) {
                     io_val = rule["ionice"];
                   }
-                  ok = set_io_priority(p.pid, rule["ioclass"], io_val);
+                  ok =
+                      priority::set_io_priority(p.pid, rule["ioclass"], io_val);
                 }
 
                 if (!ok)
@@ -76,7 +77,8 @@ void Worker::start() {
                   spdlog::debug("Setting OOM score adjustment of {}({}) to {}",
                                 p.name, p.pid,
                                 to_string(rule["oom_score_adj"]));
-                  ok = set_oom_score_adjust(p.pid, rule["oom_score_adj"]);
+                  ok = priority::set_oom_score_adjust(p.pid,
+                                                      rule["oom_score_adj"]);
                 }
 
                 if (config->apply_cgroups() && rule.contains("cgroup")) {

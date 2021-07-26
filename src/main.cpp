@@ -104,7 +104,7 @@ int main(const int argc, const char **argv) {
   if (parser["manual-scanning"]) {
     spdlog::debug("Manual scanning enabled! Increasing Ananicy Nice value to "
                   "prevent lag.");
-    set_priority(get_pid(), 19);
+    priority::set_priority(get_pid(), 19);
   }
 
   service::set_status(service::STARTING);
