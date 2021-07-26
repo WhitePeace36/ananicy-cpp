@@ -11,6 +11,8 @@
 
 pid_t get_pid();
 
+std::string get_command_from_pid(pid_t pid);
+
 struct Process {
   pid_t       pid;
   std::string name;

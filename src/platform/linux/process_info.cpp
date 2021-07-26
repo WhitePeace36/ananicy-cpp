@@ -3,6 +3,7 @@
 #include "core/priority.hpp"
 #include "syscalls.h"
 
+#include <core/process.hpp>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -42,7 +43,7 @@ nlohmann::json get_autogroup_map() {
         autogroup_map[autogroup_num]["proc"] = nlohmann::json::object();
       }
       process_info.erase("autogroup");
-      std::string pid = std::to_string(static_cast<int>(process_info["pid"]));
+      std::string pid = std::to_string(static_cast<int>(process_info["tpid"]));
       autogroup_map[autogroup_num]["proc"][pid] = process_info;
     }
   }
@@ -160,7 +161,7 @@ static std::optional<process_info> get_process_info(unsigned pid) {
       info["exe"] = nullptr;
     }
 
-    info["cmd"] = nullptr;
+    info["cmd"] = get_command_from_pid(pid);
 
     std::string stat;
     std::getline(std::fstream(std::format("/proc/{}/stat", pid)), stat);
