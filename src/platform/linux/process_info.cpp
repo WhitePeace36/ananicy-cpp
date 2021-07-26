@@ -83,6 +83,41 @@ static sched_attr get_sched_attributes(unsigned int pid) {
   return attr;
 }
 
+enum io_prio_class {
+  NONE = IOPRIO_CLASS_NONE,
+  REALTIME = IOPRIO_CLASS_RT,
+  BEST_EFFORT = IOPRIO_CLASS_BE,
+  IDLE = IOPRIO_CLASS_IDLE
+};
+
+struct io_prio_attributes {
+  io_prio_class io_class;
+  int           io_nice;
+};
+
+static io_prio_attributes get_io_prio_attributes(unsigned int pid) {
+  int io_prio_data = ioprio_get(IOPRIO_WHO_PROCESS, pid);
+  int io_nice = IOPRIO_PRIO_DATA(io_prio_data);
+
+  io_prio_class io_class;
+  switch (IOPRIO_PRIO_CLASS(io_prio_data)) {
+  case IOPRIO_CLASS_IDLE:
+    io_class = IDLE;
+    break;
+  case IOPRIO_CLASS_BE:
+    io_class = BEST_EFFORT;
+    break;
+  case IOPRIO_CLASS_RT:
+    io_class = REALTIME;
+    break;
+  default:
+    io_class = NONE;
+    break;
+  }
+
+  return io_prio_attributes{.io_class = io_class, .io_nice = io_nice};
+}
+
 static std::optional<process_info> get_process_info(unsigned pid) {
   if (!exists(std::filesystem::path(std::format("/proc/{}", pid))))
     return std::optional<process_info>();
@@ -130,7 +165,28 @@ static std::optional<process_info> get_process_info(unsigned pid) {
     info["rtprio"] = static_cast<unsigned>(sched_info.sched_priority);
     info["nice"] = static_cast<int>(sched_info.sched_nice);
 
-    info["ionice"] = ioprio_get(IOPRIO_WHO_PROCESS, pid);
+    auto io_data = get_io_prio_attributes(pid);
+
+    info["ionice"] = nlohmann::json::array();
+
+    std::string io_class_name;
+    switch (io_data.io_class) {
+    case NONE:
+      io_class_name = "none";
+    case REALTIME:
+      io_class_name = "realtime";
+    case BEST_EFFORT:
+      io_class_name = "best-effort";
+    case IDLE:
+      io_class_name = "idle";
+    }
+
+    info["ionice"][0] = io_class_name;
+    if (io_data.io_class == BEST_EFFORT) {
+      info["ionice"][1] = io_data.io_nice;
+    } else {
+      info["ionice"][1] = nullptr;
+    }
 
     unsigned oom_score_adj = 0;
     std::fstream(std::fstream(std::format("/proc/{}/oom_score_adj", pid))) >>
