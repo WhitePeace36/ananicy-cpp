@@ -106,8 +106,12 @@ int main(const int argc, const char **argv) {
 
   service::set_status(service::STARTING);
 
-  std::cout << std::format("Ananicy Cpp v{}.{}.{}", MAJOR_VERSION,
-                           MINOR_VERSION, PATCH_VERSION)
+  constexpr std::string_view commit_hash(COMMIT_HASH);
+
+  std::cout << std::format(
+                   "Ananicy Cpp v{}.{}.{}{}", MAJOR_VERSION, MINOR_VERSION,
+                   PATCH_VERSION,
+                   commit_hash.empty() ? "" : std::format("-{}", commit_hash))
             << std::endl;
 
   InterruptHandler ih({SIGINT, SIGTERM});
