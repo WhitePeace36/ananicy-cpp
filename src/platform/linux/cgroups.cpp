@@ -183,6 +183,12 @@ control_groups::cgroup_info control_groups::get_cgroup_version() {
               spdlog::warn("cgroup2 at {} are non-functional, skipping",
                            cgroup_path.string());
               break;
+            } else {
+              // Cleanup the cgroup we created
+              try {
+                std::filesystem::remove(test_cgroup);
+              } catch (const std::filesystem::filesystem_error &e) {
+              }
             }
             if (!std::filesystem::exists(
                     std::filesystem::path(test_cgroup).append("cpu.max"))) {
