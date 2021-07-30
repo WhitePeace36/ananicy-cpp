@@ -128,6 +128,7 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
                                       const std::string &cgroup_name) {
   using namespace std::filesystem;
   int errors = 0;
+  int error_code = 0;
   switch (get_cgroup_version().version) {
 
   case cgroup_info::none:
@@ -137,9 +138,26 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
   case cgroup_info::v1:
     try {
       path cpu_procs_path = get_cgroup_path(cgroup_name).append("tasks");
-      std::ofstream(cpu_procs_path) << std::max(pid, 0) << std::endl;
-      spdlog::debug("Added pid {:d} to {} successfully", pid,
-                    cpu_procs_path.string());
+      if (!exists(cpu_procs_path)) {
+        errors = 1;
+        spdlog::error("{}: cgroup path not found: {}", __func__,
+                      cpu_procs_path.string());
+        break;
+      }
+      errno = 0;
+      std::ofstream cpu_procs_file(cpu_procs_path);
+      cpu_procs_file << std::max(pid, 0) << std::endl;
+      error_code = errno;
+      if (cpu_procs_file) {
+        spdlog::debug("Added pid {:d} to {} successfully", pid,
+                      cpu_procs_path.string());
+      } else {
+        errors = 1;
+        spdlog::error(
+            "{}: cgroup v1 error: couldn't add task to cgroup {} ({})",
+            __func__, cpu_procs_path.string(), strerror(error_code));
+        break;
+      }
     } catch (const std::filesystem::filesystem_error &e) {
       spdlog::error("{}: cgroup v1 error: {} at {}", __func__, e.what(),
                     e.path1().string());
@@ -149,10 +167,25 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
   case cgroup_info::v2:
     try {
       path cpu_procs_path = get_cgroup_path(cgroup_name).append("cgroup.procs");
+      if (!exists(cpu_procs_path)) {
+        errors = 1;
+        spdlog::error("{}: cgroup path not found: {}", __func__,
+                      cpu_procs_path.string());
+        break;
+      }
+      errno = 0;
       std::fstream cpu_procs_file(cpu_procs_path);
-      cpu_procs_file << std::max(pid, 0);
-      spdlog::debug("Added pid {:d} to {} successfully", pid,
-                    cpu_procs_path.string());
+      cpu_procs_file << std::max(pid, 0) << std::endl;
+      error_code = errno;
+      if (cpu_procs_file) {
+        spdlog::debug("Added pid {:d} to {} successfully", pid,
+                      cpu_procs_path.string());
+      } else {
+        errors = 1;
+        spdlog::error("{}: cgroup error: couldn't add task to cgroup {} ({})",
+                      __func__, cpu_procs_path.string(), strerror(error_code));
+        break;
+      }
     } catch (const std::filesystem::filesystem_error &e) {
       spdlog::error("{}: cgroup error: {} at {}", __func__, e.what(),
                     e.path1().string());
