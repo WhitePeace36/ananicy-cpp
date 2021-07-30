@@ -50,7 +50,7 @@ bool set_priority(unsigned pid, int nice_value) {
                   e.path1().string());
     return false;
   } catch (const std::exception &e) {
-    spdlog::critical("{}: unknown exception: {} (path: {})", __func__,
+    spdlog::critical("{}: unknown exception: {}", __func__,
                      e.what());
   }
 
