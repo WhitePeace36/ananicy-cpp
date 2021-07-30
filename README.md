@@ -13,7 +13,7 @@ _Beta status_
 - [X] Setting OOM score
 - [X] Change default configuration file and rules directory using environment variables (`ANANICY_CPP_{CONF,CONFDIR}`)
 - [X] Cgroups
-  - [ ] V1
+  - [X] V1
   - [X] V2
 - [X] Autogroup
 - [X] Systemd integration
