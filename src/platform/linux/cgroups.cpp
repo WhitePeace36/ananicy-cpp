@@ -52,6 +52,7 @@ int control_groups::create_cgroup(const std::string &name) {
 
     return create_directory(cgroup_path);
   case cgroup_info::v2:
+    cgroup_path = get_cgroup_path(name);
     if (exists(cgroup_path)) {
       spdlog::warn("cgroup {:s} already exists, ignoring.", name);
       return false;
@@ -98,9 +99,10 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
   case cgroup_info::v2:
     try {
       path cpu_max_path = get_cgroup_path(name).append("cpu.max");
-      if (exists(cpu_max_path)) {
+      if (!exists(cpu_max_path)) {
         errors = 1;
-        spdlog::error("{}: cgroup v2 error: cpu.max not found!", __func__);
+        spdlog::error("{}: cgroup v2 error: cpu.max not found at {}!", __func__,
+                      cpu_max_path.string());
         break;
       }
       std::ofstream cpu_weight_file(cpu_max_path);
@@ -216,18 +218,18 @@ control_groups::cgroup_info control_groups::get_cgroup_version() {
               spdlog::warn("cgroup2 at {} are non-functional, skipping",
                            cgroup_path.string());
               break;
-            } else {
-              // Cleanup the cgroup we created
-              try {
-                std::filesystem::remove(test_cgroup);
-              } catch (const std::filesystem::filesystem_error &e) {
-              }
             }
-            if (!std::filesystem::exists(
-                    std::filesystem::path(test_cgroup).append("cpu.max"))) {
+            auto test_cgroup_cpumax =
+                std::filesystem::path(test_cgroup).append("cpu.max");
+            if (!std::filesystem::exists(test_cgroup_cpumax)) {
               spdlog::warn("cgroup2 at {} lack cpu.max, skipping",
-                           cgroup_path.string());
+                           test_cgroup_cpumax.string());
               break;
+            }
+            // Cleanup the cgroup we created
+            try {
+              std::filesystem::remove(test_cgroup);
+            } catch (const std::filesystem::filesystem_error &e) {
             }
             info = {.path = cgroup_path,
                     .version = cgroup_info::cgroup_version::v2};
