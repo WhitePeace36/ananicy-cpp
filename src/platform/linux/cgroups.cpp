@@ -8,16 +8,20 @@
 #include <spdlog/spdlog.h>
 #include <thread>
 
-inline std::filesystem::path get_cgroup_path(const std::string &cgroup_name) {
+static std::filesystem::path get_cgroup_path(const std::string &cgroup_name) {
   auto  cgroup_info = control_groups::get_cgroup_version();
   auto &base_path = cgroup_info.path;
 
-  std::filesystem::path cgroup_path;
+  spdlog::trace("{}: .path = {}, .version = {}", __func__,
+                cgroup_info.path.string(), cgroup_info.version);
+
+  std::filesystem::path cgroup_path{base_path};
   switch (cgroup_info.version) {
   case control_groups::cgroup_info::none:
     break;
   case control_groups::cgroup_info::v1:
     cgroup_path.append("cpu").append(cgroup_name);
+    spdlog::trace("{}: cgroup_path: {}", __func__, cgroup_path.string());
     break;
   case control_groups::cgroup_info::v2:
     cgroup_path.append(cgroup_name);
@@ -34,7 +38,6 @@ int control_groups::create_cgroup(const std::string &name) {
   switch (get_cgroup_version().version) {
 
   case cgroup_info::none:
-    cgroup_path = get_cgroup_path(name);
     spdlog::warn(
         "Cgroups are not available on this platform (or are not enabled)");
     break;
@@ -94,17 +97,22 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
     break;
   case cgroup_info::v2:
     try {
-      path          cpu_weight_path = get_cgroup_path(name).append("cpu.max");
-      std::ofstream cpu_weight_file(cpu_weight_path);
+      path cpu_max_path = get_cgroup_path(name).append("cpu.max");
+      if (exists(cpu_max_path)) {
+        errors = 1;
+        spdlog::error("{}: cgroup v2 error: cpu.max not found!", __func__);
+        break;
+      }
+      std::ofstream cpu_weight_file(cpu_max_path);
       unsigned      max_period = 100000u;
       unsigned      period = max_period * std::thread::hardware_concurrency() *
                         std::clamp(quota, 0u, 100u) / 100u;
       cpu_weight_file << std::format("{} {}", period, max_period) << std::endl;
       std::string content_check;
-      std::getline(std::ifstream{cpu_weight_path}, content_check);
+      std::getline(std::ifstream{cpu_max_path}, content_check);
       spdlog::debug(
           "Set {} cpu quota to {:d} (period: {:d}) successfully: '{}' ({})",
-          name, quota, period, content_check, cpu_weight_path.string());
+          name, quota, period, content_check, cpu_max_path.string());
     } catch (const std::filesystem::filesystem_error &e) {
       spdlog::error("{}: cgroup error: {} at {}", __func__, e.what(),
                     e.path1().string());
@@ -157,24 +165,56 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
 control_groups::cgroup_info control_groups::get_cgroup_version() {
   static std::optional<cgroup_info> info{};
   if (!info.has_value()) {
-    std::string  cgroup_path;
     std::fstream mtab("/etc/mtab");
     while (mtab) {
-      std::string word;
-      mtab >> word;
-      if (word.starts_with("cgroup2")) {
-        mtab >> cgroup_path;
-        info = {.path = cgroup_path,
-                .version = cgroup_info::cgroup_version::v2};
-        spdlog::trace("Found cgroup v2 at {}", cgroup_path);
-        break;
-      } else if (word.starts_with("cgroup")) {
-        if (!info.has_value()) {
-          mtab >> cgroup_path;
-          info = {.path = cgroup_path,
-                  .version = cgroup_info::cgroup_version::v1};
-          spdlog::trace("Found cgroup v1 at {}", cgroup_path);
+      std::string           word, line;
+      std::filesystem::path cgroup_path;
+      std::stringstream     ss;
+      std::getline(mtab, line);
+      spdlog::trace("{}: line = {}", __func__, line);
+      ss << line;
+      while (ss) {
+        ss >> word;
+        try {
+          if (word.starts_with("cgroup2")) {
+            ss >> cgroup_path;
+            std::filesystem::path test_cgroup(cgroup_path);
+            if (!create_directory(test_cgroup.append("ananicy_test_cgroup2"))) {
+              spdlog::warn("cgroup2 at {} are non-functional, skipping",
+                           cgroup_path.string());
+              break;
+            }
+            if (!std::filesystem::exists(
+                    std::filesystem::path(test_cgroup).append("cpu.max"))) {
+              spdlog::warn("cgroup2 at {} lack cpu.max, skipping",
+                           cgroup_path.string());
+              break;
+            }
+            info = {.path = cgroup_path,
+                    .version = cgroup_info::cgroup_version::v2};
+            spdlog::trace("Found cgroup v2 at {}", cgroup_path.string());
+            break;
+          } else if (word.starts_with("cgroup")) {
+            if (!info.has_value()) {
+              ss >> cgroup_path;
+              cgroup_path = cgroup_path.parent_path();
+              if (!std::filesystem::exists(
+                      std::filesystem::path(cgroup_path).append("cpu"))) {
+                spdlog::warn("cgroup at {} lack cpu controller, skipping",
+                             cgroup_path.string());
+                break;
+              }
+              info = {.path = cgroup_path,
+                      .version = cgroup_info::cgroup_version::v1};
+              spdlog::trace("Found cgroup v1 at {}", cgroup_path.string());
+            }
+          }
+        } catch (const std::filesystem::filesystem_error &e) {
+          spdlog::warn("{}: {} at {}", __func__, e.what(), e.path1().string());
         }
+      }
+      if (info.has_value()) {
+        break;
       }
     }
     if (!info.has_value()) {
