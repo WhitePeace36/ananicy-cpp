@@ -106,10 +106,9 @@ int main(const int argc, const char **argv) {
 
   service::set_status(service::STARTING);
 
-  constexpr std::string_view full_version(FULL_VERSION);
+  constexpr std::string_view version(VERSION);
 
-  std::cout << std::format(
-      "Ananicy Cpp {}", full_version) << std::endl;
+  std::cout << std::format("Ananicy Cpp {}", version) << std::endl;
 
   InterruptHandler ih({SIGINT, SIGTERM});
 
