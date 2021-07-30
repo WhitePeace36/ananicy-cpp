@@ -25,10 +25,10 @@ if(VERSION STREQUAL "0.0.0")
     endif()
 endif()
 message("Version: ${VERSION}")
-string(REGEX REPLACE "([0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9])?)(.*)" "\\1" CMAKE_VERSION "${VERSION}")
-message(STATUS "version for cmake: ${CMAKE_VERSION}")
+string(REGEX REPLACE "([0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9])?)(.*)" "\\1" VERSION_FOR_CMAKE "${VERSION}")
+message(STATUS "version for cmake: ${VERSION_FOR_CMAKE}")
 
-project(ananicy-cpp VERSION ${CMAKE_VERSION})
+project(ananicy-cpp VERSION ${VERSION_FOR_CMAKE})
 
 option(USE_EXTERNAL_JSON "Use an external JSON library" OFF)
 option(USE_EXTERNAL_SPDLOG "Use external Spdlog library" OFF)
