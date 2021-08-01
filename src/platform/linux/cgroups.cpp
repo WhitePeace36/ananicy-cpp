@@ -1,5 +1,6 @@
 #include "core/cgroups.hpp"
 
+#include <chrono>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -198,6 +199,8 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
 }
 
 control_groups::cgroup_info control_groups::get_cgroup_version() {
+  using namespace std::chrono_literals;
+
   static std::optional<cgroup_info> info{};
   if (!info.has_value()) {
     std::fstream mtab("/etc/mtab");
@@ -219,11 +222,15 @@ control_groups::cgroup_info control_groups::get_cgroup_version() {
                            cgroup_path.string());
               break;
             }
+            // Fix for https://gitlab.com/ananicy-cpp/ananicy-cpp/-/issues/21
+            // (hopefully)
+            std::this_thread::sleep_for(100ms);
             auto test_cgroup_cpumax =
                 std::filesystem::path(test_cgroup).append("cpu.max");
             if (!std::filesystem::exists(test_cgroup_cpumax)) {
-              spdlog::warn("cgroup2 at {} lack cpu.max, skipping",
-                           test_cgroup_cpumax.string());
+
+              spdlog::warn("cgroup2 at {} lacks cpu.max, skipping",
+                           test_cgroup.string());
               break;
             }
             // Cleanup the cgroup we created
