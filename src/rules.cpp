@@ -6,8 +6,8 @@
 #include "core/cgroups.hpp"
 #include <fstream>
 #include <iostream>
-#include <queue>
 #include <spdlog/spdlog.h>
+#include <stack>
 
 using std::filesystem::path;
 
@@ -90,13 +90,12 @@ void Rules::show_rules(rule_type type) {
   std::cout << rules_display.dump(4) << std::endl;
 }
 
-void Rules::load_rules_from_directory(
-    const std::filesystem::path &dir_path) { // NOLINT(misc-no-recursion)
-  std::queue<path> directories;
+void Rules::load_rules_from_directory(const std::filesystem::path &dir_path) {
+  std::stack<path> directories;
   directories.emplace(dir_path);
 
   while (!directories.empty()) {
-    const path directory = directories.front();
+    const path directory = directories.top();
     spdlog::debug("Scanning directory {}", directory.string());
     directories.pop();
 
