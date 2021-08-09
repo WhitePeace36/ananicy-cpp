@@ -23,14 +23,17 @@ void print_file(const std::string &path) {
 template <> void print_debug_for_issue<21>() {
   print_file("/etc/mtab");
 
-  const auto cgroup_path = control_groups::get_cgroup_version().path;
-  std::cout << std::format("#### BEGIN listing files in {0} #####\n",
-                           cgroup_path.string());
-  for (const auto &file : std::filesystem::directory_iterator(cgroup_path)) {
-    std::cout << file << std::endl;
+  const auto cgroup_info = control_groups::get_cgroup_version();
+  if (cgroup_info.version != control_groups::cgroup_info::none) {
+    std::cout << std::format("#### BEGIN listing files in {0} #####\n",
+                             cgroup_info.path.string());
+    for (const auto &file :
+         std::filesystem::directory_iterator(cgroup_info.path)) {
+      std::cout << file << std::endl;
+    }
+    std::cout << std::format("#### END listing files in {0} #####\n",
+                             cgroup_info.path.string());
   }
-  std::cout << std::format("#### END listing files in {0} #####\n",
-                           cgroup_path.string());
 
   std::cout << std::format("Unit name: {}", service::get_unit_name())
             << std::endl;
