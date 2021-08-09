@@ -13,4 +13,5 @@ void reload() { spdlog::warn("{}: Not implemented yet", __func__); }
 
 void stop() { spdlog::warn("{}: Not implemented yet", __func__); }
 
+std::string get_unit_name() { return "<not using systemd>"; }
 } // namespace service
