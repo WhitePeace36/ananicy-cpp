@@ -102,6 +102,11 @@ static sched_attr get_sched_attributes(unsigned int pid) {
   return attr;
 }
 
+bool is_realtime(unsigned pid) {
+  sched_attr attr = get_sched_attributes(pid);
+  return attr.sched_priority > 0;
+}
+
 enum io_prio_class {
   NONE = IOPRIO_CLASS_NONE,
   REALTIME = IOPRIO_CLASS_RT,
