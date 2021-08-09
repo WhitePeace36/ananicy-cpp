@@ -198,10 +198,15 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
   return errors;
 }
 
-control_groups::cgroup_info control_groups::get_cgroup_version() {
+control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
   using namespace std::chrono_literals;
 
   static std::optional<cgroup_info> info{};
+
+  if (reset) {
+    info.reset();
+  }
+
   if (!info.has_value()) {
     std::fstream mtab("/etc/mtab");
     while (mtab) {
