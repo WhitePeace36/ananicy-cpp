@@ -12,5 +12,6 @@ int         create_cgroup(const std::string &name);
 int         set_cgroup_cpu_quota(const std::string &name, unsigned quota);
 int         add_pid_to_cgroup(pid_t pid, const std::string &cgroup_name);
 cgroup_info get_cgroup_version();
+std::string get_cgroup_for_pid(pid_t pid);
 
 } // namespace control_groups
