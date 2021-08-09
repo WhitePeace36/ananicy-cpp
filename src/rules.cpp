@@ -134,6 +134,7 @@ void Rules::load_rules_from_directory(const std::filesystem::path &dir_path) {
 }
 
 void Rules::create_cgroups() {
+  spdlog::info("Creating Cgroups...");
   for (const auto &cgroup_rule : cgroup_rules) {
     control_groups::create_cgroup(cgroup_rule.first);
     if (cgroup_rule.second.contains("CPUQuota")) {

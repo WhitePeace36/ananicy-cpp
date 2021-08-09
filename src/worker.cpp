@@ -5,6 +5,7 @@
 #include "core/worker.hpp"
 #include "core/cgroups.hpp"
 #include "core/priority.hpp"
+#include "utility/process_info.hpp"
 #include <chrono>
 #include <spdlog/spdlog.h>
 using namespace std::chrono_literals;
@@ -19,12 +20,17 @@ void Worker::start() {
   std::function<void(std::stop_token)> worker(
       [this, func_name = __func__](const std::stop_token &stop_token) {
         std::optional<Process> proc;
+        const bool             is_affected_by_cgroup_bug =
+            control_groups::get_cgroup_version().version ==
+            control_groups::cgroup_info::v2;
         while (!stop_token.stop_requested()) {
           while ((proc = process_queue->poll(500ms)).has_value()) {
             Process &p = proc.value();
             json     rule = rules->get_rule(p.name);
 
             processed_count++;
+
+            const bool is_realtime = process_info::is_realtime(p.pid);
 
             if (!rule.is_null()) {
               if (spdlog::should_log(spdlog::level::debug)) {
@@ -81,7 +87,11 @@ void Worker::start() {
                                                       rule["oom_score_adj"]);
                 }
 
-                if (config->apply_cgroups() && rule.contains("cgroup")) {
+                if (is_realtime && config->cgroup_realtime_workaround() &&
+                    is_affected_by_cgroup_bug) {
+                  spdlog::debug("Cgroups are not compatible with realtime "
+                                "scheduling for now (linux limitation)");
+                } else if (config->apply_cgroups() && rule.contains("cgroup")) {
                   spdlog::debug("Adding process {}({}) to cgroup {}", p.name,
                                 p.pid, to_string(rule["cgroup"]));
                   ok = control_groups::add_pid_to_cgroup(p.pid, rule["cgroup"]);
@@ -91,6 +101,13 @@ void Worker::start() {
                     "{}: unhandled exception: {} (comm: {}, pid: {})",
                     func_name, e.what(), p.name, p.pid);
               }
+            }
+
+            if (is_realtime && config->cgroup_realtime_workaround() &&
+                is_affected_by_cgroup_bug) {
+              spdlog::debug("Moving realtime process {}({}) to root cgroup",
+                            p.name, p.pid);
+              control_groups::add_pid_to_cgroup(p.pid, "");
             }
           }
         }

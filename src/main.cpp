@@ -158,7 +158,6 @@ int main(const int argc, const char **argv) {
   rules.show_all_rules();
 
   control_groups::get_cgroup_version();
-  spdlog::info("Creating Cgroups...");
   rules.create_cgroups();
 
   ProcessQueue processListener;
@@ -168,6 +167,14 @@ int main(const int argc, const char **argv) {
   Worker worker(&rules, &conf, &processListener.process_queue);
 
   worker.start();
+
+  if (conf.cgroup_realtime_workaround()) {
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(100ms);
+    spdlog::debug("Cgroup realtime workaround requested, re-checking cgroups");
+    control_groups::get_cgroup_version(true);
+    rules.create_cgroups();
+  }
 
   service::set_status(service::STARTED);
 
