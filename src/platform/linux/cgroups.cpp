@@ -222,9 +222,32 @@ control_groups::cgroup_info control_groups::get_cgroup_version() {
                            cgroup_path.string());
               break;
             }
-            // Fix for https://gitlab.com/ananicy-cpp/ananicy-cpp/-/issues/21
-            // (hopefully)
-            std::this_thread::sleep_for(100ms);
+
+            auto controllers_path =
+                std::filesystem::path(test_cgroup).append("cgroup.controllers");
+            std::fstream controllers_file;
+            controllers_file.exceptions(std::fstream::failbit);
+            controllers_file.open(controllers_path);
+
+            bool has_cpu_controller = false;
+            while (controllers_file) {
+              controllers_file >> word;
+              if (word == "cpu") {
+                spdlog::trace("{}: Found {} controller in {}", __func__, word,
+                              controllers_path.string());
+                has_cpu_controller = true;
+                break;
+              }
+            }
+
+            if (!has_cpu_controller) {
+
+              spdlog::warn("cgroup2 at {} doesn't have a cpu controller "
+                           "available, skipping",
+                           test_cgroup.string());
+              break;
+            }
+
             auto test_cgroup_cpumax =
                 std::filesystem::path(test_cgroup).append("cpu.max");
             if (!std::filesystem::exists(test_cgroup_cpumax)) {
