@@ -79,4 +79,6 @@ std::optional<std::string> get_env(const std::string &name);
 
 std::string get_error_string(int error_number);
 
+std::string read_file(const std::string &path);
+
 #endif // ANANICY_CPP_UTILS_HPP

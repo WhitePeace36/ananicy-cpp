@@ -5,6 +5,7 @@
 #include <cerrno>
 #include <csignal>
 #include <cstring>
+#include <fstream>
 #include <functional>
 bool InterruptHandler::should_exit() const { return this->need_exit; }
 
@@ -37,4 +38,19 @@ std::string get_error_string(int error_number) {
   std::string msg;
   msg.append(strerror(error_number));
   return msg;
+}
+
+std::string read_file(const std::string &path) {
+  constexpr std::size_t read_size = 4096;
+  auto                  file_stream = std::ifstream(path);
+  file_stream.exceptions(std::ios_base::badbit);
+
+  std::string data;
+  std::string buffer(read_size, '\0');
+  while (file_stream.read(&buffer[0], read_size)) {
+    data.append(buffer, 0, file_stream.gcount());
+  }
+  data.append(buffer, 0, file_stream.gcount());
+
+  return data;
 }
