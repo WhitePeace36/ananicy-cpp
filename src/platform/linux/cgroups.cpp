@@ -222,8 +222,16 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
           if (word.starts_with("cgroup2")) {
             ss >> cgroup_path;
             std::filesystem::path test_cgroup(cgroup_path);
-            if (!create_directory(test_cgroup.append("ananicy_test_cgroup2"))) {
-              spdlog::warn("cgroup2 at {} are non-functional, skipping",
+            test_cgroup.append("ananicy_test_cgroup2");
+
+            if (std::filesystem::exists(test_cgroup)) {
+              if (!std::filesystem::remove(test_cgroup)) {
+                spdlog::warn("Couldn't delete {}", test_cgroup.string());
+              }
+            }
+
+            if (!create_directory(test_cgroup)) {
+              spdlog::warn("can't create new cgroup(2) at {}, skipping",
                            cgroup_path.string());
               break;
             }
