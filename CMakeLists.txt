@@ -54,6 +54,7 @@ check_cxx_compiler_flag("-g3" CXX_ACCEPTS_G3)
 check_cxx_compiler_flag("-g" CXX_ACCEPTS_G)
 check_cxx_compiler_flag("-Og" CXX_ACCEPTS_OG)
 check_cxx_compiler_flag("-flto" CXX_ACCEPTS_FLTO)
+check_cxx_compiler_flag("-march=native" CXX_ACCEPTS_MARCH_NATIVE)
 check_cxx_compiler_flag("-fsanitize=undefined" CXX_ACCEPTS_SANITIZE)
 set(CMAKE_MESSAGE_CONTEXT "")
 
@@ -77,6 +78,10 @@ endif()
 
 if(CXX_ACCEPTS_SANITIZE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+endif()
+
+if(OPTIMIZE_FOR_NATIVE_MICROARCH AND CXX_ACCEPTS_MARCH_NATIVE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 endif()
 
 if(STATIC)
