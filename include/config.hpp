@@ -32,7 +32,7 @@ public:
   bool rule_load() { return check_rule("rule_load"); }
 
   bool cgroup_realtime_workaround() {
-    return check_rule("cgroup_realtime_workaround", false);
+    return check_rule("cgroup_realtime_workaround", true);
   }
 
   spdlog::level::level_enum loglevel() {
