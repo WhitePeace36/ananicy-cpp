@@ -113,6 +113,7 @@ list(APPEND HEADERS
         include/service.hpp
         include/utility/backtrace.hpp
         include/utility/argument_parser.hpp
+        include/utility/debug.hpp
         include/utility/process_info.hpp)
 
 list(APPEND LINUX_SOURCES
@@ -121,6 +122,7 @@ list(APPEND LINUX_SOURCES
         src/platform/linux/syscalls.h
         src/platform/linux/backtrace.cpp
         src/platform/linux/cgroups.cpp
+        src/platform/linux/debug.cpp
         src/platform/linux/process_info.cpp)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")

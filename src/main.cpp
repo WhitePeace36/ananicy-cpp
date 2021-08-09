@@ -12,6 +12,8 @@
 #include "core/worker.hpp"
 #include "service.hpp"
 #include "utility/argument_parser.hpp"
+#include "utility/debug.hpp"
+#include "utility/process_info.hpp"
 #include "utility/utils.hpp"
 #include "version.hpp"
 #include <csignal>
@@ -19,7 +21,6 @@
 #include <filesystem>
 #include <iostream>
 #include <mutex>
-#include <utility/process_info.hpp>
 
 using namespace std::chrono_literals;
 
@@ -124,7 +125,7 @@ int main(const int argc, const char **argv) {
     spdlog::info("Starting Ananicy");
   } else if (action == "dump") {
     if (!sub_action.has_value()) {
-      spdlog::error("A sub-action must be specified for dump.");
+      spdlog::error("A sub-action must be specified for {}.", action.value());
       std::exit(EXIT_FAILURE);
     } else if (sub_action == "rules") {
       rules.show_rules(Rules::rules);
@@ -139,6 +140,15 @@ int main(const int argc, const char **argv) {
     } else {
       spdlog::critical("Unknown sub-action for dump: {}", sub_action.value());
       std::exit(EXIT_FAILURE);
+    }
+    std::exit(EXIT_SUCCESS);
+  } else if (action == "debug") {
+
+    if (!sub_action.has_value()) {
+      spdlog::error("A sub-action must be specified for {}.", action.value());
+      std::exit(EXIT_FAILURE);
+    } else if (sub_action == "cgroups") {
+      ananicy_debug::print_debug_for_issue<21>();
     }
     std::exit(EXIT_SUCCESS);
   } else {
