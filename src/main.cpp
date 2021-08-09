@@ -143,7 +143,7 @@ int main(const int argc, const char **argv) {
     }
     std::exit(EXIT_SUCCESS);
   } else if (action == "debug") {
-
+    spdlog::set_level(spdlog::level::trace);
     if (!sub_action.has_value()) {
       spdlog::error("A sub-action must be specified for {}.", action.value());
       std::exit(EXIT_FAILURE);
