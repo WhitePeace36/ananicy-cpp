@@ -142,6 +142,7 @@ void Rules::create_cgroups() {
           cgroup_rule.first, cgroup_rule.second["CPUQuota"].get<unsigned>());
     }
   }
+  spdlog::info("Finished creating Cgroups...");
 }
 
 json Rules::get_rule(const std::string &name) {
