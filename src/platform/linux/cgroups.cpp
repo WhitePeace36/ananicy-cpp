@@ -239,7 +239,7 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
             auto controllers_path =
                 std::filesystem::path(test_cgroup).append("cgroup.controllers");
             std::fstream controllers_file;
-            controllers_file.exceptions(std::fstream::failbit);
+            // controllers_file.exceptions(std::fstream::failbit);
             controllers_file.open(controllers_path);
 
             bool has_cpu_controller = false;
