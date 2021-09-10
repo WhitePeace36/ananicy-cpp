@@ -295,9 +295,11 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
           }
         } catch (const std::filesystem::filesystem_error &e) {
           spdlog::warn("{}: {} at {}", __func__, e.what(), e.path1().string());
+          break;
         } catch (const std::ios::failure &e) {
           spdlog::warn("{}: {}, message: {}", __func__, e.what(),
                        e.code().message());
+          break;
         }
       }
       if (info.has_value()) {
