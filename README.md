@@ -25,6 +25,15 @@ _Beta status_
 
 ## Installation
 
+#### Dependencies
+
+- [CMake](https://cmake.org/download/) 3.17+
+- [fmtlib](https://github.com/fmtlib/fmt) 8.0+ _(can be automatically downloaded)_
+- [spdlog](https://github.com/gabime/spdlog) 1.9+ _(can be automatically downloaded)_
+- [nlohmann_json](https://github.com/nlohmann/json) 3.9+ _(can be automatically downloaded)_
+- C++ compiler compatible with C++20,
+- _Optional_: libsystemd (if you want systemd support)
+
 ### Linux
 Almost a drop-in replacement from Ananicy.
 
@@ -36,6 +45,14 @@ cmake -DCMAKE_RELEASE_TYPE=Release ..
 cmake --build .
 sudo cmake --install .
 ```
+
+#### Available CMake options
+
+- `USE_EXTERNAL_JSON`: Use system nlohmann_json library,
+- `USE_EXTERNAL_SPDLOG`: Use system spdlog library,
+- `USE_EXTERNAL_FMTLIB`: Use system fmtlib,
+- `ENABLE_SYSTEMD`: Add systemd support,
+- `STATIC`: Build a static binary,
 
 To enable the systemd service, just run:
 ```
@@ -49,7 +66,7 @@ and it should be done.
 There is an AUR package named `ananicy-cpp`, which is maintained by me.
 You can simply use your preferred AUR-helper to install it.
 
-There is also binaries in `chaotic-aur`, although `ananicy-cpp` is quite fast to build.
+There is also binaries in `chaotic-aur`, although `ananicy-cpp` is relatively fast to build.
 
 
 ## Configuration
@@ -75,7 +92,13 @@ The syntax is the following:
 It can then be used in any rule by simply adding the `type` property to the rule.
 For instance, `{"name": "gcc", "type": "compiler"}`
 
-## Why rewritting ananicy?
+### Community rules
+
+#### From the original project
+
+You can use the original Ananicy's rules by copying the `00-default`, `00-types.types` and `00-cgroups.cgroups` to you `ananicy.d` directory (by default, in `/etc`).
+
+## Why rewriting ananicy?
 I mostly used Ananicy on older computers to improve interactivity. However, having Ananicy use megabytes of RAM
 and a decent amount of CPU time troubled me. Thus I decided to rewrite it in C++, using an event based approach.
 RAM usage is much lower (only a few thousands of bytes !), and CPU usage is almost always zero thanks to its
