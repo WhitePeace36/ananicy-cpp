@@ -154,9 +154,10 @@ std::string get_command_from_pid(pid_t pid) {
       std::string exe_name = exe_path.filename().string();
       auto exe_name_end = exe_name.find_last_not_of(" (deleted)");
       if (exe_name_end != std::string::npos) {
-        exe_name = exe_name.substr(0, exe_name_end);
+        exe_name = exe_name.substr(0, exe_name_end+1);
       }
       spdlog::debug("{}: exe filename: {}", __func__, exe_name);
+      return exe_name;
     } else {
       spdlog::debug("{}: read symlink failed: {}", __func__, ec.message());
     }
