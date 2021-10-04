@@ -149,6 +149,8 @@ static std::optional<process_info> get_process_info(unsigned pid) {
   process_info info = nlohmann::json::object();
 
   try {
+    std::error_code ec;
+
     nlohmann::json status = parse_proc_status(pid);
     if (status["PPid"] == 0) {
       spdlog::trace("{}: {} is a kernel thread, skipping", __func__, pid);
@@ -159,12 +161,14 @@ static std::optional<process_info> get_process_info(unsigned pid) {
 
     info["tpid"] = pid;
 
-    try {
-      info["exe"] =
-          std::filesystem::read_symlink(std::format("/proc/{}/exe", pid));
-    } catch (const std::filesystem::filesystem_error &e) {
+    info["exe"] =
+        std::filesystem::read_symlink(std::format("/proc/{}/exe", pid), ec);
+    if (ec)
       info["exe"] = nullptr;
-    }
+
+    std::string comm;
+    std::getline(std::fstream(std::format("/proc/{}/comm", pid)), comm);
+    info["comm"] = comm;
 
     info["cmd"] = get_command_from_pid(pid);
 
