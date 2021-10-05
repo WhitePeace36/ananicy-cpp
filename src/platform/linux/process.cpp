@@ -143,47 +143,37 @@ std::string get_command_from_pid(pid_t pid) {
 
   // Building path
   try {
-    std::filesystem::path proc_path(std::format("/proc/{}/comm", pid));
+    std::filesystem::path proc_path(std::format("/proc/{}/exe", pid));
 
     if (!exists(proc_path))
       return command;
 
-    std::fstream pid_info(proc_path);
-
-    command.clear();
-    pid_info >> command;
-
-    /* Workaround for:
-     * https://stackoverflow.com/questions/23534263/what-is-the-maximum-allowed-limit-on-the-length-of-a-process-name
-     */
-    if (command.length() == 16 - 1) {
-      std::fstream cmdline_file(std::format("/proc/{}/cmdline", pid));
-      std::string  cmdline;
-
-      std::getline(cmdline_file, cmdline);
-
-      size_t command_pos = cmdline.find(command);
-      if (!cmdline.empty() && command_pos != std::string::npos) {
-        spdlog::trace("{}: pid: {}, Cmdline: {}", __func__, pid, cmdline);
-
-        size_t command_pos_end = command_pos;
-        while (cmdline[command_pos_end + 1] != '\0' &&
-               command_pos_end + 1 < cmdline.length()) {
-          command_pos_end++;
-        }
-        spdlog::trace(
-            "{}: command_pos = {}, command_pos_end = {}, cmdline.length = {}",
-            __func__, command_pos, command_pos_end, cmdline.length());
-        const std::string new_command =
-            cmdline.substr(command_pos, command_pos_end - command_pos + 1);
-        spdlog::debug("Fixed command: new: {:s}, original: {:s}", new_command,
-                      command);
-        command = new_command;
-      } else {
-        spdlog::trace("Couldn't find command '{}' in cmdline '{}'", command,
-                      cmdline);
+    std::error_code ec {};
+    std::filesystem::path exe_path = read_symlink(proc_path, ec);
+    if (!ec) {
+      std::string exe_name = exe_path.filename().string();
+      auto exe_name_end = exe_name.find_last_not_of(" (deleted)");
+      if (exe_name_end != std::string::npos) {
+        exe_name = exe_name.substr(0, exe_name_end+1);
       }
+      spdlog::debug("{}: exe filename: {}", __func__, exe_name);
+      return exe_name;
+    } else {
+      spdlog::debug("{}: read symlink failed: {}", __func__, ec.message());
     }
+
+    std::fstream cmdline_file(std::format("/proc/{}/cmdline", pid));
+    std::string  cmdline;
+
+    std::getline(cmdline_file, cmdline);
+    auto exe_name_begin = cmdline.find_last_of('/');
+
+    if (exe_name_begin != std::string::npos) {
+      return cmdline.substr(exe_name_begin + 1);
+    } else {
+      return cmdline;
+    }
+
   } catch (const std::filesystem::filesystem_error &e) {
     spdlog::error("{}: filesystem error: {} (path: {})", __func__, e.what(),
                   e.path1().string());
