@@ -18,6 +18,9 @@
 #include <thread>
 #include <unistd.h>
 
+#include "process_helpers.hpp"
+
+
 static int connect_netlink_socket() {
 
   errno = 0;
@@ -139,39 +142,45 @@ static int handle_events(int nl_sock, atomic_queue<Process> *queue,
 }
 
 std::string get_command_from_pid(pid_t pid) {
-  std::string command = "<unknown>";
-
-  // Building path
+  // Exe method
   try {
     std::filesystem::path proc_path(std::format("/proc/{}/exe", pid));
 
-    if (!exists(proc_path))
-      return command;
-
-    std::error_code ec {};
+    std::error_code ec{};
     std::filesystem::path exe_path = read_symlink(proc_path, ec);
     if (!ec) {
       std::string exe_name = exe_path.filename().string();
-      auto exe_name_end = exe_name.find_last_not_of(" (deleted)");
+      auto exe_name_end = exe_name.find(" (deleted)");
       if (exe_name_end != std::string::npos) {
-        exe_name = exe_name.substr(0, exe_name_end+1);
+        exe_name = exe_name.substr(0, exe_name_end + 1);
       }
       spdlog::debug("{}: exe filename: {}", __func__, exe_name);
       return exe_name;
     } else {
       spdlog::debug("{}: read symlink failed: {}", __func__, ec.message());
     }
+  } catch (const std::filesystem::filesystem_error &e) {
+    spdlog::error("{}: filesystem error: {} (path: {})", __func__, e.what(),
+                  e.path1().string());
+  }
 
-    std::fstream cmdline_file(std::format("/proc/{}/cmdline", pid));
-    std::string  cmdline;
 
-    std::getline(cmdline_file, cmdline);
-    auto exe_name_begin = cmdline.find_last_of('/');
 
-    if (exe_name_begin != std::string::npos) {
-      return cmdline.substr(exe_name_begin + 1);
-    } else {
-      return cmdline;
+  // Cmdline method
+  try {
+
+    std::vector<std::string> cmdline = process_info::get_cmdline_from_pid(pid);
+    if (cmdline.size() > 0) {
+      auto exe_name_begin = cmdline[0].find_last_of('/');
+
+      spdlog::debug("{}: exe_name_begin: {}, cmdline: {}", __func__,
+                    exe_name_begin, cmdline);
+
+      if (exe_name_begin != std::string::npos) {
+        return cmdline[0].substr(exe_name_begin);
+      } else {
+        return cmdline[0];
+      }
     }
 
   } catch (const std::filesystem::filesystem_error &e) {
@@ -179,7 +188,19 @@ std::string get_command_from_pid(pid_t pid) {
                   e.path1().string());
   }
 
-  return command;
+  // Comm method
+  try {
+    std::fstream comm_file(std::format("/proc/{}/comm", pid));
+    std::string  comm;
+
+    std::getline(comm_file, comm);
+    return comm;
+  } catch (const std::filesystem::filesystem_error &e) {
+    spdlog::error("{}: filesystem error: {} (path: {})", __func__, e.what(),
+                  e.path1().string());
+  }
+
+  return { "<unknown>" };
 }
 
 struct ProcessQueue::Socket {

@@ -12,6 +12,8 @@
 #include <queue>
 #include <spdlog/spdlog.h>
 
+#include "process_helpers.hpp"
+
 namespace process_info {
 
 static autogroup get_autogroup_from_str(const std::string &str) {
@@ -221,20 +223,7 @@ static std::optional<process_info> get_process_info(unsigned pid) {
         oom_score_adj;
     info["oom_score_adj"] = oom_score_adj;
 
-    std::string cmdline_value;
-    std::getline(std::fstream(std::format("/proc/{}/cmdline", pid)),
-                 cmdline_value);
-    std::vector<std::string> cmdline;
-
-    size_t start_pos;
-    size_t end_pos = 0;
-    while ((start_pos = cmdline_value.find_first_not_of('\0', end_pos)) !=
-           std::string::npos) {
-      end_pos = cmdline_value.find('\0', start_pos);
-      cmdline.push_back(cmdline_value.substr(start_pos, end_pos - start_pos));
-    }
-
-    info["cmdline"] = cmdline;
+    info["cmdline"] = get_cmdline_from_pid(pid);
 
   } catch (const std::filesystem::filesystem_error &e) {
     spdlog::trace("{}: Error getting {} infos: {} ({}, {})", __func__, pid,
