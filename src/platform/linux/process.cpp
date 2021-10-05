@@ -177,7 +177,7 @@ std::string get_command_from_pid(pid_t pid) {
                     exe_name_begin, cmdline);
 
       if (exe_name_begin != std::string::npos) {
-        return cmdline[0].substr(exe_name_begin);
+        return cmdline[0].substr(exe_name_begin+1);
       } else {
         return cmdline[0];
       }
