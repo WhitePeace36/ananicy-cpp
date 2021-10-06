@@ -58,6 +58,7 @@ argument_parser::parse_args(const std::vector<std::string> &params) {
           arg.set_value("true");
         } else if (value.has_value()) {
           arg.set_value(value.value());
+          i++;
         } else {
           return_result = std::format(
               "Expected argument for parameter '{}', none were found!",
@@ -76,6 +77,7 @@ argument_parser::parse_args(const std::vector<std::string> &params) {
             arg.set_value("true");
           } else if (value.has_value()) {
             arg.set_value(value.value());
+            i++;
           } else {
             return_result = std::format(
                 "Expected argument for parameter '{}', none were found!",
