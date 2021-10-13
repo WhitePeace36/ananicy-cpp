@@ -47,6 +47,10 @@ int main(const int argc, const char **argv) {
   parser.add_argument()
       .name("--benchmark")
       .description("Should we activate benchmark mode or not");
+  parser.add_argument()
+      .name("--benchmark-count")
+      .type(typeid(uint))
+      .description("How many pids to process before stopping");
 
   parser.add_argument()
       .name("--manual-scanning")
@@ -97,6 +101,10 @@ int main(const int argc, const char **argv) {
 
   if (parser["benchmark"]) {
     spdlog::warn("Benchmark enabled!");
+  }
+  std::optional<uint> benchmark_count = parser["benchmark-count"].value<uint>();
+  if (benchmark_count.has_value()) {
+    spdlog::warn("Benchmark count: {}", benchmark_count.value());
   }
 
   if (parser["manual-scanning"]) {
@@ -179,8 +187,14 @@ int main(const int argc, const char **argv) {
   service::set_status(service::STARTED);
 
   while (!ih.should_exit()) {
-    ih.wait_for(1min);
-    if (ih.should_exit() || parser["benchmark"])
+    if (parser["benchmark"])
+      processListener.process_queue.wait_for(30s);
+    else
+      ih.wait_for(1min);
+
+    if (ih.should_exit() || parser["benchmark"] ||
+        (benchmark_count.has_value() &&
+         worker.processed_processes() >= benchmark_count))
       break;
 
     if (parser["manual-scanning"]) {

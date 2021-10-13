@@ -1,9 +1,11 @@
 #pragma once
 
 #include <atomic>
+#include <concepts>
 #include <format>
 #include <map>
 #include <optional>
+#include <spdlog/spdlog.h>
 #include <string>
 #include <typeindex>
 #include <unordered_map>
@@ -34,6 +36,20 @@ public:
       : m_value(std::move(value)), m_type(type) {}
 
   operator std::optional<std::string>() const { return m_value; }
+
+  template <std::integral T> std::optional<T> value() const {
+    spdlog::debug("{}: m_value = {}", __func__, m_value.value_or("N/A"));
+
+    if (!m_value.has_value())
+      return {};
+
+    if constexpr (std::signed_integral<T>) {
+      return std::stoll(m_value.value());
+    } else {
+      return std::stoull(m_value.value());
+    }
+  }
+
   operator bool() const;
 };
 

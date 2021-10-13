@@ -48,6 +48,13 @@ public:
     return {};
   }
 
+  template <typename Rep, typename Period>
+  bool wait_for(std::chrono::duration<Rep, Period> timeout) {
+    std::unique_lock<std::mutex> lock(m_mutex);
+    return m_cond_not_empty.wait_for(lock, timeout,
+                                     [this] { return !m_queue.empty(); });
+  }
+
   size_t size() { return m_queue.size(); }
 
 private:
