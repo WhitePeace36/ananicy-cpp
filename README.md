@@ -35,7 +35,9 @@ _Beta status_
 - _Optional_: libsystemd (if you want systemd support)
 
 ### Linux
-Almost a drop-in replacement from Ananicy.
+It should be a fully drop-in replacement from Ananicy.  
+If you detect a difference in behavior (except for bugs in Ananicy that are fixed in `ananicy-cpp`),
+please create an issue.
 
 If you want pre-made community rules, install the original ananicy, and then:
 ```
