@@ -9,8 +9,15 @@
 #include <optional>
 #include <spdlog/spdlog.h>
 #include <unordered_map>
+#include <utility>
 
 class Config {
+  using ConfigMap = std::unordered_map<std::string, std::string>;
+  using ConfigInit =
+      std::initializer_list<std::pair<std::string_view, std::string_view>>;
+
+  static const ConfigInit &&default_config;
+
   inline bool check_rule(const std::string &rule_name,
                          const bool         default_value = true) {
     if (config.contains(rule_name))
@@ -21,6 +28,7 @@ class Config {
 public:
   explicit Config(const std::filesystem::path &config_path);
 
+  // static_assert(default_config.);
   bool apply_nice() { return check_rule("apply_nice"); }
 
   bool apply_sched() { return check_rule("apply_sched"); }
@@ -62,8 +70,10 @@ public:
   void set(const std::string &key, const std::string &value);
   std::optional<std::string> get(const std::string &key) const;
 
+  explicit operator std::string() const;
+
 private:
-  std::unordered_map<std::string, std::string> config;
+  ConfigMap config;
 };
 
 #endif // ANANICY_CPP_CONFIG_HPP
