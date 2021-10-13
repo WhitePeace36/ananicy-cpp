@@ -187,7 +187,11 @@ int main(const int argc, const char **argv) {
   service::set_status(service::STARTED);
 
   while (!ih.should_exit()) {
-    ih.wait_for(1min);
+    if (parser["benchmark"])
+      processListener.process_queue.wait_for(30s);
+    else
+      ih.wait_for(1min);
+
     if (ih.should_exit() || parser["benchmark"] ||
         (benchmark_count.has_value() &&
          worker.processed_processes() >= benchmark_count))
