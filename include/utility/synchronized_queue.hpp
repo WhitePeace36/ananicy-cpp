@@ -1,5 +1,11 @@
 #pragma once
 
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+#include <optional>
+#include <queue>
+
 template <typename T> class synchronized_queue {
 public:
   void push(const T &value) {
@@ -49,6 +55,6 @@ public:
 
 private:
   std::queue<T>           m_queue{};
-  std::mutex              m_mutex{};
+  std::mutex              m_mutex;
   std::condition_variable m_cond_not_empty{};
 };

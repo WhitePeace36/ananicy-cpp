@@ -9,7 +9,6 @@
 #include <condition_variable>
 #include <mutex>
 #include <optional>
-#include <queue>
 
 class InterruptHandler {
 private:
