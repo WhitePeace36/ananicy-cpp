@@ -3,6 +3,7 @@
 //
 
 #include "core/process.hpp"
+#include "utility/synchronized_queue.hpp"
 #include "utility/utils.hpp"
 #include <cctype>
 #include <cerrno>
@@ -84,7 +85,7 @@ static int set_event_subscription(int nl_sock, bool enable) {
   return send(nl_sock, &netlink_connection_message, sizeof(nl_cn_msg), 0);
 }
 
-static int handle_events(int nl_sock, atomic_queue<Process> *queue,
+static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
                          const std::stop_token &stop_token) {
   struct alignas(NLMSG_ALIGNTO) nl_cn_msg {
     struct nlmsghdr nl_hdr;

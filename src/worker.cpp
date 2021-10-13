@@ -11,7 +11,7 @@
 using namespace std::chrono_literals;
 
 Worker::Worker(Rules *rules, Config *config,
-               atomic_queue<Process> *process_queue)
+               synchronized_queue<Process> *process_queue)
     : rules(rules), config(config), process_queue(process_queue) {
   spdlog::info("Worker initialized with {} rules", rules->size());
 }

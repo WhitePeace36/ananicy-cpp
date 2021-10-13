@@ -8,12 +8,14 @@
 #include "config.hpp"
 #include "process.hpp"
 #include "rules.hpp"
+#include "utility/synchronized_queue.hpp"
 #include "utility/utils.hpp"
 #include <thread>
 
 class Worker {
 public:
-  Worker(Rules *rules, Config *config, atomic_queue<Process> *process_queue);
+  Worker(Rules *rules, Config *config,
+         synchronized_queue<Process> *process_queue);
   void start();
   void stop() {
     worker_thread.request_stop();
@@ -23,11 +25,11 @@ public:
   [[nodiscard]] unsigned processed_processes() const { return processed_count; }
 
 private:
-  Rules *                rules;
-  Config *               config;
-  std::jthread           worker_thread;
-  atomic_queue<Process> *process_queue;
-  std::atomic<unsigned>  processed_count;
+  Rules *                      rules;
+  Config *                     config;
+  std::jthread                 worker_thread;
+  synchronized_queue<Process> *process_queue;
+  std::atomic<unsigned>        processed_count;
 };
 
 #endif // ANANICY_CPP_WORKER_HPP

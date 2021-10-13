@@ -5,6 +5,7 @@
 #ifndef ANANICY_CPP_PROCESS_HPP
 #define ANANICY_CPP_PROCESS_HPP
 
+#include "utility/synchronized_queue.hpp"
 #include "utility/utils.hpp"
 #include <string>
 #include <thread>
@@ -36,7 +37,7 @@ public:
 
   void full_scan();
 
-  atomic_queue<Process> process_queue;
+  synchronized_queue<Process> process_queue;
 };
 
 #endif // ANANICY_CPP_PROCESS_HPP

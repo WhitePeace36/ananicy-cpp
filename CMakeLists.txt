@@ -28,7 +28,9 @@ message("Version: ${VERSION}")
 string(REGEX REPLACE "([0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9])?)(.*)" "\\1" VERSION_FOR_CMAKE "${VERSION}")
 message(STATUS "version for cmake: ${VERSION_FOR_CMAKE}")
 
-project(ananicy-cpp VERSION ${VERSION_FOR_CMAKE})
+project(ananicy-cpp
+        VERSION ${VERSION_FOR_CMAKE}
+        LANGUAGES CXX)
 
 option(USE_EXTERNAL_JSON "Use an external JSON library" OFF)
 option(USE_EXTERNAL_SPDLOG "Use external Spdlog library" OFF)
@@ -40,9 +42,9 @@ option(OPTIMIZE_FOR_NATIVE_MICROARCH "Enable -march=native flag on the CXX compi
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_MESSAGE_CONTEXT_SHOW ON)
 
-set(CMAKE_CXX_FLAGS_DEBUG "")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O2")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/version.hpp)
 
@@ -112,6 +114,7 @@ list(APPEND HEADERS
         include/core/process.hpp
         include/core/rules.hpp
         include/utility/utils.hpp
+        include/utility/synchronized_queue.hpp
         include/core/worker.hpp
         include/core/cgroups.hpp
         include/version.hpp
@@ -148,7 +151,7 @@ else()
 endif()
 
 add_executable(ananicy-cpp ${HEADERS} ${SOURCES})
-
+target_sources(ananicy-cpp PRIVATE src include)
 
 # threading support
 message(STATUS "Configuring threads")
