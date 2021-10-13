@@ -200,7 +200,7 @@ if (NOT HAVE_STD_FORMAT)
 
         FetchContent_MakeAvailable(fmtlib)
     endif()
-    target_link_libraries(ananicy-cpp PRIVATE fmt)
+    target_link_libraries(ananicy-cpp PRIVATE fmt::fmt-header-only)
     target_include_directories(ananicy-cpp SYSTEM PRIVATE polyfills/format)
     target_sources(ananicy-cpp PRIVATE polyfills/format/format)
     set(CMAKE_MESSAGE_CONTEXT "")
@@ -242,7 +242,7 @@ target_include_directories(ananicy-cpp PRIVATE "${CMAKE_HOME_DIRECTORY}/include"
 
 include(GNUInstallDirs)
 install(TARGETS ananicy-cpp
-        RUNTIME DESTINATION bin)
+        RUNTIME DESTINATION bin COMPONENT Runtime)
 
 if(ENABLE_SYSTEMD)
     configure_file(ananicy-cpp.service ananicy-cpp.service @ONLY)
