@@ -78,7 +78,7 @@ if(CXX_ACCEPTS_FLTO)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
 endif()
 
-if(CXX_ACCEPTS_SANITIZE)
+if(CXX_ACCEPTS_SANITIZE AND NOT(STATIC))
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
 endif()
 
@@ -87,7 +87,10 @@ if(OPTIMIZE_FOR_NATIVE_MICROARCH AND CXX_ACCEPTS_MARCH_NATIVE)
 endif()
 
 if(STATIC)
-    set(CMAKE_CXX_FLAGS "-static ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_FIND_LIBRARY_SUFFIXES "${CMAKE_STATIC_LIBRARY_SUFFIX}")
+    set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+    set(BUILD_SHARED_LIBS OFF)
     if (ENABLE_SYSTEMD)
         message(FATAL_ERROR "Can't make a static build with systemd enabled, add -DENABLE_SYSTEMD=Off to cmake's invocation")
     endif()
@@ -152,6 +155,13 @@ endif()
 
 add_executable(ananicy-cpp ${HEADERS} ${SOURCES})
 target_sources(ananicy-cpp PRIVATE src include)
+
+if(STATIC)
+    set_target_properties(ananicy-cpp PROPERTIES LINK_SEARCH_START_STATIC ON)
+    set_target_properties(ananicy-cpp PROPERTIES LINK_SEARCH_END_STATIC ON)
+    set_target_properties(ananicy-cpp PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    target_link_options(ananicy-cpp PRIVATE -static-libgcc -static-libstdc++ -static)
+endif()
 
 # threading support
 message(STATUS "Configuring threads")
