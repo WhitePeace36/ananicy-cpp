@@ -17,6 +17,10 @@ std::string get_command_from_pid(pid_t pid);
 struct Process {
   pid_t       pid;
   std::string name;
+
+  bool operator==(const Process &other) const {
+    return pid == other.pid && name == other.name;
+  }
 };
 
 class ProcessQueue {

@@ -131,8 +131,15 @@ static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
 
     try {
       if (pid != 0) {
-        spdlog::trace("Pushing new process: pid = {}", pid);
-        queue->push(Process{.pid = pid, .name = get_command_from_pid(pid)});
+        static Process last_process{};
+
+        Process process{.pid = pid, .name = get_command_from_pid(pid)};
+        if (process !=
+            last_process) { // Fix
+                            // https://gitlab.com/ananicy-cpp/ananicy-cpp/-/issues/20
+          spdlog::trace("Pushing new process: pid = {}", pid);
+          queue->push(process);
+        }
       }
     } catch (std::exception &e) {
       spdlog::error("{}: unhandled error: {}", __func__, e.what());
