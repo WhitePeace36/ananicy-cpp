@@ -39,28 +39,47 @@ It should be a fully drop-in replacement from Ananicy.
 If you detect a difference in behavior (except for bugs in Ananicy that are fixed in `ananicy-cpp`),
 please create an issue.
 
-If you want pre-made community rules, install the original ananicy, and then:
-```
-mkdir build
-cd build
-cmake -DCMAKE_RELEASE_TYPE=Release ..
-cmake --build .
-sudo cmake --install .
-```
+If you want pre-made community rules, you can use the rules from the original Ananicy project.
+Simply copy them to your rules directory (by default, `/etc/ananicy.d`).
 
 #### Available CMake options
 
-- `USE_EXTERNAL_JSON`: Use system nlohmann_json library,
-- `USE_EXTERNAL_SPDLOG`: Use system spdlog library,
-- `USE_EXTERNAL_FMTLIB`: Use system fmtlib,
-- `ENABLE_SYSTEMD`: Add systemd support,
-- `STATIC`: Build a static binary,
+- `CMAKE_RELEASE_TYPE:STRING`: Either `None` (default), `Release`, or `Debug`.
+The effects are mainly on the default compiler flags `ananicy-cpp` is built with.
+- `USE_EXTERNAL_JSON:BOOL`: Use system nlohmann_json library,
+- `USE_EXTERNAL_SPDLOG:BOOL`: Use system spdlog library,
+- `USE_EXTERNAL_FMTLIB:BOOL`: Use system fmtlib,
+- `ENABLE_SYSTEMD:BOOL`: Add systemd support,
+- `STATIC:BOOL`: Build a static binary,
 
-To enable the systemd service, just run:
+#### Building
+
+In order to actually build `ananicy-cpp`, open a terminal,
+clone the repository (or download a release archive), and do the following commands:
+
+```
+cd ananicy-cpp # Or the name of the folder from the extracted release archive
+
+cmake -B build \
+  -DCMAKE_RELEASE_TYPE=Release \
+  -D[Your Option Here] -D[Another Option] \
+  -S .
+cmake --build build
+sudo cmake --install build
+```
+
+#### Service
+
+To enable the systemd service,
+enable Systemd support with `-DENABLE_SYSTEMD=ON` on `cmake` invocation, and run this command _after_ installing `ananicy-cpp`:
 ```
 systemctl enable --now ananicy-cpp.service
 ```
-and it should be done.
+If you want to stop or disable it later, you can use:
+```
+systemctl (stop|disable) ananicy-cpp.service 
+```
+You can have more information in `systemd`'s man page (`man systemd` on Linux)
 
 ### Distro-specific
 #### Arch-based distros
