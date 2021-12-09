@@ -14,11 +14,20 @@ const Config::ConfigInit &&Config::default_config = {
     {"apply_ionice", "true"}, {"apply_oom_score_adj", "true"},
     {"cgroup_load", "true"},  {"type_load", "true"},
     {"rule_load", "true"},    {"cgroup_realtime_workaround", "true"},
-    {"loglevel", "info"},
-};
+    {"loglevel", "info"},     {"check_freq", "60"}};
+
+static std::string trim(const std::string &str) {
+  std::size_t first = str.find_first_not_of(' ');
+  if (std::string::npos == first) {
+    return str;
+  }
+  std::size_t last = str.find_last_not_of(' ');
+  return str.substr(first, (last - first + 1));
+}
 
 Config::Config(const std::filesystem::path &config_path) {
   config = {};
+
   for (const auto &item : default_config) {
     config[std::string(item.first)] = item.second;
   }
@@ -52,8 +61,9 @@ Config::Config(const std::filesystem::path &config_path) {
     std::string        key;
     if (std::getline(is_line, key, '=')) {
       std::string value;
-      if (std::getline(is_line, value))
-        config[key] = value;
+      if (std::getline(is_line, value)) {
+        config[trim(key)] = trim(value);
+      }
     }
   }
 }
@@ -87,4 +97,15 @@ Config::operator std::string() const {
                    item.second);
   }
   return std::move(config_string);
+}
+
+std::chrono::duration<uint32_t, std::ratio<1, 1>> Config::check_freq() {
+  uint32_t frequency = 60;
+  if (config.contains("check_freq"))
+    frequency = std::stoul(config.at("check_freq"));
+
+  spdlog::trace("{}: frequency = {}", __func__, frequency);
+
+  std::chrono::duration<uint32_t, std::ratio<1, 1>> duration(frequency);
+  return duration;
 }

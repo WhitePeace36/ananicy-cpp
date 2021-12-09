@@ -108,9 +108,11 @@ int main(const int argc, const char **argv) {
   }
 
   if (parser["manual-scanning"]) {
-    spdlog::debug("Manual scanning enabled! Increasing Ananicy Nice value to "
-                  "prevent lag.");
+    spdlog::info("Manual scanning enabled! Increasing Ananicy Nice value to "
+                 "prevent lag.");
     priority::set_priority(get_pid(), 19);
+
+    spdlog::info("Checking frequency set to {}", conf.check_freq());
   }
 
   service::set_status(service::STARTING);
@@ -190,7 +192,7 @@ int main(const int argc, const char **argv) {
     if (parser["benchmark"])
       processListener.process_queue.wait_for(30s);
     else
-      ih.wait_for(1min);
+      ih.wait_for(conf.check_freq());
 
     if (ih.should_exit() || parser["benchmark"] ||
         (benchmark_count.has_value() &&

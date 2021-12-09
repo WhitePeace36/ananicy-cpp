@@ -38,6 +38,7 @@ public:
   bool cgroup_load() { return check_rule("cgroup_load"); }
   bool type_load() { return check_rule("type_load"); }
   bool rule_load() { return check_rule("rule_load"); }
+  std::chrono::duration<uint32_t, std::ratio<1, 1>> check_freq();
 
   bool cgroup_realtime_workaround() {
     return check_rule("cgroup_realtime_workaround", true);
