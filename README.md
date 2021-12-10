@@ -31,7 +31,8 @@ _Beta status_
 - [fmtlib](https://github.com/fmtlib/fmt) 8.0+ _(can be automatically downloaded)_
 - [spdlog](https://github.com/gabime/spdlog) 1.9+ _(can be automatically downloaded)_
 - [nlohmann_json](https://github.com/nlohmann/json) 3.9+ _(can be automatically downloaded)_
-- C++ compiler compatible with C++20,
+- C++ compiler compatible with C++20 (`g++ >= 10` or `clang++ >= 10`).
+  Notably, `<concepts>` and `std::jthread` are required. Work is in progress to add support to `g++ ~= 9`, see https://gitlab.com/ananicy-cpp/ananicy-cpp/-/issues/28 for more info.
 - _Optional_: libsystemd (if you want systemd support)
 
 ### Linux
