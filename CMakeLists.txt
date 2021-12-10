@@ -122,7 +122,6 @@ list(APPEND HEADERS
         include/core/process.hpp
         include/core/rules.hpp
         include/utility/utils.hpp
-        include/utility/synchronized_queue.hpp
         include/core/worker.hpp
         include/core/cgroups.hpp
         include/version.hpp
@@ -193,33 +192,10 @@ target_link_libraries(ananicy-cpp PRIVATE "nlohmann_json::nlohmann_json")
 set(CMAKE_MESSAGE_CONTEXT "")
 
 # std::format
-include(CheckCXXSymbolExists)
-message(STATUS "stdlib checks")
-set(CMAKE_MESSAGE_CONTEXT "std")
-check_cxx_symbol_exists(std::format "format" HAVE_STD_FORMAT)
-if(NOT HAVE_STD_FORMAT)
-    message(STATUS "std::format not available, using fmtlib as a replacement")
+if (NOT TARGET stl_polyfill::format)
+    add_subdirectory(external/std-format)
 endif()
-set(CMAKE_MESSAGE_CONTEXT "")
-
-# fmt
-if (NOT HAVE_STD_FORMAT)
-    message(STATUS "Configuring fmtlib")
-    set(CMAKE_MESSAGE_CONTEXT "fmtlib")
-    if(USE_EXTERNAL_FMTLIB)
-        find_package(fmt 8.0 REQUIRED)
-    else()
-        FetchContent_Declare(fmtlib
-                GIT_REPOSITORY https://github.com/fmtlib/fmt
-                GIT_TAG 8.0.1)
-
-        FetchContent_MakeAvailable(fmtlib)
-    endif()
-    target_link_libraries(ananicy-cpp PRIVATE fmt::fmt-header-only)
-    target_include_directories(ananicy-cpp SYSTEM PRIVATE polyfills/format)
-    target_sources(ananicy-cpp PRIVATE polyfills/format/format)
-    set(CMAKE_MESSAGE_CONTEXT "")
-endif()
+target_link_libraries(ananicy-cpp PRIVATE stl_polyfill::format)
 
 
 # spdlog

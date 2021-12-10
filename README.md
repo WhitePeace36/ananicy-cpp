@@ -57,9 +57,15 @@ The effects are mainly on the default compiler flags `ananicy-cpp` is built with
 In order to actually build `ananicy-cpp`, open a terminal,
 clone the repository (or download a release archive), and do the following commands:
 
-```
-cd ananicy-cpp # Or the name of the folder from the extracted release archive
+- If using the `git` repo (development version):
+  - `git clone --recurse-submodules https://gitlab.com/ananicy-cpp/ananicy-cpp.git`
+  - `cd ananicy-cpp`
+- If using release archive:
+  - `wget https://gitlab.com/ananicy-cpp/ananicy-cpp/-/archive/v1.0.0-rc5/ananicy-cpp-v1.0.0-rc5.tar.gz`
+  - `tar -xvf ananicy-cpp-v1.0.0-rc5.tar.gz`
+  - `cd ananicy-cpp-v1.0.0-rc5`
 
+```
 cmake -B build \
   -DCMAKE_RELEASE_TYPE=Release \
   -D[Your Option Here] -D[Another Option] \
