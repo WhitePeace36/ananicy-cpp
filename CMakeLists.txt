@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.16)
 
 set(VERSION "0.0.0" CACHE STRING "Override this value to specify the version string used by CMake and Ananicy-cpp")
 set(COMMIT_HASH "")
@@ -40,6 +40,11 @@ option(STATIC "Build static binary" OFF)
 option(OPTIMIZE_FOR_NATIVE_MICROARCH "Enable -march=native flag on the CXX compiler. This makes build NOT portable." OFF)
 
 set(CMAKE_CXX_STANDARD 20)
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++2a -fconcepts")
+    endif()
+endif()
 set(CMAKE_MESSAGE_CONTEXT_SHOW ON)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
