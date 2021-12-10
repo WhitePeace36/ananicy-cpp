@@ -1,6 +1,10 @@
 ---
 image: gcc
 
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+
 default:
   before_script:
     - apt-get -y update
@@ -9,18 +13,14 @@ default:
 build:
   stage: build
   script:
-    - mkdir build
-    - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Release ..
-    - cmake --build .
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -S .
+    - cmake --build build -j
 
 build-static:
   stage: build
   script:
-    - mkdir build
-    - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=On -DENABLE_SYSTEMD=Off ..
-    - cmake --build .
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DSTATIC=On -DENABLE_SYSTEMD=Off -S .
+    - cmake --build build -j
   artifacts:
     paths:
       - build/ananicy-cpp
