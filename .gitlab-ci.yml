@@ -1,6 +1,10 @@
 ---
 image: gcc
 
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+
 default:
   before_script:
     - apt-get -y update
