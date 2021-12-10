@@ -9,6 +9,7 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <string>
+#include <unistd.h>
 
 namespace ananicy_debug {
 void print_file(const std::string &path) {
