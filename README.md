@@ -45,7 +45,7 @@ Simply copy them to your rules directory (by default, `/etc/ananicy.d`).
 
 #### Available CMake options
 
-- `CMAKE_RELEASE_TYPE:STRING`: Either `None` (default), `Release`, or `Debug`.
+- `CMAKE_BUILD_TYPE:STRING`: Either `None` (default), `Release`, or `Debug`.
 The effects are mainly on the default compiler flags `ananicy-cpp` is built with.
 - `USE_EXTERNAL_JSON:BOOL`: Use system nlohmann_json library,
 - `USE_EXTERNAL_SPDLOG:BOOL`: Use system spdlog library,
