@@ -1,3 +1,5 @@
+![Ananicy Cpp Logo](./assets/ananicy_logo.svg)
+
 # Ananicy Cpp
 [Ananicy](https://github.com/Nefelim4ag/Ananicy) rewritten in C++ for much lower CPU and memory usage.
 
