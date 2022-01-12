@@ -74,7 +74,7 @@ cmake -B build \
   -D[Your Option Here] -D[Another Option] \
   -S .
 cmake --build build
-sudo cmake --install build
+sudo cmake --install build --component Runtime
 ```
 
 #### Service
