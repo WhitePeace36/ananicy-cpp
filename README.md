@@ -73,7 +73,7 @@ cmake -B build \
   -DCMAKE_RELEASE_TYPE=Release \
   -D[Your Option Here] -D[Another Option] \
   -S .
-cmake --build build
+cmake --build build --target ananicy-cpp
 sudo cmake --install build --component Runtime
 ```
 
