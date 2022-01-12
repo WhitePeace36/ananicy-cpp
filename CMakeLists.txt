@@ -192,6 +192,7 @@ target_link_libraries(ananicy-cpp PRIVATE "nlohmann_json::nlohmann_json")
 set(CMAKE_MESSAGE_CONTEXT "")
 
 # std::format
+set(STL_FORMAT_USE_EXTERNAL_FMTLIB ${USE_EXTERNAL_FMTLIB} CACHE BOOL "" FORCE)
 if (NOT TARGET stl_polyfill::format)
     add_subdirectory(external/std-format)
 endif()
