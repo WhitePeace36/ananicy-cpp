@@ -240,5 +240,6 @@ if(ENABLE_SYSTEMD)
     configure_file(ananicy-cpp.service ananicy-cpp.service @ONLY)
 
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ananicy-cpp.service
-        DESTINATION lib/systemd/system/)
+            DESTINATION lib/systemd/system/
+            COMPONENT Runtime)
 endif()
