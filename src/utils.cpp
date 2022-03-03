@@ -14,7 +14,7 @@ void                            on_signal(int unused) { handler(unused); }
 
 InterruptHandler::InterruptHandler(std::initializer_list<int> signals) {
 
-  handler = [this](int unused) -> void { this->stop(); };
+  handler = [this]([[maybe_unused]] int unused) -> void { this->stop(); };
 
   for (const int &sig : signals) {
     signal(sig, &on_signal);
@@ -48,9 +48,9 @@ std::string read_file(const std::string &path) {
   std::string data;
   std::string buffer(read_size, '\0');
   while (file_stream.read(&buffer[0], read_size)) {
-    data.append(buffer, 0, file_stream.gcount());
+    data.append(buffer, 0, static_cast<size_t>(file_stream.gcount()));
   }
-  data.append(buffer, 0, file_stream.gcount());
+  data.append(buffer, 0, static_cast<size_t>(file_stream.gcount()));
 
   return data;
 }

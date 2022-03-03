@@ -4,15 +4,17 @@
 
 #include "core/rules.hpp"
 #include "core/cgroups.hpp"
+
 #include <fstream>
 #include <iostream>
-#include <spdlog/spdlog.h>
 #include <stack>
+
+#include <spdlog/spdlog.h>
 
 using std::filesystem::path;
 
-Rules::Rules(const std::filesystem::path &ruleset_directory, Config *config)
-    : config(config) {
+Rules::Rules(const std::filesystem::path &ruleset_directory, Config *config_src)
+    : config(config_src) {
   if (!exists(ruleset_directory)) {
     spdlog::error("{}: directory {} does not exist", __func__,
                   ruleset_directory.string());
@@ -162,4 +164,5 @@ json Rules::get_rule(const std::string &name) {
   return rule;
 }
 
+[[gnu::pure]]
 size_t Rules::size() const { return program_rules.size(); }

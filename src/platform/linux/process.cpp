@@ -39,7 +39,7 @@ static int connect_netlink_socket() {
   };
 
   errno = 0;
-  int rc = bind(nl_sock, (struct sockaddr *)&sa_nl, sizeof(sa_nl));
+  int rc = bind(nl_sock, reinterpret_cast<struct sockaddr *>(&sa_nl), sizeof(sa_nl));
   if (rc == -1) {
     [[unlikely]] spdlog::error("Couldn't bind to socket: {}",
                                get_error_string(errno));
@@ -51,7 +51,7 @@ static int connect_netlink_socket() {
   struct timeval tv {
     .tv_sec = 0, .tv_usec = 500 * 1000
   };
-  setsockopt(nl_sock, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv));
+  setsockopt(nl_sock, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char *>(&tv), sizeof(tv));
 
   return nl_sock;
 }
@@ -82,7 +82,7 @@ static int set_event_subscription(int nl_sock, bool enable) {
   netlink_connection_message.cn_mcast =
       enable ? PROC_CN_MCAST_LISTEN : PROC_CN_MCAST_IGNORE;
 
-  return send(nl_sock, &netlink_connection_message, sizeof(nl_cn_msg), 0);
+  return static_cast<int>(send(nl_sock, &netlink_connection_message, sizeof(nl_cn_msg), 0));
 }
 
 static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
@@ -146,7 +146,7 @@ static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
     }
   }
 
-  return status;
+  return static_cast<int>(status);
 }
 
 #ifndef COMMAND_NAME_HEURISTIC_SKIP_EXE_FAILURES
@@ -165,10 +165,10 @@ std::string get_command_from_pid(pid_t pid) {
    */
   if (exe_fail_count < COMMAND_NAME_HEURISTIC_SKIP_EXE_FAILURES) {
     try {
-      std::filesystem::path proc_path(std::format("/proc/{}/exe", pid));
+      std::filesystem::path proc_path{std::format("/proc/{}/exe", pid)};
 
       std::filesystem::path exe_path = read_symlink(proc_path);
-      std::string           exe_name = exe_path.filename().string();
+      auto           exe_name = exe_path.filename().string();
       auto                  exe_name_end = exe_name.find(" (deleted)");
       if (exe_name_end != std::string::npos) {
         exe_name = exe_name.substr(0, exe_name_end + 1);

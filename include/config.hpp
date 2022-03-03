@@ -7,9 +7,10 @@
 
 #include <filesystem>
 #include <optional>
-#include <spdlog/spdlog.h>
 #include <unordered_map>
 #include <utility>
+
+#include <spdlog/spdlog.h>
 
 class Config {
   using ConfigMap = std::unordered_map<std::string, std::string>;

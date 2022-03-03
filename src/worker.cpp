@@ -6,13 +6,15 @@
 #include "core/cgroups.hpp"
 #include "core/priority.hpp"
 #include "utility/process_info.hpp"
+
 #include <chrono>
 #include <spdlog/spdlog.h>
+
 using namespace std::chrono_literals;
 
-Worker::Worker(Rules *rules, Config *config,
-               synchronized_queue<Process> *process_queue)
-    : rules(rules), config(config), process_queue(process_queue) {
+Worker::Worker(Rules *rules_, Config *config_,
+               synchronized_queue<Process> *process_queue_)
+    : rules(rules_), config(config_), process_queue(process_queue_) {
   spdlog::info("Worker initialized with {} rules", rules->size());
 }
 

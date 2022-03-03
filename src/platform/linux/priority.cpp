@@ -12,7 +12,7 @@
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 
-static int test_errno(int errcode, const std::string &func_name, unsigned pid) {
+static int test_errno(int errcode, const std::string &func_name, pid_t pid) {
   if (errcode == 0) {
     spdlog::debug("{}: Successfully applied to {}", func_name, pid);
     return true;
@@ -34,7 +34,7 @@ static int test_errno(int errcode, const std::string &func_name, unsigned pid) {
 
 namespace priority {
 
-bool set_priority(unsigned pid, int nice_value) {
+bool set_priority(pid_t pid, int nice_value) {
   int errcode = 0;
   try {
     for (const auto &path : std::filesystem::directory_iterator(
@@ -42,7 +42,7 @@ bool set_priority(unsigned pid, int nice_value) {
       int tid = std::stoi(path.path().filename().string());
       errno = 0;
       if (tid > 0)
-        setpriority(PRIO_PROCESS, tid, nice_value);
+        setpriority(PRIO_PROCESS, static_cast<id_t>(tid), nice_value);
       errcode = errno;
     }
   } catch (const std::filesystem::filesystem_error &e) {
@@ -54,10 +54,10 @@ bool set_priority(unsigned pid, int nice_value) {
                      e.what());
   }
 
-  return test_errno(errcode, __func__, pid);
+  return test_errno(errcode, __func__, static_cast<pid_t>(pid));
 }
 
-bool set_io_priority(unsigned pid, const std::string &io_class, int value) {
+bool set_io_priority(pid_t pid, const std::string &io_class, int value) {
   int io_class_value = 0;
   if (io_class == "best-effort") {
     io_class_value = IOPRIO_CLASS_BE;
@@ -85,7 +85,7 @@ bool set_io_priority(unsigned pid, const std::string &io_class, int value) {
   return test_errno(errno, __func__, pid);
 }
 
-bool set_sched(unsigned pid, const std::string &sched_name, unsigned rt_prio) {
+bool set_sched(pid_t pid, const std::string &sched_name, unsigned rt_prio) {
   int         sched = 0;
   sched_param param = {};
   if (sched_name == "idle") {
@@ -110,7 +110,7 @@ bool set_sched(unsigned pid, const std::string &sched_name, unsigned rt_prio) {
     return false;
   }
   errno = 0;
-  sched_setscheduler(static_cast<pid_t>(pid), sched, &param);
+  sched_setscheduler(pid, sched, &param);
 
   const int success = test_errno(errno, __func__, pid);
   if (success == -1)
@@ -120,7 +120,7 @@ bool set_sched(unsigned pid, const std::string &sched_name, unsigned rt_prio) {
   return success;
 }
 
-bool set_oom_score_adjust(unsigned pid, int value) {
+bool set_oom_score_adjust(pid_t pid, int value) {
 
   try {
     std::filesystem::path oom_score_path(

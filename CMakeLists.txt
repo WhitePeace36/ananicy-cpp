@@ -1,111 +1,24 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(VERSION "0.0.0" CACHE STRING "Override this value to specify the version string used by CMake and Ananicy-cpp")
-set(COMMIT_HASH "")
-set(COMMIT_COUNT 0)
-set(FULL_VERSION "${VERSION}")
-if(VERSION STREQUAL "0.0.0")
-    message(STATUS "No version defined, fetching one from git")
-    find_package(Git)
-    if(Git_FOUND)
-        message(STATUS "Git found: ${GIT_EXECUTABLE}")
-
-        execute_process(
-                COMMAND ${GIT_EXECUTABLE} describe --long
-                OUTPUT_VARIABLE OUTPUT
-                RESULT_VARIABLE STATUS
-        )
-        if (STATUS EQUAL 0)
-            string(REGEX REPLACE "v([0-9A-Za-z.-]+)-([0-9]+)-([a-zA-Z0-9]+).+" "\\1.r\\2.\\3" FULL_VERSION "${OUTPUT}")
-            set(VERSION ${FULL_VERSION})
-            set(COMMIT_COUNT ${CMAKE_MATCH_2})
-            set(COMMIT_HASH ${CMAKE_MATCH_3})
-            message(STATUS "Version from git: ${FULL_VERSION}")
-        endif()
-    endif()
-endif()
-message("Version: ${VERSION}")
-string(REGEX REPLACE "([0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9])?)(.*)" "\\1" VERSION_FOR_CMAKE "${VERSION}")
-message(STATUS "version for cmake: ${VERSION_FOR_CMAKE}")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(Version)
 
 project(ananicy-cpp
         VERSION ${VERSION_FOR_CMAKE}
         LANGUAGES CXX)
 
-option(USE_EXTERNAL_JSON "Use an external JSON library" OFF)
-option(USE_EXTERNAL_SPDLOG "Use external Spdlog library" OFF)
-option(USE_EXTERNAL_FMTLIB "Use external fmt library" OFF)
-option(ENABLE_SYSTEMD "Include systemd headers and install service file" ON)
-option(STATIC "Build static binary" OFF)
-option(OPTIMIZE_FOR_NATIVE_MICROARCH "Enable -march=native flag on the CXX compiler. This makes build NOT portable." OFF)
+include(GNUInstallDirs)
+include(CompilerChecks)
+include(StandardProjectSettings)
+include(EnableCcache)
+include(Linker)
+include(StaticAnalyzers)
+include(Sanitizers)
+include(CPM)
 
-set(CMAKE_CXX_STANDARD 20)
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++2a -fconcepts")
-    endif()
-endif()
-set(CMAKE_MESSAGE_CONTEXT_SHOW ON)
-
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O2")
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/version.hpp)
-
-# Compiler checks
-message(STATUS "Checking compiler flags support")
-set(CMAKE_MESSAGE_CONTEXT "compiler checks")
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-g3" CXX_ACCEPTS_G3)
-check_cxx_compiler_flag("-g" CXX_ACCEPTS_G)
-check_cxx_compiler_flag("-Og" CXX_ACCEPTS_OG)
-check_cxx_compiler_flag("-flto" CXX_ACCEPTS_FLTO)
-check_cxx_compiler_flag("-march=native" CXX_ACCEPTS_MARCH_NATIVE)
-check_cxx_compiler_flag("-fsanitize=undefined" CXX_ACCEPTS_SANITIZE)
-set(CMAKE_MESSAGE_CONTEXT "")
-
-if(CXX_ACCEPTS_G3)
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_DEBUG} -g3")
-elseif(CXX_ACCEPTS_G)
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_DEBUG} -g")
-endif()
-
-if(CXX_ACCEPTS_OG)
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
-else()
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O1")
-endif()
-
-if(CXX_ACCEPTS_FLTO)
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
-endif()
-
-if(CXX_ACCEPTS_SANITIZE AND NOT(STATIC))
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
-endif()
-
-if(OPTIMIZE_FOR_NATIVE_MICROARCH AND CXX_ACCEPTS_MARCH_NATIVE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-endif()
-
-if(STATIC)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES "${CMAKE_STATIC_LIBRARY_SUFFIX}")
-    set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
-    set(BUILD_SHARED_LIBS OFF)
-    if (ENABLE_SYSTEMD)
-        message(FATAL_ERROR "Can't make a static build with systemd enabled, add -DENABLE_SYSTEMD=Off to cmake's invocation")
-    endif()
-    if(OPTIMIZE_FOR_NATIVE_MICROARCH)
-        message(WARNING "It is not recommended to build a static binary with -march=native")
-    endif()
-endif()
-
-include(FetchContent)
-
+# Link this 'library' to set the c++ standard / compile-time options requested
+add_library(project_options INTERFACE)
+target_compile_features(project_options INTERFACE cxx_std_20)
 
 list(APPEND SOURCES
         src/main.cpp
@@ -167,6 +80,12 @@ if(STATIC)
     target_link_options(ananicy-cpp PRIVATE -static-libgcc -static-libstdc++ -static)
 endif()
 
+# Add linker configuration
+configure_linker(project_options)
+
+# sanitizer options if supported by compiler
+enable_sanitizers(project_options)
+
 # threading support
 message(STATUS "Configuring threads")
 set(CMAKE_MESSAGE_CONTEXT "threads")
@@ -181,12 +100,13 @@ set(CMAKE_MESSAGE_CONTEXT "nlohmann_json")
 if (USE_EXTERNAL_JSON)
     find_package(nlohmann_json 3.9 REQUIRED)
 else()
-    set(JSON_BuildTests Off)
-    FetchContent_Declare(json
-            GIT_REPOSITORY https://github.com/nlohmann/json
-            GIT_TAG v3.9.1)
-
-    FetchContent_MakeAvailable(json)
+    CPMAddPackage(
+        NAME json
+        GITHUB_REPOSITORY ArthurSonzogni/nlohmann_json_cmake_fetchcontent
+        GIT_PROGRESS TRUE
+        GIT_SHALLOW TRUE
+        GIT_TAG v3.9.1
+        EXCLUDE_FROM_ALL YES)
 endif()
 target_link_libraries(ananicy-cpp PRIVATE "nlohmann_json::nlohmann_json")
 set(CMAKE_MESSAGE_CONTEXT "")
@@ -206,19 +126,28 @@ if(USE_EXTERNAL_SPDLOG)
     # Stand-alone build
     find_package(spdlog 1.9 REQUIRED)
 else()
-    FetchContent_Declare(spdlog
-            GIT_REPOSITORY https://github.com/gabime/spdlog
-            GIT_TAG v1.9.1
-            )
+    CPMAddPackage(
+        NAME spdlog
+        GITHUB_REPOSITORY gabime/spdlog
+        GIT_PROGRESS TRUE
+        GIT_SHALLOW TRUE
+        GIT_TAG v1.9.2
+        EXCLUDE_FROM_ALL YES)
 
     if(USE_EXTERNAL_FMTLIB)
         message("Using external fmtlib")
-        set(SPDLOG_FMT_EXTERNAL_HO ON CACHE INTERNAL "Make spdlog use external, header-only fmtlib")
+        CPMAddPackage(
+            NAME fmt
+            GITHUB_REPOSITORY fmtlib/fmt
+            GIT_PROGRESS TRUE
+            GIT_SHALLOW TRUE
+            GIT_TAG 8.0.1
+            EXCLUDE_FROM_ALL YES
+        )
+        set(SPDLOG_FMT_EXTERNAL ON CACHE INTERNAL "Make spdlog use external fmtlib" FORCE)
     endif()
-
-    FetchContent_MakeAvailable(spdlog)
 endif()
-target_link_libraries(ananicy-cpp PRIVATE spdlog::spdlog)
+target_link_libraries(ananicy-cpp PRIVATE project_options spdlog::spdlog fmt::fmt)
 set(CMAKE_MESSAGE_CONTEXT "")
 
 
@@ -232,7 +161,6 @@ endif()
 
 target_include_directories(ananicy-cpp PRIVATE "${CMAKE_HOME_DIRECTORY}/include")
 
-include(GNUInstallDirs)
 install(TARGETS ananicy-cpp
         RUNTIME DESTINATION bin COMPONENT Runtime)
 

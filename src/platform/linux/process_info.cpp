@@ -32,11 +32,11 @@ static autogroup get_autogroup_from_str(const std::string &str) {
 nlohmann::json get_autogroup_map() {
   nlohmann::json autogroup_map = {};
 
-  const auto process_info_map = get_process_info_map();
+  const auto& process_info_map = get_process_info_map();
 
-  for (nlohmann::json process_info : process_info_map) {
+  for (auto process_info : process_info_map) {
     if (process_info["autogroup"] != nullptr) {
-      std::string autogroup_num =
+      const auto autogroup_num =
           std::to_string(static_cast<int>(process_info["autogroup"]["group"]));
       if (!autogroup_map.contains(autogroup_num)) {
         autogroup_map[autogroup_num] = nlohmann::json::object();
@@ -45,7 +45,7 @@ nlohmann::json get_autogroup_map() {
         autogroup_map[autogroup_num]["proc"] = nlohmann::json::object();
       }
       process_info.erase("autogroup");
-      std::string pid = std::to_string(static_cast<int>(process_info["tpid"]));
+      auto pid = std::to_string(static_cast<int>(process_info["tpid"]));
       autogroup_map[autogroup_num]["proc"][pid] = process_info;
     }
   }
@@ -56,7 +56,7 @@ nlohmann::json get_autogroup_map() {
 nlohmann::json parse_proc_status(unsigned pid) {
   nlohmann::json status = nlohmann::json::object();
 
-  std::fstream status_file = std::fstream(std::format("/proc/{}/status", pid));
+  std::fstream status_file{std::format("/proc/{}/status", pid)};
   std::string  line;
   while (status_file.good()) {
     std::getline(status_file, line);
@@ -96,15 +96,15 @@ static std::string get_sched_policy_name(unsigned sched_policy) {
   }
 }
 
-static sched_attr get_sched_attributes(unsigned int pid) {
+static sched_attr get_sched_attributes(pid_t pid) {
 
   ::sched_attr attr{};
-  sched_getattr(static_cast<pid_t>(pid), &attr, sizeof(attr), 0);
+  sched_getattr(pid, &attr, sizeof(attr), 0);
 
   return attr;
 }
 
-bool is_realtime(unsigned pid) {
+bool is_realtime(pid_t pid) {
   sched_attr attr = get_sched_attributes(pid);
   return attr.sched_priority > 0;
 }
@@ -172,7 +172,7 @@ static std::optional<process_info> get_process_info(unsigned pid) {
     std::getline(std::fstream(std::format("/proc/{}/comm", pid)), comm);
     info["comm"] = comm;
 
-    info["cmd"] = get_command_from_pid(pid);
+    info["cmd"] = get_command_from_pid(static_cast<pid_t>(pid));
 
     std::string stat;
     std::getline(std::fstream(std::format("/proc/{}/stat", pid)), stat);
@@ -192,8 +192,8 @@ static std::optional<process_info> get_process_info(unsigned pid) {
     ::sched_attr sched_info = get_sched_attributes(pid);
 
     info["sched"] = get_sched_policy_name(sched_info.sched_policy);
-    info["rtprio"] = static_cast<unsigned>(sched_info.sched_priority);
-    info["nice"] = static_cast<int>(sched_info.sched_nice);
+    info["rtprio"] = uint32_t(sched_info.sched_priority);
+    info["nice"] = int(sched_info.sched_nice);
 
     auto io_data = get_io_prio_attributes(pid);
 
@@ -203,12 +203,16 @@ static std::optional<process_info> get_process_info(unsigned pid) {
     switch (io_data.io_class) {
     case NONE:
       io_class_name = "none";
+      break;
     case REALTIME:
       io_class_name = "realtime";
+      break;
     case BEST_EFFORT:
       io_class_name = "best-effort";
+      break;
     case IDLE:
       io_class_name = "idle";
+      break;
     }
 
     info["ionice"][0] = io_class_name;
@@ -219,11 +223,11 @@ static std::optional<process_info> get_process_info(unsigned pid) {
     }
 
     unsigned oom_score_adj = 0;
-    std::fstream(std::fstream(std::format("/proc/{}/oom_score_adj", pid))) >>
+    std::fstream{std::format("/proc/{}/oom_score_adj", pid)} >>
         oom_score_adj;
     info["oom_score_adj"] = oom_score_adj;
 
-    info["cmdline"] = get_cmdline_from_pid(pid);
+    info["cmdline"] = get_cmdline_from_pid(static_cast<int>(pid));
 
   } catch (const std::filesystem::filesystem_error &e) {
     spdlog::trace("{}: Error getting {} infos: {} ({}, {})", __func__, pid,
@@ -249,7 +253,7 @@ nlohmann::json get_process_info_map() {
       continue;
     }
 
-    unsigned pid = std::stoul(process_path.filename().string());
+    const auto pid = std::stoul(process_path.filename().string());
 
     if (pid == 0 || process_map.contains(std::to_string(pid)))
       continue;
@@ -269,12 +273,12 @@ nlohmann::json get_process_info_map() {
                         process_path.string());
           continue;
         }
-        unsigned pid = std::stoul(process_path.filename().string());
+        const auto pid = std::stoul(process_path.filename().string());
 
         if (pid == 0 || process_map.contains(std::to_string(pid)))
           continue;
 
-        std::optional<process_info> info = get_process_info(pid);
+        std::optional<process_info> info = get_process_info(static_cast<uint32_t>(pid));
         if (info.has_value()) {
           process_map[std::to_string(pid)] = info.value();
         }
