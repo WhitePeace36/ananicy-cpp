@@ -6,10 +6,12 @@
 #define ANANICY_CPP_RULES_HPP
 
 #include "config.hpp"
+
 #include <filesystem>
-#include <map>
-#include <nlohmann/json.hpp>
+#include <unordered_map>
 #include <string>
+
+#include <nlohmann/json.hpp>
 
 using nlohmann::json;
 
@@ -24,7 +26,7 @@ private:
 
 public:
   explicit Rules(const std::filesystem::path &ruleset_directory,
-                 Config *                     config);
+                 Config *                     config_src);
   void load_rule_from_string(const std::string &rule);
   void load_rules_from_file(const std::filesystem::path &path);
   void load_rules_from_directory(const std::filesystem::path &dir_path);

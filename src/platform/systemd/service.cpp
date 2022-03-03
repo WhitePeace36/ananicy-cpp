@@ -23,6 +23,7 @@ void set_status(service::status status) {
   }
 }
 
+[[gnu::pure]]
 status get_status() { return current_status; }
 
 void reload() { spdlog::warn("{}: Not implemented yet", __func__); }
