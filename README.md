@@ -5,6 +5,8 @@
 
 _Beta status_
 
+[![Packaging status](https://repology.org/badge/vertical-allrepos/ananicy-cpp.svg)](https://repology.org/project/ananicy-cpp/versions)
+
 ## What works
 
 - [X] Rule and configuration loading
