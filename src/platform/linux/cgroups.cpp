@@ -208,7 +208,7 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
   }
 
   if (!info.has_value()) {
-    std::fstream mtab("/etc/mtab");
+    std::ifstream mtab("/etc/mtab");
     while (mtab) {
       std::string           word, line;
       std::filesystem::path cgroup_path;
@@ -238,7 +238,7 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
 
             auto controllers_path =
                 std::filesystem::path(test_cgroup).append("cgroup.controllers");
-            std::fstream controllers_file;
+            std::ifstream controllers_file;
             // controllers_file.exceptions(std::fstream::failbit);
             controllers_file.open(controllers_path);
 
