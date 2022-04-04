@@ -214,7 +214,7 @@ std::string get_command_from_pid(pid_t pid) {
 
   // Comm method
   try {
-    std::fstream comm_file(std::format("/proc/{}/comm", pid));
+    std::ifstream comm_file(std::format("/proc/{}/comm", pid));
     std::string  comm;
 
     std::getline(comm_file, comm);

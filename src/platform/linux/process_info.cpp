@@ -56,7 +56,7 @@ nlohmann::json get_autogroup_map() {
 nlohmann::json parse_proc_status(unsigned pid) {
   nlohmann::json status = nlohmann::json::object();
 
-  std::fstream status_file{std::format("/proc/{}/status", pid)};
+  std::ifstream status_file{std::format("/proc/{}/status", pid)};
   std::string  line;
   while (status_file.good()) {
     std::getline(status_file, line);
@@ -169,13 +169,13 @@ static std::optional<process_info> get_process_info(unsigned pid) {
       info["exe"] = nullptr;
 
     std::string comm;
-    std::getline(std::fstream(std::format("/proc/{}/comm", pid)), comm);
+    std::getline(std::ifstream(std::format("/proc/{}/comm", pid)), comm);
     info["comm"] = comm;
 
     info["cmd"] = get_command_from_pid(static_cast<pid_t>(pid));
 
     std::string stat;
-    std::getline(std::fstream(std::format("/proc/{}/stat", pid)), stat);
+    std::getline(std::ifstream(std::format("/proc/{}/stat", pid)), stat);
     info["stat"] = stat;
 
     auto stat_name_begin = stat.find_first_of('(') + 1;
@@ -185,7 +185,7 @@ static std::optional<process_info> get_process_info(unsigned pid) {
         stat.substr(stat_name_begin, stat_name_end - stat_name_begin);
 
     std::string autogroup_value;
-    std::getline(std::fstream(std::format("/proc/{}/autogroup", pid)),
+    std::getline(std::ifstream(std::format("/proc/{}/autogroup", pid)),
                  autogroup_value);
     info["autogroup"] = get_autogroup_from_str(autogroup_value);
 
@@ -223,7 +223,7 @@ static std::optional<process_info> get_process_info(unsigned pid) {
     }
 
     unsigned oom_score_adj = 0;
-    std::fstream{std::format("/proc/{}/oom_score_adj", pid)} >>
+    std::ifstream{std::format("/proc/{}/oom_score_adj", pid)} >>
         oom_score_adj;
     info["oom_score_adj"] = oom_score_adj;
 
