@@ -3,6 +3,8 @@
 #include "core/priority.hpp"
 #include "syscalls.h"
 
+#include <charconv>
+#include <concepts>
 #include <core/process.hpp>
 #include <filesystem>
 #include <format>
@@ -15,6 +17,20 @@
 #include "process_helpers.hpp"
 
 namespace process_info {
+
+template <std::integral T = std::size_t>
+static constexpr inline T to_int(const std::string_view &str) {
+  T result = 0;
+  std::from_chars(str.data(), str.data() + str.size(), result);
+  return result;
+}
+
+template <std::integral T = std::size_t>
+static constexpr inline std::string_view to_str(T number) {
+  std::array<char, 35> str{};
+  auto [ptr, _] = std::to_chars(str.data(), str.data() + str.size(), number);
+  return std::string_view(str.data(), ptr);
+}
 
 static autogroup get_autogroup_from_str(const std::string &str) {
   auto begin_group_num = str.find_first_not_of("/autogroup-");
@@ -37,16 +53,16 @@ nlohmann::json get_autogroup_map() {
   for (auto process_info : process_info_map) {
     if (process_info["autogroup"] != nullptr) {
       const auto autogroup_num =
-          std::to_string(static_cast<int>(process_info["autogroup"]["group"]));
+          to_str(static_cast<int>(process_info["autogroup"]["group"]));
       if (!autogroup_map.contains(autogroup_num)) {
-        autogroup_map[autogroup_num] = nlohmann::json::object();
-        autogroup_map[autogroup_num]["nice"] =
+        autogroup_map[autogroup_num.data()] = nlohmann::json::object();
+        autogroup_map[autogroup_num.data()]["nice"] =
             process_info["autogroup"]["nice"];
-        autogroup_map[autogroup_num]["proc"] = nlohmann::json::object();
+        autogroup_map[autogroup_num.data()]["proc"] = nlohmann::json::object();
       }
       process_info.erase("autogroup");
-      auto pid = std::to_string(static_cast<int>(process_info["tpid"]));
-      autogroup_map[autogroup_num]["proc"][pid] = process_info;
+      const auto pid = to_str(static_cast<int>(process_info["tpid"]));
+      autogroup_map[autogroup_num.data()]["proc"][pid.data()] = process_info;
     }
   }
 
@@ -279,9 +295,9 @@ nlohmann::json get_process_info_map() {
       continue;
     }
 
-    const auto pid = std::stoul(process_path.filename().string());
+    const auto pid = to_int(process_path.filename().string());
 
-    if (pid == 0 || process_map.contains(std::to_string(pid)))
+    if (pid == 0 || process_map.contains(to_str(pid)))
       continue;
 
     directories.emplace(
@@ -299,14 +315,14 @@ nlohmann::json get_process_info_map() {
                         process_path.string());
           continue;
         }
-        const auto pid = std::stoul(process_path.filename().string());
+        const auto pid = to_int(process_path.filename().string());
 
-        if (pid == 0 || process_map.contains(std::to_string(pid)))
+        if (pid == 0 || process_map.contains(to_str(pid)))
           continue;
 
         std::optional<process_info> info = get_process_info(static_cast<uint32_t>(pid));
         if (info.has_value()) {
-          process_map[std::to_string(pid)] = info.value();
+          process_map[to_str(pid).data()] = info.value();
         }
       }
     } catch (const std::filesystem::filesystem_error &e) {
