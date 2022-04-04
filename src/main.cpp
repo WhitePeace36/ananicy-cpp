@@ -119,7 +119,7 @@ int main(const int argc, const char **argv) {
 
   constexpr std::string_view version(VERSION);
 
-  std::cout << std::format("Ananicy Cpp {}", version) << std::endl;
+  std::cout << std::format("Ananicy Cpp {}\n", version) << std::flush;
 
   InterruptHandler ih({SIGINT, SIGTERM});
 

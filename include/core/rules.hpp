@@ -8,8 +8,8 @@
 #include "config.hpp"
 
 #include <filesystem>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
 #include <nlohmann/json.hpp>
 
@@ -19,15 +19,15 @@ using ruleset = std::unordered_map<std::string, json>;
 
 class Rules {
 private:
-  ruleset program_rules;
-  ruleset type_rules;
-  ruleset cgroup_rules;
   Config *config;
+  ruleset program_rules{};
+  ruleset type_rules{};
+  ruleset cgroup_rules{};
 
 public:
   explicit Rules(const std::filesystem::path &ruleset_directory,
-                 Config *                     config_src);
-  void load_rule_from_string(const std::string &rule);
+                 Config                      *config_src);
+  void load_rule_from_string(const std::string_view &rule);
   void load_rules_from_file(const std::filesystem::path &path);
   void load_rules_from_directory(const std::filesystem::path &dir_path);
   json get_rule(const std::string &name);

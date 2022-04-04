@@ -125,7 +125,7 @@ template <> struct std::formatter<argparse::argument> {
   template <typename ParseContext> constexpr auto parse(ParseContext &ctx);
 
   template <typename FormatContext>
-  auto format(const argparse::argument &arg, FormatContext &ctx);
+  constexpr auto format(const argparse::argument &arg, FormatContext &ctx);
 };
 
 template <typename ParseContext>
@@ -134,7 +134,7 @@ constexpr auto std::formatter<argparse::argument>::parse(ParseContext &ctx) {
 }
 
 template <typename FormatContext>
-auto std::formatter<argparse::argument>::format(const argparse::argument &arg,
+constexpr auto std::formatter<argparse::argument>::format(const argparse::argument &arg,
                                                 FormatContext &           ctx) {
   return std::format_to(ctx.out(), arg.operator std::string());
 }
