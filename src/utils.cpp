@@ -22,7 +22,11 @@ InterruptHandler::InterruptHandler(std::initializer_list<int> signals) {
 
 void InterruptHandler::stop() {
   m_need_exit = true;
+#if __cpp_lib_atomic_wait
   m_need_exit.notify_all();
+#else
+  m_exit_condition.notify_all();
+#endif
 }
 
 std::optional<std::string> get_env(const std::string &name) {

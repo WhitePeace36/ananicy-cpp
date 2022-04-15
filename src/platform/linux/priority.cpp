@@ -13,6 +13,7 @@
 #include <sched.h>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
+#include <type_traits>
 
 namespace fs = std::filesystem;
 

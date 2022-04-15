@@ -32,7 +32,7 @@ template <std::integral T = std::size_t>
 static constexpr inline std::string_view to_str(T number) {
   std::array<char, 35> str{};
   auto [ptr, _] = std::to_chars(str.data(), str.data() + str.size(), number);
-  return std::string_view(str.data(), ptr);
+  return std::string_view(std::to_address(str.data()), ptr - str.data());
 }
 
 static autogroup get_autogroup_from_str(const std::string &str) {

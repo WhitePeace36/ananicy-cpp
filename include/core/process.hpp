@@ -21,6 +21,9 @@ struct Process {
   constexpr inline bool operator==(const Process &other) const {
     return (pid == other.pid) && (name == other.name);
   }
+  constexpr inline bool operator!=(const Process &other) const {
+    return !(*this == other);
+  }
 };
 
 class ProcessQueue {
