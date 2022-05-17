@@ -26,8 +26,11 @@ Rules::Rules(const std::filesystem::path &ruleset_directory, Config *config_src)
 void Rules::load_rule_from_string(const std::string &line) {
   json rule;
 
-  if (line.empty() || line[0] == '#')
+  std::size_t first_non_whitespace = line.find_first_not_of(" \t");
+  if (line.empty() || first_non_whitespace == std::string::npos ||
+    line[first_non_whitespace] == '#') {
     return;
+  }
 
   try {
     rule = json::parse(line);
