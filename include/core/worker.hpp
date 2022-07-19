@@ -25,11 +25,13 @@ public:
   [[nodiscard]] unsigned processed_processes() const { return processed_count; }
 
 private:
-  Rules *                      rules;
-  Config *                     config;
+  Rules                       *rules;
+  Config                      *config;
   std::jthread                 worker_thread;
   synchronized_queue<Process> *process_queue;
   std::atomic<unsigned>        processed_count;
+
+  void work(const std::stop_token &stop_token);
 };
 
 #endif // ANANICY_CPP_WORKER_HPP
