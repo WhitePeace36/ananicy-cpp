@@ -53,10 +53,28 @@ nlohmann::json get_autogroup_map() {
   return autogroup_map;
 }
 
-nlohmann::json parse_proc_status(unsigned pid) {
+using file_time_point = std::chrono::file_clock::time_point;
+static nlohmann::json parse_proc_status(process_id_t pid) {
+  static std::unordered_map<process_id_t,
+                            std::pair<file_time_point, nlohmann::json>>
+      status_cache = {};
+
+  std::filesystem::path status_file_path = std::format("/proc/{}/status", pid);
+  file_time_point       status_file_last_modified{};
+  try {
+    status_file_last_modified = last_write_time(status_file_path);
+    if (status_cache.contains(pid)) {
+      if (status_file_last_modified <= status_cache[pid].first) {
+        return status_cache[pid].second;
+      }
+    }
+  } catch (const std::filesystem::filesystem_error &e) {
+    return {};
+  }
+
+  std::ifstream   status_file{status_file_path};
   nlohmann::json status = nlohmann::json::object();
 
-  std::ifstream status_file{std::format("/proc/{}/status", pid)};
   std::string  line;
   while (status_file.good()) {
     std::getline(status_file, line);
@@ -72,6 +90,8 @@ nlohmann::json parse_proc_status(unsigned pid) {
     }
     status[name] = value;
   }
+
+  status_cache[pid] = std::make_pair(status_file_last_modified, status);
   return status;
 }
 
@@ -96,15 +116,15 @@ static std::string get_sched_policy_name(unsigned sched_policy) {
   }
 }
 
-static sched_attr get_sched_attributes(pid_t pid) {
+static sched_attr get_sched_attributes(process_id_t pid) {
 
   ::sched_attr attr{};
-  sched_getattr(pid, &attr, sizeof(attr), 0);
+  sched_getattr(static_cast<pid_t>(pid), &attr, sizeof(attr), 0);
 
   return attr;
 }
 
-bool is_realtime(pid_t pid) {
+bool is_realtime(process_id_t pid) {
   sched_attr attr = get_sched_attributes(pid);
   return attr.sched_priority > 0;
 }
@@ -121,7 +141,7 @@ struct io_prio_attributes {
   int           io_nice;
 };
 
-static io_prio_attributes get_io_prio_attributes(unsigned int pid) {
+static io_prio_attributes get_io_prio_attributes(process_id_t pid) {
   int io_prio_data = ioprio_get(IOPRIO_WHO_PROCESS, pid);
   int io_nice = IOPRIO_PRIO_DATA(io_prio_data);
 
@@ -144,7 +164,7 @@ static io_prio_attributes get_io_prio_attributes(unsigned int pid) {
   return io_prio_attributes{.io_class = io_class, .io_nice = io_nice};
 }
 
-static std::optional<process_info> get_process_info(unsigned pid) {
+static std::optional<process_info> get_process_info(process_id_t pid) {
   if (!exists(std::filesystem::path(std::format("/proc/{}", pid))))
     return std::optional<process_info>();
 
