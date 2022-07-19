@@ -95,7 +95,7 @@ static nlohmann::json parse_proc_status(process_id_t pid) {
   return status;
 }
 
-static std::string get_sched_policy_name(unsigned sched_policy) {
+[[gnu::pure]] static std::string get_sched_policy_name(unsigned sched_policy) {
   switch (sched_policy & 0xFF) {
   case SCHED_RR:
     return "rr";
@@ -166,7 +166,7 @@ static io_prio_attributes get_io_prio_attributes(process_id_t pid) {
 
 static std::optional<process_info> get_process_info(process_id_t pid) {
   if (!exists(std::filesystem::path(std::format("/proc/{}", pid))))
-    return std::optional<process_info>();
+    return {};
 
   process_info info = nlohmann::json::object();
 
@@ -243,8 +243,7 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
     }
 
     unsigned oom_score_adj = 0;
-    std::ifstream{std::format("/proc/{}/oom_score_adj", pid)} >>
-        oom_score_adj;
+    std::ifstream{std::format("/proc/{}/oom_score_adj", pid)} >> oom_score_adj;
     info["oom_score_adj"] = oom_score_adj;
 
     info["cmdline"] = get_cmdline_from_pid(static_cast<int>(pid));
@@ -254,11 +253,13 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
                   e.what(), e.path1().string(), e.path2().string());
 
     info["incomplete"] = true;
-
-    return std::optional<process_info>(info);
+  } catch (const std::exception &e) {
+    spdlog::trace("{:s}: Error getting {:d} infos: {}", __func__, pid,
+                  e.what());
+    info["incomplete"] = true;
   }
 
-  return std::optional<process_info>(info);
+  return {info};
 }
 
 nlohmann::json get_process_info_map() {
