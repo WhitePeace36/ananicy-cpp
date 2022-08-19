@@ -65,7 +65,7 @@ bool set_priority(pid_t pid, int nice_value) {
     spdlog::critical("{}: unknown exception: {}", __func__, e.what());
   }
 
-  return test_errno(errcode, __func__, static_cast<pid_t>(pid));
+  return test_errno(errcode, __func__, pid);
 }
 
 bool set_io_priority(pid_t pid, const std::string_view &io_class, int value) {
@@ -91,7 +91,7 @@ bool set_io_priority(pid_t pid, const std::string_view &io_class, int value) {
   }
 
   errno = 0;
-  ioprio_set(IOPRIO_WHO_PROCESS, pid, io_prio);
+  ioprio_set(IOPRIO_WHO_PROCESS, static_cast<id_t>(pid), io_prio);
 
   return test_errno(errno, __func__, pid);
 }
