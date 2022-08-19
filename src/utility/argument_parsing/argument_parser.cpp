@@ -102,7 +102,7 @@ argument_parser::parse_args(const std::vector<std::string> &params) {
   }
 
   for (const auto &arg_pair : m_args) {
-    spdlog::trace((std::string)arg_pair.second);
+    spdlog::trace(static_cast<std::string>(arg_pair.second));
   }
 
   return return_result;
@@ -127,7 +127,7 @@ argument &argument_parser::add_argument(const std::string &name) {
 
 argparse_error argument_parser::parse_args(const int argc, const char **argv) {
   std::vector<std::string> args;
-  args.reserve(argc);
+  args.reserve(static_cast<std::size_t>(argc));
   for (int i = 0; i < argc; ++i) {
     args.emplace_back(std::string{argv[i]});
   }

@@ -89,9 +89,10 @@ public:
   [[nodiscard]] bool is_flag() const;
   [[nodiscard]] bool is_defined() const;
 
-  operator std::string() const;
+  [[nodiscard]] operator std::string() const;
 
-  friend bool operator==(const argument &arg, const std::string &name) {
+
+  constexpr friend bool operator==(const argument &arg, const std::string &name) {
     return arg.m_name == name;
   }
 };

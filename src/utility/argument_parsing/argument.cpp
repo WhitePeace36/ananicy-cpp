@@ -52,7 +52,7 @@ std::vector<std::string> argument::get_long_names() const {
 
 std::vector<char> argument::get_short_names() const { return m_short_names; }
 
-std::type_index argument::get_type() const { return m_value_type; }
+[[gnu::pure]] std::type_index argument::get_type() const { return m_value_type; }
 
 argument &argument::type(const std::type_info &type) {
   m_value_type = type;
@@ -62,9 +62,9 @@ argument &argument::type(const std::type_info &type) {
 
 void argument::set_value(const std::string &value) { m_value = value; }
 
-bool argument::is_positional() const { return m_is_positional; }
+[[gnu::pure]] bool argument::is_positional() const { return m_is_positional; }
 
-bool argument::is_flag() const { return m_is_flag; }
+[[gnu::pure]] bool argument::is_flag() const { return m_is_flag; }
 
 bool argument::is_defined() const { return m_value.has_value(); }
 
