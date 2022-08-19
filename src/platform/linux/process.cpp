@@ -62,14 +62,14 @@ static int connect_netlink_socket() {
 
 static int set_event_subscription(int nl_sock, bool enable) {
   struct alignas(NLMSG_ALIGNTO) nl_cn_msg {
-    struct nlmsghdr nl_hdr;
+    struct nlmsghdr nl_hdr{};
     struct [[gnu::packed]] {
-      struct cn_msg         cn_msg;
-      enum proc_cn_mcast_op cn_mcast;
+      struct cn_msg         cn_msg{};
+      enum proc_cn_mcast_op cn_mcast{};
     };
   };
 
-  nl_cn_msg netlink_connection_message = {};
+  nl_cn_msg netlink_connection_message{};
   netlink_connection_message.nl_hdr = {
       .nlmsg_len = sizeof(nl_cn_msg),
       .nlmsg_type = NLMSG_DONE,
@@ -93,15 +93,15 @@ static int set_event_subscription(int nl_sock, bool enable) {
 static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
                          const std::stop_token &stop_token) {
   struct alignas(NLMSG_ALIGNTO) nl_cn_msg {
-    struct nlmsghdr nl_hdr;
+    struct nlmsghdr nl_hdr{};
     struct [[gnu::packed]] {
-      struct cn_msg     cn_msg;
-      struct proc_event proc_ev;
+      struct cn_msg     cn_msg{};
+      struct proc_event proc_ev{};
     };
   };
 
   ssize_t   status = 0;
-  nl_cn_msg netlink_connection_message = {};
+  nl_cn_msg netlink_connection_message{};
   while (!stop_token.stop_requested()) {
     errno = 0;
     status = recv(nl_sock, &netlink_connection_message,
