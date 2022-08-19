@@ -78,7 +78,7 @@ static nlohmann::json parse_proc_status(process_id_t pid) {
                             std::pair<file_time_point, nlohmann::json>>
       status_cache = {};
 
-  std::filesystem::path status_file_path = std::format("/proc/{}/status", pid);
+  fs::path status_file_path = std::format("/proc/{}/status", pid);
   file_time_point       status_file_last_modified{};
   try {
     status_file_last_modified = last_write_time(status_file_path);
@@ -87,7 +87,7 @@ static nlohmann::json parse_proc_status(process_id_t pid) {
         return status_cache[pid].second;
       }
     }
-  } catch (const std::filesystem::filesystem_error &e) {
+  } catch (const fs::filesystem_error &e) {
     return {};
   }
 
@@ -144,12 +144,12 @@ static sched_attr get_sched_attributes(process_id_t pid) {
 }
 
 bool is_realtime(process_id_t pid) {
-  sched_attr attr = get_sched_attributes(pid);
+  const sched_attr attr = get_sched_attributes(pid);
   return attr.sched_priority > 0;
 }
 
 bool is_kernel_process(process_id_t pid) {
-  auto status = parse_proc_status(pid);
+  const auto& status = parse_proc_status(pid);
   return (status["PPid"] == "0") || (status["PPid"] == "2");
 }
 
@@ -242,7 +242,7 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
 
     info["ionice"] = nlohmann::json::array();
 
-    std::string io_class_name;
+    std::string io_class_name{};
     switch (io_data.io_class) {
     case NONE:
       io_class_name = "none";
