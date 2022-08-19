@@ -95,13 +95,13 @@ Config::operator std::string() const {
     std::format_to(std::back_inserter(config_string), "{:s} = {}\n", item.first,
                    item.second);
   }
-  return std::move(config_string);
+  return config_string;
 }
 
 std::chrono::duration<uint32_t, std::ratio<1, 1>> Config::check_freq() {
   uint32_t frequency = 60;
   if (config.contains("check_freq"))
-    frequency = std::stoul(config.at("check_freq"));
+    frequency = static_cast<uint32_t>(std::stoul(config.at("check_freq")));
 
   spdlog::trace("{}: frequency = {}", __func__, frequency);
 
