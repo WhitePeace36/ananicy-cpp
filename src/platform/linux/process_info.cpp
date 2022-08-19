@@ -93,8 +93,7 @@ static nlohmann::json parse_proc_status(process_id_t pid) {
 
   nlohmann::json status = nlohmann::json::object();
 
-  std::ifstream status_file{std::format("/proc/{}/status", pid)};
-  std::string   line;
+  std::string line;
   while (status_file.good()) {
     std::getline(status_file, line);
     const size_t      delimiter_pos = line.find_first_of(':');
@@ -149,7 +148,7 @@ bool is_realtime(process_id_t pid) {
 }
 
 bool is_kernel_process(process_id_t pid) {
-  const auto& status = parse_proc_status(pid);
+  auto status = parse_proc_status(pid);
   return (status["PPid"] == "0") || (status["PPid"] == "2");
 }
 
