@@ -32,7 +32,7 @@ template <std::integral T = std::size_t>
 static constexpr inline std::string_view to_str(T number) {
   std::array<char, 35> str{};
   auto [ptr, _] = std::to_chars(str.data(), str.data() + str.size(), number);
-  return std::string_view(std::to_address(str.data()), ptr - str.data());
+  return std::string_view(std::to_address(str.data()), static_cast<std::size_t>(ptr - str.data()));
 }
 
 static autogroup get_autogroup_from_str(const std::string &str) {
@@ -114,7 +114,7 @@ static nlohmann::json parse_proc_status(process_id_t pid) {
   return status;
 }
 
-[[gnu::pure]] static std::string get_sched_policy_name(unsigned sched_policy) {
+static std::string get_sched_policy_name(unsigned sched_policy) {
   switch (sched_policy & 0xFF) {
   case SCHED_RR:
     return "rr";
@@ -167,7 +167,7 @@ struct io_prio_attributes {
 
 static io_prio_attributes get_io_prio_attributes(process_id_t pid) {
   const int io_prio_data = ioprio_get(IOPRIO_WHO_PROCESS, pid);
-  const int io_nice = IOPRIO_PRIO_DATA(io_prio_data);
+  const int io_nice = IOPRIO_PRIO_DATA(static_cast<std::size_t>(io_prio_data));
 
   io_prio_class io_class;
   switch (IOPRIO_PRIO_CLASS(io_prio_data)) {
