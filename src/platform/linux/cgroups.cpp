@@ -5,6 +5,7 @@
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <mutex>
 #include <optional>
 #include <spdlog/spdlog.h>
 #include <thread>
@@ -201,10 +202,13 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
 control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
   using namespace std::chrono_literals;
 
+  static std::mutex info_mutex{};
+  std::lock_guard<std::mutex> lock{info_mutex};
+
   static std::optional<cgroup_info> info{};
 
   if (reset) {
-    info.reset();
+    info = std::nullopt;
   }
 
   if (!info.has_value()) {
