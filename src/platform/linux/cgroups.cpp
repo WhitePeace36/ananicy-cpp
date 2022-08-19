@@ -23,11 +23,11 @@ static fs::path get_cgroup_path(const std::string_view &cgroup_name) {
   case control_groups::cgroup_info::none:
     break;
   case control_groups::cgroup_info::v1:
-    cgroup_path.append("cpu").append(cgroup_name);
+    cgroup_path /= fs::path{"cpu"} / cgroup_name.data();
     spdlog::trace("{}: cgroup_path: {}", __func__, cgroup_path.string());
     break;
   case control_groups::cgroup_info::v2:
-    cgroup_path.append(cgroup_name);
+    cgroup_path /= cgroup_name;
     break;
   }
   return cgroup_path;
@@ -77,9 +77,9 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
   case cgroup_info::v1:
     try {
       const auto &cpu_quota_path =
-          get_cgroup_path(name).append("cpu.cfs_quota_us");
+          get_cgroup_path(name) / "cpu.cfs_quota_us";
       const auto &cpu_period_path =
-          get_cgroup_path(name).append("cpu.cfs_period_us");
+          get_cgroup_path(name) / "cpu.cfs_period_us";
       unsigned period_us = 1000u * 1000u; // maximum is 1s
       unsigned quota_us = period_us * std::thread::hardware_concurrency() *
                           std::clamp(quota, 0u, 100u) / 100u;
@@ -100,7 +100,7 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
     break;
   case cgroup_info::v2:
     try {
-      const auto &cpu_max_path = get_cgroup_path(name).append("cpu.max");
+      const auto &cpu_max_path = get_cgroup_path(name) / "cpu.max";
       if (!exists(cpu_max_path)) {
         errors = 1;
         spdlog::error("{}: cgroup v2 error: cpu.max not found at {}!", __func__,
@@ -140,7 +140,7 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
     break;
   case cgroup_info::v1:
     try {
-      const auto &cpu_procs_path = get_cgroup_path(cgroup_name).append("tasks");
+      const auto &cpu_procs_path = get_cgroup_path(cgroup_name) / "tasks";
       if (!exists(cpu_procs_path)) {
         errors = 1;
         spdlog::error("{}: cgroup path not found: {}", __func__,
@@ -169,7 +169,7 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
   case cgroup_info::v2:
     try {
       const auto &cpu_procs_path =
-          get_cgroup_path(cgroup_name).append("cgroup.procs");
+          get_cgroup_path(cgroup_name) / "cgroup.procs";
       if (!exists(cpu_procs_path)) {
         errors = 1;
         spdlog::error("{}: cgroup path not found: {}", __func__,
@@ -222,7 +222,7 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
           if (word.starts_with("cgroup2")) {
             ss >> cgroup_path;
             fs::path test_cgroup(cgroup_path);
-            test_cgroup.append("ananicy_test_cgroup2");
+            test_cgroup /= "ananicy_test_cgroup2";
 
             if (fs::exists(test_cgroup)) {
               if (!fs::remove(test_cgroup)) {
@@ -236,8 +236,7 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
               break;
             }
 
-            const auto &controllers_path =
-                fs::path{test_cgroup}.append("cgroup.controllers");
+            const auto controllers_path = fs::path{test_cgroup} / "cgroup.controllers";
             std::ifstream controllers_file{controllers_path};
             // controllers_file.exceptions(std::fstream::failbit);
 
@@ -259,8 +258,7 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
               break;
             }
 
-            const auto &test_cgroup_cpumax =
-                fs::path{test_cgroup}.append("cpu.max");
+            const auto &test_cgroup_cpumax = fs::path{test_cgroup} / "cpu.max";
             if (!fs::exists(test_cgroup_cpumax)) {
               spdlog::warn("cgroup2 at {} lacks cpu.max, skipping",
                            test_cgroup.string());
@@ -277,7 +275,7 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
             if (!info.has_value()) {
               ss >> cgroup_path;
               cgroup_path = cgroup_path.parent_path();
-              if (!fs::exists(fs::path{cgroup_path}.append("cpu"))) {
+              if (!fs::exists(fs::path{cgroup_path} / "cpu")) {
                 spdlog::warn("cgroup at {} lack cpu controller, skipping",
                              cgroup_path.string());
                 break;
