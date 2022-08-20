@@ -5,7 +5,7 @@
 namespace process_info {
   static std::vector<std::string> get_cmdline_from_pid(int pid) {
     std::string cmdline_value;
-    std::getline(std::fstream(std::format("/proc/{}/cmdline", pid)),
+    std::getline(std::ifstream(std::format("/proc/{}/cmdline", pid)),
                  cmdline_value);
     std::vector<std::string> cmdline;
 
