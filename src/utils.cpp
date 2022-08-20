@@ -35,8 +35,7 @@ std::optional<std::string> get_env(const std::string &name) {
 }
 
 std::string get_error_string(int error_number) {
-  std::string msg;
-  msg.append(strerror(error_number));
+  std::string msg{strerror(error_number)};
   return msg;
 }
 
