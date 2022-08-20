@@ -18,8 +18,8 @@ struct Process {
   pid_t       pid;
   std::string name;
 
-  bool operator==(const Process &other) const {
-    return pid == other.pid && name == other.name;
+  constexpr inline bool operator==(const Process &other) const {
+    return (pid == other.pid) && (name == other.name);
   }
 };
 

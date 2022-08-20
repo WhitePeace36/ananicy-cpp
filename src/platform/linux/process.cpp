@@ -22,6 +22,8 @@
 
 #include "process_helpers.hpp"
 
+namespace fs = std::filesystem;
+
 static int connect_netlink_socket() {
 
   errno = 0;
@@ -39,7 +41,8 @@ static int connect_netlink_socket() {
   };
 
   errno = 0;
-  int rc = bind(nl_sock, reinterpret_cast<struct sockaddr *>(&sa_nl), sizeof(sa_nl));
+  int rc =
+      bind(nl_sock, reinterpret_cast<struct sockaddr *>(&sa_nl), sizeof(sa_nl));
   if (rc == -1) {
     [[unlikely]] spdlog::error("Couldn't bind to socket: {}",
                                get_error_string(errno));
@@ -51,7 +54,8 @@ static int connect_netlink_socket() {
   struct timeval tv {
     .tv_sec = 0, .tv_usec = 500 * 1000
   };
-  setsockopt(nl_sock, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char *>(&tv), sizeof(tv));
+  setsockopt(nl_sock, SOL_SOCKET, SO_RCVTIMEO,
+             reinterpret_cast<const char *>(&tv), sizeof(tv));
 
   return nl_sock;
 }
@@ -82,7 +86,8 @@ static int set_event_subscription(int nl_sock, bool enable) {
   netlink_connection_message.cn_mcast =
       enable ? PROC_CN_MCAST_LISTEN : PROC_CN_MCAST_IGNORE;
 
-  return static_cast<int>(send(nl_sock, &netlink_connection_message, sizeof(nl_cn_msg), 0));
+  return static_cast<int>(
+      send(nl_sock, &netlink_connection_message, sizeof(nl_cn_msg), 0));
 }
 
 static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
@@ -165,11 +170,11 @@ std::string get_command_from_pid(pid_t pid) {
    */
   if (exe_fail_count < COMMAND_NAME_HEURISTIC_SKIP_EXE_FAILURES) {
     try {
-      std::filesystem::path proc_path{std::format("/proc/{}/exe", pid)};
+      const fs::path proc_path{std::format("/proc/{}/exe", pid)};
 
-      std::filesystem::path exe_path = read_symlink(proc_path);
+      const fs::path exe_path = read_symlink(proc_path);
       auto           exe_name = exe_path.filename().string();
-      auto                  exe_name_end = exe_name.find(" (deleted)");
+      const auto     exe_name_end = exe_name.find(" (deleted)");
       if (exe_name_end != std::string::npos) {
         exe_name = exe_name.substr(0, exe_name_end + 1);
       }
@@ -178,7 +183,7 @@ std::string get_command_from_pid(pid_t pid) {
       exe_fail_count = 0;
 
       return exe_name;
-    } catch (const std::filesystem::filesystem_error &e) {
+    } catch (const fs::filesystem_error &e) {
       const auto errcode = e.code().value();
       if (errcode == EEXIST)
         return "<unknown>";
@@ -202,12 +207,11 @@ std::string get_command_from_pid(pid_t pid) {
 
       if (exe_name_begin != std::string::npos) {
         return cmdline[0].substr(exe_name_begin + 1);
-      } else {
-        return cmdline[0];
       }
+      return cmdline[0];
     }
 
-  } catch (const std::filesystem::filesystem_error &e) {
+  } catch (const fs::filesystem_error &e) {
     spdlog::warn("{}: filesystem error: {} (path: {})", __func__, e.what(),
                  e.path1().string());
   }
@@ -215,11 +219,11 @@ std::string get_command_from_pid(pid_t pid) {
   // Comm method
   try {
     std::ifstream comm_file(std::format("/proc/{}/comm", pid));
-    std::string  comm;
+    std::string   comm;
 
     std::getline(comm_file, comm);
     return comm;
-  } catch (const std::filesystem::filesystem_error &e) {
+  } catch (const fs::filesystem_error &e) {
     spdlog::error("{}: filesystem error: {} (path: {})", __func__, e.what(),
                   e.path1().string());
   }
@@ -234,7 +238,7 @@ struct ProcessQueue::Socket {
 int ProcessQueue::init() {
   full_scan();
 
-  int socket = connect_netlink_socket();
+  const int socket = connect_netlink_socket();
 
   if (socket == -1) {
     [[unlikely]] throw std::runtime_error("Couldn't open netlink socket!");
@@ -279,8 +283,7 @@ ProcessQueue::~ProcessQueue() { stop(); }
 void ProcessQueue::full_scan() {
   spdlog::info("Doing a full scan");
   unsigned n_process_found = 0;
-  for (const std::filesystem::path &process_path :
-       std::filesystem::directory_iterator("/proc")) {
+  for (const fs::path &process_path : fs::directory_iterator("/proc")) {
     const std::string pid_str = process_path.filename().string();
     if (isdigit(pid_str[0])) {
       const int pid = std::stoi(pid_str);
