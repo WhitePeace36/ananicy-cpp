@@ -17,11 +17,11 @@ const Config::ConfigInit &&Config::default_config = {
     {"loglevel", "info"},     {"check_freq", "60"}};
 
 static std::string trim(const std::string &str) {
-  std::size_t first = str.find_first_not_of(' ');
+  const std::size_t first = str.find_first_not_of(' ');
   if (std::string::npos == first) {
     return str;
   }
-  std::size_t last = str.find_last_not_of(' ');
+  const std::size_t last = str.find_last_not_of(' ');
   return str.substr(first, (last - first + 1));
 }
 
@@ -52,8 +52,7 @@ Config::Config(const std::filesystem::path &config_path) {
     return;
   }
 
-  std::ifstream is_file;
-  is_file.open(config_path);
+  std::ifstream is_file{config_path};
 
   std::string line;
   while (std::getline(is_file, line)) {

@@ -33,7 +33,7 @@ int main(const int argc, const char **argv) {
     spdlog::set_level(spdlog::level::info);
   }
 
-  auto start_time = std::chrono::system_clock::now();
+  const auto start_time = std::chrono::system_clock::now();
 
   argparse::argument_parser parser(
       "ananicy-cpp" /*, "ANother Auto NIce daemon, fully written in C++"*/);
@@ -216,7 +216,7 @@ int main(const int argc, const char **argv) {
 
   ih.stop();
 
-  std::chrono::duration<double, std::ratio<1, 1>> duration =
+  const std::chrono::duration<double, std::ratio<1, 1>> duration =
       std::chrono::system_clock::now() - start_time;
 
   spdlog::info("Summary:\n{} processes processed, ran for {:%H:%M:%S} seconds",
