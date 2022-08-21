@@ -91,6 +91,7 @@ static nlohmann::json parse_proc_status(process_id_t pid) {
     return {};
   }
 
+  std::ifstream  status_file{status_file_path};
   nlohmann::json status = nlohmann::json::object();
 
   std::string line;
@@ -317,7 +318,8 @@ nlohmann::json get_process_info_map() {
         if (pid == 0 || process_map.contains(to_str(pid)))
           continue;
 
-        std::optional<process_info> info = get_process_info(static_cast<uint32_t>(pid));
+        std::optional<process_info> info =
+            get_process_info(static_cast<uint32_t>(pid));
         if (info.has_value()) {
           process_map[to_str(pid).data()] = info.value();
         }
