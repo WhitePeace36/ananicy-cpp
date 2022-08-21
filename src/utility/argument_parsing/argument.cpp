@@ -1,17 +1,35 @@
 #include "utility/argument_parser.hpp"
+
+#include <cstdlib>
 #include <cxxabi.h>
 #include <format>
-#include <functional>
 #include <iostream>
+#include <memory>
 #include <queue>
+#include <string>
+#include <utility>
 
 namespace argparse {
 std::atomic<unsigned> argument::_id = 0;
 
-static inline std::string demangle_symbol(std::type_index type_index) {
-  return std::string(
-      abi::__cxa_demangle(type_index.name(), nullptr, nullptr, nullptr));
+namespace {
+// NOTE: abi::__cxa_demangle requires to free memory.
+// Also, abi::__cxa_demangle can return nullptr; std::string{nullptr} is
+// undefined behaviour
+std::string demangle_symbol(const std::type_index &type_index) {
+  std::size_t                            sz{128};
+  std::unique_ptr<char, decltype(&free)> buffer(
+      static_cast<char *>(std::malloc(sz)), free);
+  std::memset(buffer.get(), 0, sz);
+  int   status{};
+  char *demangle_name =
+      abi::__cxa_demangle(type_index.name(), buffer.get(), &sz, &status);
+  if (!demangle_name) {
+    return "<unknown symbol>";
+  }
+  return demangle_name;
 }
+} // namespace
 
 argument &argument::positional() {
   m_is_positional = true;
@@ -91,7 +109,7 @@ argument::operator std::string() const {
 std::optional<std::string> argument::get_description() const {
   if (m_description.empty())
     return {};
-  return std::optional<std::string>(m_description);
+  return m_description;
 }
 
 } // namespace argparse

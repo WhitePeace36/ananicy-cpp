@@ -98,7 +98,7 @@ public:
 
 class argument_parser {
   std::map<unsigned, argument> m_args{};
-  std::string                  m_program_name = "";
+  std::string                  m_program_name{};
 
 public:
   argument_parser(std::string program_name = "");
@@ -107,7 +107,7 @@ public:
 
   argument &add_argument();
   argument &add_argument(const argument &argument);
-  argument &add_argument(std::string name);
+  argument &add_argument(const std::string& name);
 
   std::optional<argument> get_arg(const std::string &name);
   std::string             get_program_name();
