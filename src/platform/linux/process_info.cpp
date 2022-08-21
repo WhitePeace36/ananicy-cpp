@@ -13,8 +13,11 @@
 #include <optional>
 #include <queue>
 #include <spdlog/spdlog.h>
+#include <string_view>
 
 #include "process_helpers.hpp"
+
+namespace fs = std::filesystem;
 
 namespace process_info {
 
@@ -33,22 +36,22 @@ static constexpr inline std::string_view to_str(T number) {
 }
 
 static autogroup get_autogroup_from_str(const std::string &str) {
-  auto begin_group_num = str.find_first_not_of("/autogroup-");
+  const auto begin_group_num = str.find_first_not_of("/autogroup-");
   if (begin_group_num == std::string::npos) {
     return nullptr;
   }
-  auto end_group_num = str.find_first_of(' ', begin_group_num);
-  auto begin_nice_num = str.find_first_not_of("nice ", end_group_num);
-  auto end_nice_num = str.size();
+  const auto end_group_num = str.find_first_of(' ', begin_group_num);
+  const auto begin_nice_num = str.find_first_not_of("nice ", end_group_num);
+  const auto end_nice_num = str.size();
 
-  return {{"group", std::stol(str.substr(begin_group_num, end_group_num))},
-          {"nice", std::stol(str.substr(begin_nice_num, end_nice_num))}};
+  return {{"group", to_int(str.substr(begin_group_num, end_group_num))},
+          {"nice", to_int(str.substr(begin_nice_num, end_nice_num))}};
 }
 
 nlohmann::json get_autogroup_map() {
   nlohmann::json autogroup_map = {};
 
-  const auto& process_info_map = get_process_info_map();
+  const auto &process_info_map = get_process_info_map();
 
   for (auto process_info : process_info_map) {
     if (process_info["autogroup"] != nullptr) {
@@ -88,17 +91,17 @@ static nlohmann::json parse_proc_status(process_id_t pid) {
     return {};
   }
 
-  std::ifstream   status_file{status_file_path};
   nlohmann::json status = nlohmann::json::object();
 
-  std::string  line;
+  std::ifstream status_file{std::format("/proc/{}/status", pid)};
+  std::string   line;
   while (status_file.good()) {
     std::getline(status_file, line);
-    size_t      delimiter_pos = line.find_first_of(':');
-    std::string name = line.substr(0, delimiter_pos);
-    std::string value = line.substr(delimiter_pos + 1);
+    const size_t      delimiter_pos = line.find_first_of(':');
+    const std::string name = line.substr(0, delimiter_pos);
+    std::string       value = line.substr(delimiter_pos + 1);
 
-    size_t first_non_whitespace = value.find_first_not_of({' ', '\t'});
+    const size_t first_non_whitespace = value.find_first_not_of({' ', '\t'});
     if (first_non_whitespace == std::string::npos) {
       value = "";
     } else {
@@ -163,8 +166,8 @@ struct io_prio_attributes {
 };
 
 static io_prio_attributes get_io_prio_attributes(process_id_t pid) {
-  int io_prio_data = ioprio_get(IOPRIO_WHO_PROCESS, pid);
-  int io_nice = IOPRIO_PRIO_DATA(io_prio_data);
+  const int io_prio_data = ioprio_get(IOPRIO_WHO_PROCESS, pid);
+  const int io_nice = IOPRIO_PRIO_DATA(io_prio_data);
 
   io_prio_class io_class;
   switch (IOPRIO_PRIO_CLASS(io_prio_data)) {
@@ -186,7 +189,7 @@ static io_prio_attributes get_io_prio_attributes(process_id_t pid) {
 }
 
 static std::optional<process_info> get_process_info(process_id_t pid) {
-  if (!exists(std::filesystem::path(std::format("/proc/{}", pid))))
+  if (!exists(fs::path(std::format("/proc/{}", pid))))
     return {};
 
   process_info info = nlohmann::json::object();
@@ -200,12 +203,11 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
       return std::optional<process_info>();
     }
 
-    info["pid"] = std::stoul(static_cast<std::string>(status["Tgid"]));
+    info["pid"] = to_int(static_cast<std::string>(status["Tgid"]));
 
     info["tpid"] = pid;
 
-    info["exe"] =
-        std::filesystem::read_symlink(std::format("/proc/{}/exe", pid), ec);
+    info["exe"] = fs::read_symlink(std::format("/proc/{}/exe", pid), ec);
     if (ec)
       info["exe"] = nullptr;
 
@@ -219,8 +221,8 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
     std::getline(std::ifstream(std::format("/proc/{}/stat", pid)), stat);
     info["stat"] = stat;
 
-    auto stat_name_begin = stat.find_first_of('(') + 1;
-    auto stat_name_end = stat.find_first_of(')');
+    const auto stat_name_begin = stat.find_first_of('(') + 1;
+    const auto stat_name_end = stat.find_first_of(')');
 
     info["stat_name"] =
         stat.substr(stat_name_begin, stat_name_end - stat_name_begin);
@@ -236,7 +238,7 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
     info["rtprio"] = uint32_t(sched_info.sched_priority);
     info["nice"] = int(sched_info.sched_nice);
 
-    auto io_data = get_io_prio_attributes(pid);
+    const auto io_data = get_io_prio_attributes(pid);
 
     info["ionice"] = nlohmann::json::array();
 
@@ -269,7 +271,7 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
 
     info["cmdline"] = get_cmdline_from_pid(static_cast<int>(pid));
 
-  } catch (const std::filesystem::filesystem_error &e) {
+  } catch (const fs::filesystem_error &e) {
     spdlog::trace("{}: Error getting {} infos: {} ({}, {})", __func__, pid,
                   e.what(), e.path1().string(), e.path2().string());
 
@@ -286,9 +288,8 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
 nlohmann::json get_process_info_map() {
   nlohmann::json process_map = nlohmann::json::object();
 
-  std::queue<std::filesystem::path> directories{};
-  for (const std::filesystem::path &process_path :
-       std::filesystem::directory_iterator("/proc")) {
+  std::queue<fs::path> directories{};
+  for (const fs::path &process_path : fs::directory_iterator("/proc")) {
 
     if (!isdigit(process_path.filename().string()[0])) {
       spdlog::trace("{}: Skipping entry '{}'", __func__, process_path.string());
@@ -296,27 +297,24 @@ nlohmann::json get_process_info_map() {
     }
 
     const auto pid = to_int(process_path.filename().string());
-
     if (pid == 0 || process_map.contains(to_str(pid)))
       continue;
 
-    directories.emplace(
-        std::filesystem::path(std::format("/proc/{}/task", pid)));
+    directories.emplace(fs::path(std::format("/proc/{}/task", pid)));
   }
 
   while (!directories.empty()) {
     const auto &directory = directories.front();
 
     try {
-      for (const std::filesystem::path &process_path :
-           std::filesystem::directory_iterator(directory)) {
+      for (const fs::path &process_path : fs::directory_iterator(directory)) {
         if (!isdigit(process_path.filename().string()[0])) {
           spdlog::trace("{}: Skipping entry '{}'", __func__,
                         process_path.string());
           continue;
         }
-        const auto pid = to_int(process_path.filename().string());
 
+        const auto pid = to_int(process_path.filename().string());
         if (pid == 0 || process_map.contains(to_str(pid)))
           continue;
 
@@ -325,7 +323,7 @@ nlohmann::json get_process_info_map() {
           process_map[to_str(pid).data()] = info.value();
         }
       }
-    } catch (const std::filesystem::filesystem_error &e) {
+    } catch (...) {
     }
 
     directories.pop();
