@@ -313,16 +313,16 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
 
 #if ENABLE_SYSTEMD == 1
 extern "C" int sd_pid_get_cgroup(pid_t, char **cgroup);
+#endif
 std::string    control_groups::get_cgroup_for_pid(pid_t pid) {
+#if ENABLE_SYSTEMD == 1
   char *cgroup;
   sd_pid_get_cgroup(pid, &cgroup);
   std::string cgroup_name(cgroup);
   free(cgroup);
 
   return cgroup_name;
-}
 #else
-std::string control_groups::get_cgroup_for_pid(pid_t pid) {
   std::ifstream pid_cgroup_file(std::format("/proc/{:d}/cgroup", pid));
   std::string   line;
   std::getline(pid_cgroup_file, line);
@@ -333,5 +333,5 @@ std::string control_groups::get_cgroup_for_pid(pid_t pid) {
 
   auto result = line.substr(line.find_last_of("::") + 1);
   return result;
-}
 #endif
+}
