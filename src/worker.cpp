@@ -26,8 +26,8 @@ void Worker::work(const std::stop_token &stop_token) {
       control_groups::cgroup_info::v2;
   while (!stop_token.stop_requested()) {
     while ((proc = process_queue->poll(500ms)).has_value()) {
-      Process &p = proc.value();
-      json     rule = rules->get_rule(p.name);
+      const auto &p = proc.value();
+      const auto &rule = rules->get_rule(p.name);
 
       processed_count++;
 
@@ -43,37 +43,42 @@ void Worker::work(const std::stop_token &stop_token) {
 
         try {
           if (config->apply_nice() && rule.contains("nice")) {
-            spdlog::debug("Setting priority of {}({}) to {}", p.name, p.pid,
-                          to_string(rule["nice"]));
-            if (!priority::set_priority(p.pid, rule["nice"]))
+            const int &rule_nice = rule["nice"];
+            spdlog::debug("Setting priority of {}({}) to {}", p.name,
+                                p.pid, rule_nice);
+            if (!priority::set_priority(p.pid, rule_nice))
               continue;
           }
 
           if (config->apply_sched() && rule.contains("sched")) {
-            unsigned rt_prio = rule.contains("rtprio")
-                                   ? static_cast<unsigned>(rule["rtprio"])
-                                   : 1u;
-            spdlog::debug("Setting scheduler of {}({}) to {}", p.name, p.pid,
-                          to_string(rule["sched"]));
-            if (!priority::set_sched(p.pid, rule["sched"], rt_prio))
+            const auto &rt_prio =
+                      rule.contains("rtprio")
+                          ? static_cast<unsigned>(rule["rtprio"])
+                          : 1u;
+            const std::string &rule_sched = rule["sched"];
+            spdlog::debug("Setting scheduler of {}({}) to {}", p.name,
+                                p.pid, rule_sched);
+            if (!priority::set_sched(p.pid, rule_sched.c_str(), rt_prio))
               continue;
           }
 
           if (config->apply_ionice() && rule.contains("ioclass")) {
-            spdlog::debug("Setting ioclass of {}({}) to {}", p.name, p.pid,
-                          to_string(rule["ioclass"]));
+            const std::string &rule_ioclass = rule["ioclass"];
+            spdlog::debug("Setting ioclass of {}({}) to {}", p.name,
+                                p.pid, rule_ioclass);
             int io_val = 0;
             if (rule.contains("ionice") && rule["ionice"].is_number_integer()) {
               io_val = rule["ionice"];
             }
-            if (!priority::set_io_priority(p.pid, rule["ioclass"], io_val))
+            if (!priority::set_io_priority(p.pid, rule_ioclass.c_str(), io_val))
               continue;
           }
 
           if (config->apply_oom_score_adj() && rule.contains("oom_score_adj")) {
+            const int &rule_oom_score_adj = rule["oom_score_adj"];
             spdlog::debug("Setting OOM score adjustment of {}({}) to {}",
-                          p.name, p.pid, to_string(rule["oom_score_adj"]));
-            if (!priority::set_oom_score_adjust(p.pid, rule["oom_score_adj"]))
+                          p.name, p.pid, rule_oom_score_adj);
+            if (!priority::set_oom_score_adjust(p.pid, rule_oom_score_adj))
               continue;
           }
 
@@ -82,9 +87,9 @@ void Worker::work(const std::stop_token &stop_token) {
             spdlog::debug("Cgroups are not compatible with realtime "
                           "scheduling for now (linux limitation)");
           } else if (config->apply_cgroups() && rule.contains("cgroup")) {
-            spdlog::debug("Adding process {}({}) to cgroup {}", p.name, p.pid,
-                          to_string(rule["cgroup"]));
-            if (!control_groups::add_pid_to_cgroup(p.pid, rule["cgroup"]))
+            const std::string &rule_cgroup = rule["cgroup"];
+            spdlog::debug("Adding process {}({}) to cgroup {}", p.name, p.pid, rule_cgroup);
+            if (!control_groups::add_pid_to_cgroup(p.pid, rule_cgroup))
               continue;
           }
         } catch (const std::exception &e) {

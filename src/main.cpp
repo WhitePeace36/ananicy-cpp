@@ -189,9 +189,9 @@ int main(const int argc, const char **argv) {
   service::set_status(service::STARTED);
 
   while (!ih.should_exit()) {
-    if (parser["benchmark"])
-      processListener.process_queue.wait_for(30s);
-    else
+    if (parser["benchmark"]) {
+      std::this_thread::sleep_for(30s);
+    } else
       ih.wait_for(conf.check_freq());
 
     if (ih.should_exit() || parser["benchmark"] ||

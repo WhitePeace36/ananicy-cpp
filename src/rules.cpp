@@ -36,8 +36,9 @@ void Rules::load_rule_from_string(const std::string_view &line) {
     };
     return s.empty() || is_comment_str(s);
   };
-  if (is_invalid_str(line))
+  if (is_invalid_str(line)) {
     return;
+  }
 
   try {
     const auto &&rule = json::parse(line);
