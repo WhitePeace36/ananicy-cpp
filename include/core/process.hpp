@@ -41,7 +41,11 @@ public:
 
   void full_scan();
 
+#ifdef USE_EXPERIMENTAL_IMPL
+  synchronized_queue<Process> process_queue{INT16_MAX};
+#else
   synchronized_queue<Process> process_queue;
+#endif
 };
 
 #endif // ANANICY_CPP_PROCESS_HPP
