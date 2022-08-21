@@ -15,8 +15,8 @@ pid_t get_pid();
 std::string get_command_from_pid(pid_t pid);
 
 struct Process {
-  pid_t       pid;
-  std::string name;
+  pid_t       pid{};
+  std::string name{};
 
   constexpr inline bool operator==(const Process &other) const {
     return (pid == other.pid) && (name == other.name);
@@ -27,17 +27,17 @@ class ProcessQueue {
 private:
   struct Socket;
 
-  int init();
+  int init() noexcept(false);
 
   std::unique_ptr<Socket> sock;
   std::jthread            event_thread;
 
 public:
   ProcessQueue();
-  ~ProcessQueue();
+  ~ProcessQueue() noexcept;
 
   void start();
-  void stop();
+  void stop() noexcept;
 
   void full_scan();
 

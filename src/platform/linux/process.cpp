@@ -197,7 +197,6 @@ std::string get_command_from_pid(pid_t pid) {
 
   // Cmdline method
   try {
-
     std::vector<std::string> cmdline = process_info::get_cmdline_from_pid(pid);
     if (!cmdline.empty()) {
       auto exe_name_begin = cmdline[0].find_last_of('/');
@@ -235,7 +234,7 @@ struct ProcessQueue::Socket {
   int socket;
 };
 
-int ProcessQueue::init() {
+int ProcessQueue::init() noexcept(false) {
   full_scan();
 
   const int socket = connect_netlink_socket();
@@ -278,7 +277,7 @@ void ProcessQueue::start() {
       });
 }
 
-ProcessQueue::~ProcessQueue() { stop(); }
+ProcessQueue::~ProcessQueue() noexcept { stop(); }
 
 void ProcessQueue::full_scan() {
   spdlog::info("Doing a full scan");
@@ -288,7 +287,7 @@ void ProcessQueue::full_scan() {
     if (isdigit(pid_str[0])) {
       const int pid = std::stoi(pid_str);
       // spdlog::trace("Pushing existing process: {}", pid);
-      const std::string command = get_command_from_pid(pid);
+      const auto &command = get_command_from_pid(pid);
 
       process_queue.push(Process{
           .pid = pid,
@@ -301,7 +300,7 @@ void ProcessQueue::full_scan() {
   spdlog::debug("Full scan found {:d} processes", n_process_found);
 }
 
-void ProcessQueue::stop() {
+void ProcessQueue::stop() noexcept {
   if (!this->event_thread.get_stop_token().stop_requested()) {
     this->event_thread.request_stop();
     this->event_thread.join();

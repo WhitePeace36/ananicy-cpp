@@ -11,7 +11,7 @@
 
 namespace fs = std::filesystem;
 
-static fs::path get_cgroup_path(const std::string &cgroup_name) {
+static fs::path get_cgroup_path(const std::string_view &cgroup_name) {
   const auto &cgroup_info = control_groups::get_cgroup_version();
   const auto &base_path = cgroup_info.path;
 
@@ -253,7 +253,6 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
             }
 
             if (!has_cpu_controller) {
-
               spdlog::warn("cgroup2 at {} doesn't have a cpu controller "
                            "available, skipping",
                            test_cgroup.string());
@@ -263,16 +262,13 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
             const auto &test_cgroup_cpumax =
                 fs::path{test_cgroup}.append("cpu.max");
             if (!fs::exists(test_cgroup_cpumax)) {
-
               spdlog::warn("cgroup2 at {} lacks cpu.max, skipping",
                            test_cgroup.string());
               break;
             }
             // Cleanup the cgroup we created
-            try {
-              fs::remove(test_cgroup);
-            } catch (...) {
-            }
+            std::error_code err{};
+            fs::remove(test_cgroup, err);
             info = {.path = cgroup_path,
                     .version = cgroup_info::cgroup_version::v2};
             spdlog::trace("Found cgroup v2 at {}", cgroup_path.string());
@@ -317,16 +313,16 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
 
 #if ENABLE_SYSTEMD == 1
 extern "C" int sd_pid_get_cgroup(pid_t, char **cgroup);
-#endif
 std::string    control_groups::get_cgroup_for_pid(pid_t pid) {
-#if ENABLE_SYSTEMD == 1
   char *cgroup;
   sd_pid_get_cgroup(pid, &cgroup);
   std::string cgroup_name(cgroup);
   free(cgroup);
 
   return cgroup_name;
+}
 #else
+std::string control_groups::get_cgroup_for_pid(pid_t pid) {
   std::ifstream pid_cgroup_file(std::format("/proc/{:d}/cgroup", pid));
   std::string   line;
   std::getline(pid_cgroup_file, line);
@@ -337,5 +333,5 @@ std::string    control_groups::get_cgroup_for_pid(pid_t pid) {
 
   auto result = line.substr(line.find_last_of("::") + 1);
   return result;
-#endif
 }
+#endif

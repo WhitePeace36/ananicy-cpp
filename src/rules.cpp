@@ -145,7 +145,7 @@ void Rules::load_rules_from_directory(const fs::path &dir_path) {
   }
 }
 
-void Rules::create_cgroups() {
+void Rules::create_cgroups() const noexcept {
   spdlog::info("Creating Cgroups...");
   for (const auto &cgroup_rule : cgroup_rules) {
     control_groups::create_cgroup(cgroup_rule.first);
@@ -157,7 +157,7 @@ void Rules::create_cgroups() {
   spdlog::info("Finished creating Cgroups...");
 }
 
-json Rules::get_rule(const std::string &name) {
+json Rules::get_rule(const std::string &name) const noexcept {
   json rule;
   if (program_rules.contains(name)) {
     rule = program_rules.at(name);
@@ -174,4 +174,4 @@ json Rules::get_rule(const std::string &name) {
   return rule;
 }
 
-[[gnu::pure]] size_t Rules::size() const { return program_rules.size(); }
+[[gnu::pure]] size_t Rules::size() const noexcept { return program_rules.size(); }

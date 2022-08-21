@@ -30,11 +30,11 @@ public:
   void load_rule_from_string(const std::string_view &rule);
   void load_rules_from_file(const std::filesystem::path &path);
   void load_rules_from_directory(const std::filesystem::path &dir_path);
-  json get_rule(const std::string &name);
+  json get_rule(const std::string &name) const noexcept;
 
-  void create_cgroups();
+  void create_cgroups() const noexcept;
 
-  size_t size() const;
+  size_t size() const noexcept;
 
   void show_all_rules();
 
