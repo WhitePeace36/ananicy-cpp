@@ -7,7 +7,6 @@
 #include <cstring>
 #include <fstream>
 #include <functional>
-bool InterruptHandler::should_exit() const { return this->need_exit; }
 
 static std::function<void(int)> handler;
 void                            on_signal(int unused) { handler(unused); }
@@ -22,8 +21,8 @@ InterruptHandler::InterruptHandler(std::initializer_list<int> signals) {
 }
 
 void InterruptHandler::stop() {
-  need_exit = true;
-  exit_condition.notify_all();
+  m_need_exit = true;
+  m_need_exit.notify_all();
 }
 
 std::optional<std::string> get_env(const std::string &name) {
@@ -35,8 +34,7 @@ std::optional<std::string> get_env(const std::string &name) {
 }
 
 std::string get_error_string(int error_number) {
-  std::string msg{strerror(error_number)};
-  return msg;
+  return std::string{strerror(error_number)};
 }
 
 std::string read_file(const std::string &path) {
