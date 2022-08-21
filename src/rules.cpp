@@ -31,7 +31,7 @@ void Rules::load_rule_from_string(const std::string_view &line) {
     const auto &is_comment_str = [](auto &&s) {
       std::string_view hash_str{s};
       hash_str.remove_prefix(
-          std::min(hash_str.find_first_not_of(" "), hash_str.size()));
+          std::min(hash_str.find_first_not_of(' '), hash_str.size()));
       return hash_str[0] == '#';
     };
     return s.empty() || is_comment_str(s);
@@ -72,7 +72,7 @@ void Rules::load_rules_from_file(const fs::path &path) {
   }
 }
 
-void Rules::show_all_rules() {
+void Rules::show_all_rules() const noexcept {
   for (const auto &rule : cgroup_rules) {
     spdlog::debug("Cgroup: {}, {}", rule.first, rule.second.dump());
   }
@@ -84,17 +84,19 @@ void Rules::show_all_rules() {
   }
 }
 
-void Rules::show_rules(rule_type type) {
+void Rules::show_rules(rule_type type) const noexcept {
   const auto &rules = (type == rule_type::types)     ? type_rules
                       : (type == rule_type::cgroups) ? cgroup_rules
                                                      : program_rules;
 
   json rules_display;
 
-  for (const auto &rule : rules) {
-    if (type == rule_type::rules) {
+  if (type == rule_type::rules) {
+    for (const auto &rule : rules) {
       rules_display[rule.first] = get_rule(rule.first);
-    } else {
+    }
+  } else {
+    for (const auto &rule : rules) {
       rules_display[rule.first] = rule.second;
     }
   }

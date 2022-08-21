@@ -36,10 +36,10 @@ public:
 
   size_t size() const noexcept;
 
-  void show_all_rules();
+  void show_all_rules() const noexcept;
 
   enum rule_type { rules, types, cgroups };
-  void show_rules(rule_type type);
+  void show_rules(rule_type type) const noexcept;
 };
 
 #endif // ANANICY_CPP_RULES_HPP
