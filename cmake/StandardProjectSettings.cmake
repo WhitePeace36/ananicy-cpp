@@ -32,7 +32,7 @@ option(USE_EXTERNAL_FMTLIB "Use external fmt library" OFF)
 option(ENABLE_SYSTEMD "Include systemd headers and install service file" ON)
 option(STATIC "Build static binary" OFF)
 option(OPTIMIZE_FOR_NATIVE_MICROARCH "Enable -march=native flag on the CXX compiler. This makes build NOT portable." OFF)
-option(USE_EXPERIMENTAL_IMPL "Use experimental impl" OFF)
+option(USE_EXPERIMENTAL_IMPL "Use experimental impl" ON)
 
 option(ENABLE_IPO "Enable Interprocedural Optimization, aka Link Time Optimization (LTO)" OFF)
 
