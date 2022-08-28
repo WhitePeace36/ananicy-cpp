@@ -152,7 +152,7 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
       std::ofstream cpu_procs_file(cpu_procs_path);
       cpu_procs_file << std::max(pid, 0) << std::endl;
       error_code = errno;
-      if (cpu_procs_file) {
+      if (error_code == 0) {
         spdlog::debug("Added pid {:d} to {} successfully", pid,
                       cpu_procs_path.string());
         break;
@@ -181,7 +181,7 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
       std::fstream cpu_procs_file(cpu_procs_path);
       cpu_procs_file << std::max(pid, 0) << std::endl;
       error_code = errno;
-      if (cpu_procs_file) {
+      if (error_code == 0) {
         spdlog::debug("Added pid {:d} to {} successfully", pid,
                       cpu_procs_path.string());
         break;
