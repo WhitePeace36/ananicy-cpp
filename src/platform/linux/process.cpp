@@ -161,8 +161,27 @@ static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
 std::string get_command_from_pid(pid_t pid) {
   static uint exe_fail_count = 0;
 
-  // Exe method
+  // Cmdline method
+  try {
+    std::vector<std::string> cmdline = process_info::get_cmdline_from_pid(pid);
+    if (!cmdline.empty()) {
+      auto exe_name_begin = cmdline[0].find_last_of('/');
 
+      spdlog::trace("{}: exe_name_begin: {}, cmdline: {}", __func__,
+                    exe_name_begin, cmdline);
+
+      if (exe_name_begin != std::string::npos) {
+        return cmdline[0].substr(exe_name_begin + 1);
+      }
+      return cmdline[0];
+    }
+
+  } catch (const fs::filesystem_error &e) {
+    spdlog::warn("{}: filesystem error: {} (path: {})", __func__, e.what(),
+                 e.path1().string());
+  }
+
+  // Exe method
   /**
    * If reading the exe file doesn't work several times in a row,
    * it probably means we don't have the permissions for that.
@@ -193,26 +212,6 @@ std::string get_command_from_pid(pid_t pid) {
       spdlog::trace("{}: read symlink failed: {}, code: {}", __func__,
                     e.code().message(), errcode);
     }
-  }
-
-  // Cmdline method
-  try {
-    std::vector<std::string> cmdline = process_info::get_cmdline_from_pid(pid);
-    if (!cmdline.empty()) {
-      auto exe_name_begin = cmdline[0].find_last_of('/');
-
-      spdlog::trace("{}: exe_name_begin: {}, cmdline: {}", __func__,
-                    exe_name_begin, cmdline);
-
-      if (exe_name_begin != std::string::npos) {
-        return cmdline[0].substr(exe_name_begin + 1);
-      }
-      return cmdline[0];
-    }
-
-  } catch (const fs::filesystem_error &e) {
-    spdlog::warn("{}: filesystem error: {} (path: {})", __func__, e.what(),
-                 e.path1().string());
   }
 
   // Comm method
