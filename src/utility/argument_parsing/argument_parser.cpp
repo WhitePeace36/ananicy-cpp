@@ -20,7 +20,7 @@ argument_parser::parse_args(const std::vector<std::string> &params) {
 
   spdlog::trace("Available arguments:");
   for (const auto &arg_pair : m_args) {
-    spdlog::trace((std::string)arg_pair.second);
+    spdlog::trace(static_cast<std::string>(arg_pair.second));
     if (arg_pair.second.is_positional()) {
       positional_args.push(arg_pair.second.id);
       continue;
@@ -38,7 +38,7 @@ argument_parser::parse_args(const std::vector<std::string> &params) {
   }
 
   for (unsigned int i = 0; i < params.size(); i++) {
-    const std::string          param = params[i];
+    const auto                &param = params[i];
     std::optional<std::string> value = {};
     if (i + 1 < params.size()) {
       value = params[i + 1];
@@ -102,7 +102,7 @@ argument_parser::parse_args(const std::vector<std::string> &params) {
   }
 
   for (const auto &arg_pair : m_args) {
-    spdlog::trace((std::string)arg_pair.second);
+    spdlog::trace(static_cast<std::string>(arg_pair.second));
   }
 
   return return_result;
@@ -119,16 +119,17 @@ argument &argument_parser::add_argument(const argument &arg) {
   return m_args[arg.id];
 }
 
-argument &argument_parser::add_argument(std::string name) {
+argument &argument_parser::add_argument(const std::string &name) {
   argument arg{name};
   m_args.emplace(arg.id, arg);
   return m_args[arg.id];
 }
 
 argparse_error argument_parser::parse_args(const int argc, const char **argv) {
-  std::vector<std::string> args(argc);
-  for (unsigned i = 0; i < argc; i++) {
-    args[i] = argv[i];
+  std::vector<std::string> args;
+  args.reserve(static_cast<std::size_t>(argc));
+  for (int i = 0; i < argc; ++i) {
+    args.emplace_back(std::string{argv[i]});
   }
   return parse_args(args);
 }

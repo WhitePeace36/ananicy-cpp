@@ -1,5 +1,7 @@
 #include "service.hpp"
 
+#include <unistd.h>
+
 #include <spdlog/spdlog.h>
 #include <systemd/sd-daemon.h>
 #include <systemd/sd-login.h>
@@ -23,8 +25,7 @@ void set_status(service::status status) {
   }
 }
 
-[[gnu::pure]]
-status get_status() { return current_status; }
+[[gnu::pure]] status get_status() { return current_status; }
 
 void reload() { spdlog::warn("{}: Not implemented yet", __func__); }
 

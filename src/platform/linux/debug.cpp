@@ -13,7 +13,7 @@
 
 namespace ananicy_debug {
 void print_file(const std::string &path) {
-  auto file_data = read_file(path);
+  const auto file_data = read_file(path);
 
   std::cout << std::format("#### BEGIN {0} #####\n"
                            "{1:s}\n"

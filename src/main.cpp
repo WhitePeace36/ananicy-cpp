@@ -33,7 +33,7 @@ int main(const int argc, const char **argv) {
     spdlog::set_level(spdlog::level::info);
   }
 
-  auto start_time = std::chrono::system_clock::now();
+  const auto start_time = std::chrono::system_clock::now();
 
   argparse::argument_parser parser(
       "ananicy-cpp" /*, "ANother Auto NIce daemon, fully written in C++"*/);
@@ -119,7 +119,7 @@ int main(const int argc, const char **argv) {
 
   constexpr std::string_view version(VERSION);
 
-  std::cout << std::format("Ananicy Cpp {}", version) << std::endl;
+  std::cout << std::format("Ananicy Cpp {}\n", version) << std::flush;
 
   InterruptHandler ih({SIGINT, SIGTERM});
 
@@ -189,9 +189,9 @@ int main(const int argc, const char **argv) {
   service::set_status(service::STARTED);
 
   while (!ih.should_exit()) {
-    if (parser["benchmark"])
-      processListener.process_queue.wait_for(30s);
-    else
+    if (parser["benchmark"]) {
+      std::this_thread::sleep_for(30s);
+    } else
       ih.wait_for(conf.check_freq());
 
     if (ih.should_exit() || parser["benchmark"] ||
@@ -216,7 +216,7 @@ int main(const int argc, const char **argv) {
 
   ih.stop();
 
-  std::chrono::duration<double, std::ratio<1, 1>> duration =
+  const std::chrono::duration<double, std::ratio<1, 1>> duration =
       std::chrono::system_clock::now() - start_time;
 
   spdlog::info("Summary:\n{} processes processed, ran for {:%H:%M:%S} seconds",

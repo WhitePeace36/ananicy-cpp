@@ -89,16 +89,17 @@ public:
   [[nodiscard]] bool is_flag() const;
   [[nodiscard]] bool is_defined() const;
 
-  operator std::string() const;
+  [[nodiscard]] operator std::string() const;
 
-  friend bool operator==(const argument &arg, const std::string &name) {
+
+  constexpr friend bool operator==(const argument &arg, const std::string &name) {
     return arg.m_name == name;
   }
 };
 
 class argument_parser {
   std::map<unsigned, argument> m_args{};
-  std::string                  m_program_name = "";
+  std::string                  m_program_name{};
 
 public:
   argument_parser(std::string program_name = "");
@@ -107,7 +108,7 @@ public:
 
   argument &add_argument();
   argument &add_argument(const argument &argument);
-  argument &add_argument(std::string name);
+  argument &add_argument(const std::string& name);
 
   std::optional<argument> get_arg(const std::string &name);
   std::string             get_program_name();
@@ -125,7 +126,7 @@ template <> struct std::formatter<argparse::argument> {
   template <typename ParseContext> constexpr auto parse(ParseContext &ctx);
 
   template <typename FormatContext>
-  auto format(const argparse::argument &arg, FormatContext &ctx);
+  constexpr auto format(const argparse::argument &arg, FormatContext &ctx);
 };
 
 template <typename ParseContext>
@@ -134,7 +135,7 @@ constexpr auto std::formatter<argparse::argument>::parse(ParseContext &ctx) {
 }
 
 template <typename FormatContext>
-auto std::formatter<argparse::argument>::format(const argparse::argument &arg,
+constexpr auto std::formatter<argparse::argument>::format(const argparse::argument &arg,
                                                 FormatContext &           ctx) {
   return std::format_to(ctx.out(), arg.operator std::string());
 }

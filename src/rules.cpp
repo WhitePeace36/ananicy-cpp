@@ -11,9 +11,9 @@
 
 #include <spdlog/spdlog.h>
 
-using std::filesystem::path;
+namespace fs = std::filesystem;
 
-Rules::Rules(const std::filesystem::path &ruleset_directory, Config *config_src)
+Rules::Rules(const fs::path &ruleset_directory, Config *config_src)
     : config(config_src) {
   if (!exists(ruleset_directory)) {
     spdlog::error("{}: directory {} does not exist", __func__,
@@ -23,49 +23,57 @@ Rules::Rules(const std::filesystem::path &ruleset_directory, Config *config_src)
   load_rules_from_directory(ruleset_directory);
 }
 
-void Rules::load_rule_from_string(const std::string &line) {
-  json rule;
-
-  std::size_t first_non_whitespace = line.find_first_not_of(" \t");
-  if (line.empty() || first_non_whitespace == std::string::npos ||
-    line[first_non_whitespace] == '#') {
+void Rules::load_rule_from_string(const std::string_view &line) {
+  // NOTE: this technique makes it constexpr even in non constexpr context
+  // Because since C++17 standard lambda functions are constexpr by default
+  // @see https://en.cppreference.com/w/cpp/language/lambda
+  const auto &is_invalid_str = [](auto &&s) {
+    const auto &is_comment_str = [](auto &&s) {
+      std::string_view hash_str{s};
+      hash_str.remove_prefix(
+          std::min(hash_str.find_first_not_of(' '), hash_str.size()));
+      return hash_str[0] == '#';
+    };
+    return s.empty() || is_comment_str(s);
+  };
+  if (is_invalid_str(line)) {
     return;
   }
 
   try {
-    rule = json::parse(line);
+    const auto &&rule = json::parse(line);
+
+    if (rule.contains("name") && rule["name"].is_string()) { /* Program rule */
+      const auto &rule_name = rule["name"];
+      program_rules.insert_or_assign(rule_name, rule);
+    } else if (rule.contains("type") &&
+               rule["type"].is_string()) { /* Type rule */
+      const auto &rule_type = rule["type"];
+      type_rules.insert_or_assign(rule_type, rule);
+    } else if (rule.contains("cgroup") &&
+               rule["cgroup"].is_string()) { /* Cgroup rule */
+      const auto &rule_cgroup = rule["cgroup"];
+      cgroup_rules.insert_or_assign(rule_cgroup, rule);
+    } else {
+      spdlog::error("Rule does not have a name, or name is not a string: {}",
+                    rule.dump());
+    }
   } catch (const std::exception &e) {
     spdlog::warn("Error parsing JSON: {}, line: {}", e.what(), line);
     return;
   }
-
-  if (rule.contains("name") && rule["name"].is_string()) { /* Program rule */
-    program_rules.insert_or_assign(rule["name"], rule);
-  } else if (rule.contains("type") &&
-             rule["type"].is_string()) { /* Type rule */
-    type_rules.insert_or_assign(rule["type"], rule);
-  } else if (rule.contains("cgroup") &&
-             rule["cgroup"].is_string()) { /* Cgroup rule */
-    cgroup_rules.insert_or_assign(rule["cgroup"], rule);
-  } else {
-    spdlog::error("Rule does not have a name, or name is not a string: {}",
-                  rule.dump());
-  }
 }
 
-void Rules::load_rules_from_file(const std::filesystem::path &path) {
-  std::ifstream rule_file;
-  rule_file.open(path);
-  std::string line;
-
+void Rules::load_rules_from_file(const fs::path &path) {
+  std::string   line{};
+  std::ifstream rule_file{path};
   while (rule_file.good()) {
     std::getline(rule_file, line);
-
     load_rule_from_string(line);
   }
 }
 
-void Rules::show_all_rules() {
+void Rules::show_all_rules() const noexcept {
   for (const auto &rule : cgroup_rules) {
     spdlog::debug("Cgroup: {}, {}", rule.first, rule.second.dump());
   }
@@ -77,17 +85,19 @@ void Rules::show_all_rules() {
   }
 }
 
-void Rules::show_rules(rule_type type) {
+void Rules::show_rules(rule_type type) const noexcept {
   const auto &rules = (type == rule_type::types)     ? type_rules
                       : (type == rule_type::cgroups) ? cgroup_rules
                                                      : program_rules;
 
   json rules_display;
 
-  for (const auto &rule : rules) {
-    if (type == rule_type::rules) {
+  if (type == rule_type::rules) {
+    for (const auto &rule : rules) {
       rules_display[rule.first] = get_rule(rule.first);
-    } else {
+    }
+  } else {
+    for (const auto &rule : rules) {
       rules_display[rule.first] = rule.second;
     }
   }
@@ -95,20 +105,20 @@ void Rules::show_rules(rule_type type) {
   std::cout << rules_display.dump(4) << std::endl;
 }
 
-void Rules::load_rules_from_directory(const std::filesystem::path &dir_path) {
-  std::stack<path> directories;
+void Rules::load_rules_from_directory(const fs::path &dir_path) {
+  std::stack<fs::path> directories;
   directories.emplace(dir_path);
 
   while (!directories.empty()) {
-    const path directory = directories.top();
+    const auto directory = directories.top();
     spdlog::debug("Scanning directory {}", directory.string());
     directories.pop();
 
-    for (const path &file : std::filesystem::directory_iterator(directory)) {
+    for (const fs::path &file : fs::directory_iterator(directory)) {
       std::stringstream ss;
       ss << "Found file " << file.filename();
 
-      if (std::filesystem::is_directory(file)) {
+      if (fs::is_directory(file)) {
         ss << " (directory)";
 
         directories.emplace(file);
@@ -138,7 +148,7 @@ void Rules::load_rules_from_directory(const std::filesystem::path &dir_path) {
   }
 }
 
-void Rules::create_cgroups() {
+void Rules::create_cgroups() const noexcept {
   spdlog::info("Creating Cgroups...");
   for (const auto &cgroup_rule : cgroup_rules) {
     control_groups::create_cgroup(cgroup_rule.first);
@@ -150,7 +160,7 @@ void Rules::create_cgroups() {
   spdlog::info("Finished creating Cgroups...");
 }
 
-json Rules::get_rule(const std::string &name) {
+json Rules::get_rule(const std::string &name) const noexcept {
   json rule;
   if (program_rules.contains(name)) {
     rule = program_rules.at(name);
@@ -167,5 +177,4 @@ json Rules::get_rule(const std::string &name) {
   return rule;
 }
 
-[[gnu::pure]]
-size_t Rules::size() const { return program_rules.size(); }
+size_t Rules::size() const noexcept { return program_rules.size(); }

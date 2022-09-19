@@ -5,45 +5,44 @@
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <mutex>
 #include <optional>
 #include <spdlog/spdlog.h>
 #include <thread>
 
-static std::filesystem::path get_cgroup_path(const std::string &cgroup_name) {
-  auto  cgroup_info = control_groups::get_cgroup_version();
-  auto &base_path = cgroup_info.path;
+namespace fs = std::filesystem;
+
+static fs::path get_cgroup_path(const std::string_view &cgroup_name) {
+  const auto &cgroup_info = control_groups::get_cgroup_version();
+  const auto &base_path = cgroup_info.path;
 
   spdlog::trace("{}: .path = {}, .version = {}", __func__,
                 cgroup_info.path.string(), cgroup_info.version);
 
-  std::filesystem::path cgroup_path{base_path};
+  fs::path cgroup_path{base_path};
   switch (cgroup_info.version) {
   case control_groups::cgroup_info::none:
     break;
   case control_groups::cgroup_info::v1:
-    cgroup_path.append("cpu").append(cgroup_name);
+    cgroup_path /= fs::path{"cpu"} / cgroup_name.data();
     spdlog::trace("{}: cgroup_path: {}", __func__, cgroup_path.string());
     break;
   case control_groups::cgroup_info::v2:
-    cgroup_path.append(cgroup_name);
+    cgroup_path /= cgroup_name;
     break;
   }
   return cgroup_path;
 }
 
 int control_groups::create_cgroup(const std::string &name) {
-  using namespace std::filesystem;
-
-  path cgroup_path;
-
   switch (get_cgroup_version().version) {
 
   case cgroup_info::none:
     spdlog::warn(
         "Cgroups are not available on this platform (or are not enabled)");
     break;
-  case cgroup_info::v1:
-    cgroup_path = get_cgroup_path(name);
+  case cgroup_info::v1: {
+    const auto &cgroup_path = get_cgroup_path(name);
     if (exists(cgroup_path)) {
       spdlog::warn("cgroup v1 {:s} already exists, ignoring.", name);
       return false;
@@ -52,8 +51,9 @@ int control_groups::create_cgroup(const std::string &name) {
                   cgroup_path.string());
 
     return create_directory(cgroup_path);
-  case cgroup_info::v2:
-    cgroup_path = get_cgroup_path(name);
+  }
+  case cgroup_info::v2: {
+    const auto &cgroup_path = get_cgroup_path(name);
     if (exists(cgroup_path)) {
       spdlog::warn("cgroup {:s} already exists, ignoring.", name);
       return false;
@@ -62,12 +62,12 @@ int control_groups::create_cgroup(const std::string &name) {
 
     return create_directory(cgroup_path);
   }
+  }
   return false;
 }
 
 int control_groups::set_cgroup_cpu_quota(const std::string &name,
                                          unsigned           quota) {
-  using namespace std::filesystem;
   int errors = 0;
   switch (get_cgroup_version().version) {
 
@@ -77,8 +77,10 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
     break;
   case cgroup_info::v1:
     try {
-      path cpu_quota_path = get_cgroup_path(name).append("cpu.cfs_quota_us");
-      path cpu_period_path = get_cgroup_path(name).append("cpu.cfs_period_us");
+      const auto &cpu_quota_path =
+          get_cgroup_path(name) / "cpu.cfs_quota_us";
+      const auto &cpu_period_path =
+          get_cgroup_path(name) / "cpu.cfs_period_us";
       unsigned period_us = 1000u * 1000u; // maximum is 1s
       unsigned quota_us = period_us * std::thread::hardware_concurrency() *
                           std::clamp(quota, 0u, 100u) / 100u;
@@ -91,7 +93,7 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
       spdlog::debug(
           "Set {} cpu quota to {:d} (period: {:d}) successfully: '{}' ({})",
           name, quota, period_us, content_check, cpu_quota_path.string());
-    } catch (const std::filesystem::filesystem_error &e) {
+    } catch (const fs::filesystem_error &e) {
       spdlog::error("{}: cgroup v1 error: {} at {}", __func__, e.what(),
                     e.path1().string());
       errors = 1;
@@ -99,7 +101,7 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
     break;
   case cgroup_info::v2:
     try {
-      path cpu_max_path = get_cgroup_path(name).append("cpu.max");
+      const auto &cpu_max_path = get_cgroup_path(name) / "cpu.max";
       if (!exists(cpu_max_path)) {
         errors = 1;
         spdlog::error("{}: cgroup v2 error: cpu.max not found at {}!", __func__,
@@ -116,7 +118,7 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
       spdlog::debug(
           "Set {} cpu quota to {:d} (period: {:d}) successfully: '{}' ({})",
           name, quota, period, content_check, cpu_max_path.string());
-    } catch (const std::filesystem::filesystem_error &e) {
+    } catch (const fs::filesystem_error &e) {
       spdlog::error("{}: cgroup error: {} at {}", __func__, e.what(),
                     e.path1().string());
       errors = 1;
@@ -129,7 +131,6 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
 
 int control_groups::add_pid_to_cgroup(pid_t              pid,
                                       const std::string &cgroup_name) {
-  using namespace std::filesystem;
   int errors = 0;
   int error_code = 0;
   switch (get_cgroup_version().version) {
@@ -140,7 +141,7 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
     break;
   case cgroup_info::v1:
     try {
-      path cpu_procs_path = get_cgroup_path(cgroup_name).append("tasks");
+      const auto &cpu_procs_path = get_cgroup_path(cgroup_name) / "tasks";
       if (!exists(cpu_procs_path)) {
         errors = 1;
         spdlog::error("{}: cgroup path not found: {}", __func__,
@@ -151,17 +152,16 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
       std::ofstream cpu_procs_file(cpu_procs_path);
       cpu_procs_file << std::max(pid, 0) << std::endl;
       error_code = errno;
-      if (cpu_procs_file) {
+      if (error_code == 0) {
         spdlog::debug("Added pid {:d} to {} successfully", pid,
                       cpu_procs_path.string());
-      } else {
-        errors = 1;
-        spdlog::error(
-            "{}: cgroup v1 error: couldn't add task to cgroup {} ({})",
-            __func__, cpu_procs_path.string(), strerror(error_code));
         break;
       }
-    } catch (const std::filesystem::filesystem_error &e) {
+      errors = 1;
+      spdlog::error("{}: cgroup v1 error: couldn't add task to cgroup {} ({})",
+                    __func__, cpu_procs_path.string(), strerror(error_code));
+      break;
+    } catch (const fs::filesystem_error &e) {
       spdlog::error("{}: cgroup v1 error: {} at {}", __func__, e.what(),
                     e.path1().string());
       errors = 1;
@@ -169,7 +169,8 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
     break;
   case cgroup_info::v2:
     try {
-      path cpu_procs_path = get_cgroup_path(cgroup_name).append("cgroup.procs");
+      const auto &cpu_procs_path =
+          get_cgroup_path(cgroup_name) / "cgroup.procs";
       if (!exists(cpu_procs_path)) {
         errors = 1;
         spdlog::error("{}: cgroup path not found: {}", __func__,
@@ -180,16 +181,16 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
       std::fstream cpu_procs_file(cpu_procs_path);
       cpu_procs_file << std::max(pid, 0) << std::endl;
       error_code = errno;
-      if (cpu_procs_file) {
+      if (error_code == 0) {
         spdlog::debug("Added pid {:d} to {} successfully", pid,
                       cpu_procs_path.string());
-      } else {
-        errors = 1;
-        spdlog::error("{}: cgroup error: couldn't add task to cgroup {} ({})",
-                      __func__, cpu_procs_path.string(), strerror(error_code));
         break;
       }
-    } catch (const std::filesystem::filesystem_error &e) {
+      errors = 1;
+      spdlog::error("{}: cgroup error: couldn't add task to cgroup {} ({})",
+                    __func__, cpu_procs_path.string(), strerror(error_code));
+      break;
+    } catch (const fs::filesystem_error &e) {
       spdlog::error("{}: cgroup error: {} at {}", __func__, e.what(),
                     e.path1().string());
       errors = 1;
@@ -201,18 +202,21 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
 control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
   using namespace std::chrono_literals;
 
+  static std::mutex info_mutex{};
+  std::lock_guard<std::mutex> lock{info_mutex};
+
   static std::optional<cgroup_info> info{};
 
   if (reset) {
-    info.reset();
+    info = std::nullopt;
   }
 
   if (!info.has_value()) {
     std::ifstream mtab("/etc/mtab");
     while (mtab) {
-      std::string           word, line;
-      std::filesystem::path cgroup_path;
-      std::stringstream     ss;
+      std::string       word, line;
+      fs::path          cgroup_path;
+      std::stringstream ss;
       std::getline(mtab, line);
       spdlog::trace("{}: line = {}", __func__, line);
       ss << line;
@@ -221,11 +225,11 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
         try {
           if (word.starts_with("cgroup2")) {
             ss >> cgroup_path;
-            std::filesystem::path test_cgroup(cgroup_path);
-            test_cgroup.append("ananicy_test_cgroup2");
+            fs::path test_cgroup(cgroup_path);
+            test_cgroup /= "ananicy_test_cgroup2";
 
-            if (std::filesystem::exists(test_cgroup)) {
-              if (!std::filesystem::remove(test_cgroup)) {
+            if (fs::exists(test_cgroup)) {
+              if (!fs::remove(test_cgroup)) {
                 spdlog::warn("Couldn't delete {}", test_cgroup.string());
               }
             }
@@ -236,11 +240,9 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
               break;
             }
 
-            auto controllers_path =
-                std::filesystem::path(test_cgroup).append("cgroup.controllers");
-            std::ifstream controllers_file;
+            const auto controllers_path = fs::path{test_cgroup} / "cgroup.controllers";
+            std::ifstream controllers_file{controllers_path};
             // controllers_file.exceptions(std::fstream::failbit);
-            controllers_file.open(controllers_path);
 
             bool has_cpu_controller = false;
             while (controllers_file) {
@@ -254,26 +256,21 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
             }
 
             if (!has_cpu_controller) {
-
               spdlog::warn("cgroup2 at {} doesn't have a cpu controller "
                            "available, skipping",
                            test_cgroup.string());
               break;
             }
 
-            auto test_cgroup_cpumax =
-                std::filesystem::path(test_cgroup).append("cpu.max");
-            if (!std::filesystem::exists(test_cgroup_cpumax)) {
-
+            const auto &test_cgroup_cpumax = fs::path{test_cgroup} / "cpu.max";
+            if (!fs::exists(test_cgroup_cpumax)) {
               spdlog::warn("cgroup2 at {} lacks cpu.max, skipping",
                            test_cgroup.string());
               break;
             }
             // Cleanup the cgroup we created
-            try {
-              std::filesystem::remove(test_cgroup);
-            } catch (const std::filesystem::filesystem_error &e) {
-            }
+            std::error_code err{};
+            fs::remove(test_cgroup, err);
             info = {.path = cgroup_path,
                     .version = cgroup_info::cgroup_version::v2};
             spdlog::trace("Found cgroup v2 at {}", cgroup_path.string());
@@ -282,8 +279,7 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
             if (!info.has_value()) {
               ss >> cgroup_path;
               cgroup_path = cgroup_path.parent_path();
-              if (!std::filesystem::exists(
-                      std::filesystem::path(cgroup_path).append("cpu"))) {
+              if (!fs::exists(fs::path{cgroup_path} / "cpu")) {
                 spdlog::warn("cgroup at {} lack cpu controller, skipping",
                              cgroup_path.string());
                 break;
@@ -293,7 +289,7 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
               spdlog::trace("Found cgroup v1 at {}", cgroup_path.string());
             }
           }
-        } catch (const std::filesystem::filesystem_error &e) {
+        } catch (const fs::filesystem_error &e) {
           spdlog::warn("{}: {} at {}", __func__, e.what(), e.path1().string());
           break;
         } catch (const std::ios::failure &e) {
