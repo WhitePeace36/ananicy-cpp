@@ -12,6 +12,7 @@
 const Config::ConfigInit &&Config::default_config = {
     {"apply_nice", "true"},   {"apply_sched", "true"},
     {"apply_ionice", "true"}, {"apply_oom_score_adj", "true"},
+    {"apply_latnice", "true"}, {"convert_latnice", "true"},
     {"cgroup_load", "true"},  {"type_load", "true"},
     {"rule_load", "true"},    {"cgroup_realtime_workaround", "true"},
     {"loglevel", "info"},     {"check_freq", "60"}};

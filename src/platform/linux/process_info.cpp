@@ -232,11 +232,12 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
                  autogroup_value);
     info["autogroup"] = get_autogroup_from_str(autogroup_value);
 
-    ::sched_attr sched_info = get_sched_attributes(pid);
+    auto sched_info = get_sched_attributes(pid);
 
     info["sched"] = get_sched_policy_name(sched_info.sched_policy);
     info["rtprio"] = uint32_t(sched_info.sched_priority);
     info["nice"] = int(sched_info.sched_nice);
+    info["latency_nice"] = int(sched_info.sched_latency_nice);
 
     const auto io_data = get_io_prio_attributes(pid);
 
