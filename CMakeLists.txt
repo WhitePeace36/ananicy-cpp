@@ -111,18 +111,40 @@ endif()
 target_link_libraries(ananicy-cpp PRIVATE "nlohmann_json::nlohmann_json")
 set(CMAKE_MESSAGE_CONTEXT "")
 
+# fmtlib
+set(CMAKE_MESSAGE_CONTEXT "fmtlib")
+message(STATUS "Configuring fmtlib")
+if(USE_EXTERNAL_FMTLIB)
+    message("Using external fmtlib")
+    # Stand-alone build
+    find_package(fmt 8.0 REQUIRED)
+else()
+    CPMAddPackage(
+        NAME fmt
+        GITHUB_REPOSITORY fmtlib/fmt
+        GIT_PROGRESS TRUE
+        GIT_SHALLOW TRUE
+        GIT_TAG 9.1.0
+        EXCLUDE_FROM_ALL YES
+    )
+endif()
+set(CMAKE_MESSAGE_CONTEXT "")
+
 # std::format
-set(STL_FORMAT_USE_EXTERNAL_FMTLIB ${USE_EXTERNAL_FMTLIB} CACHE BOOL "" FORCE)
+set(STL_FORMAT_USE_EXTERNAL_FMTLIB ON CACHE BOOL "" FORCE)
 if (NOT TARGET stl_polyfill::format)
     add_subdirectory(external/std-format)
 endif()
 target_link_libraries(ananicy-cpp PRIVATE stl_polyfill::format)
+set(CMAKE_MESSAGE_CONTEXT "")
 
 
 # spdlog
-message(STATUS "Configuring spdlog")
 set(CMAKE_MESSAGE_CONTEXT "spdlog")
+message(STATUS "Configuring spdlog")
+set(SPDLOG_FMT_EXTERNAL ON CACHE INTERNAL "Make spdlog use external fmtlib" FORCE)
 if(USE_EXTERNAL_SPDLOG)
+    message("Using external spdlog")
     # Stand-alone build
     find_package(spdlog 1.9 REQUIRED)
 else()
@@ -131,21 +153,8 @@ else()
         GITHUB_REPOSITORY gabime/spdlog
         GIT_PROGRESS TRUE
         GIT_SHALLOW TRUE
-        GIT_TAG v1.9.2
+        GIT_TAG v1.10.0
         EXCLUDE_FROM_ALL YES)
-
-    if(USE_EXTERNAL_FMTLIB)
-        message("Using external fmtlib")
-        CPMAddPackage(
-            NAME fmt
-            GITHUB_REPOSITORY fmtlib/fmt
-            GIT_PROGRESS TRUE
-            GIT_SHALLOW TRUE
-            GIT_TAG 8.0.1
-            EXCLUDE_FROM_ALL YES
-        )
-        set(SPDLOG_FMT_EXTERNAL ON CACHE INTERNAL "Make spdlog use external fmtlib" FORCE)
-    endif()
 endif()
 target_link_libraries(ananicy-cpp PRIVATE project_options spdlog::spdlog fmt::fmt)
 set(CMAKE_MESSAGE_CONTEXT "")
