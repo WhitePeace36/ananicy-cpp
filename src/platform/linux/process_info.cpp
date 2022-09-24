@@ -72,26 +72,8 @@ nlohmann::json get_autogroup_map() {
   return autogroup_map;
 }
 
-using file_time_point = std::chrono::file_clock::time_point;
 static nlohmann::json parse_proc_status(process_id_t pid) {
-  static std::unordered_map<process_id_t,
-                            std::pair<file_time_point, nlohmann::json>>
-      status_cache = {};
-
-  fs::path status_file_path = std::format("/proc/{}/status", pid);
-  file_time_point       status_file_last_modified{};
-  try {
-    status_file_last_modified = last_write_time(status_file_path);
-    if (status_cache.contains(pid)) {
-      if (status_file_last_modified <= status_cache[pid].first) {
-        return status_cache[pid].second;
-      }
-    }
-  } catch (const fs::filesystem_error &e) {
-    return {};
-  }
-
-  std::ifstream  status_file{status_file_path};
+  std::ifstream status_file{std::format("/proc/{}/status", pid)};
   nlohmann::json status = nlohmann::json::object();
 
   std::string line;
@@ -110,7 +92,6 @@ static nlohmann::json parse_proc_status(process_id_t pid) {
     status[name] = value;
   }
 
-  status_cache[pid] = std::make_pair(status_file_last_modified, status);
   return status;
 }
 
