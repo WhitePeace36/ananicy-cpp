@@ -92,7 +92,12 @@ public:
   [[nodiscard]] operator std::string() const;
 
 
-  constexpr friend bool operator==(const argument &arg, const std::string &name) {
+#if (__cpp_constexpr >= 202002) || (defined(__clang__) && (__cpp_constexpr >= 201907))
+  constexpr
+#else
+  inline
+#endif
+  friend bool operator==(const argument &arg, const std::string &name) {
     return arg.m_name == name;
   }
 };

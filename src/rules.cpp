@@ -40,8 +40,14 @@ void Rules::load_rule_from_string(const std::string_view &line) {
     return;
   }
 
+  auto&& first_pair = line.find_first_of('{');
+  auto&& second_pair = line.find_first_of('}');
+
+  // Remove trailing characters.
+  auto&& clean_line = std::string_view{line.substr(first_pair).substr(0, second_pair + 1)};
+
   try {
-    const auto &&rule = json::parse(line);
+    const auto &&rule = json::parse(clean_line);
 
     if (rule.contains("name") && rule["name"].is_string()) { /* Program rule */
       const auto &rule_name = rule["name"];
