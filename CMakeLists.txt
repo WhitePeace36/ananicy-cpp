@@ -105,7 +105,7 @@ else()
         GITHUB_REPOSITORY ArthurSonzogni/nlohmann_json_cmake_fetchcontent
         GIT_PROGRESS TRUE
         GIT_SHALLOW TRUE
-        GIT_TAG v3.9.1
+        GIT_TAG v3.11.2
         EXCLUDE_FROM_ALL YES)
 endif()
 target_link_libraries(ananicy-cpp PRIVATE "nlohmann_json::nlohmann_json")
