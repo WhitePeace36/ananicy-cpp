@@ -28,7 +28,7 @@ private:
   std::mutex                 m_exit_mutex;
 
   // NOTE: do we really need to use volatile here?
-  std::atomic_bool m_need_exit;
+  volatile std::atomic_bool m_need_exit;
 };
 
 std::optional<std::string> get_env(const std::string &name);
