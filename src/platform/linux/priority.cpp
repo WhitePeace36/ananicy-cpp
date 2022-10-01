@@ -217,4 +217,20 @@ bool set_oom_score_adjust(pid_t pid, int value) {
   return true;
 }
 
+std::string_view test_latnice_support() noexcept {
+  pid_t pid{0};
+  int latency_nice{-20};
+
+  const int saved_latnice = get_latnice(pid);
+  errno = 0;
+
+  const int err = set_latnice(pid, latency_nice);
+  bool is_supported{};
+  if (err == 0 && errno == 0) {
+    set_latnice(pid, saved_latnice);
+    is_supported = true;
+  }
+  return (is_supported) ? "true" : "false";
+}
+
 } // namespace priority

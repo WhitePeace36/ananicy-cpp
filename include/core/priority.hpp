@@ -24,6 +24,8 @@ bool set_sched(pid_t pid, const std::string_view &sched_name, unsigned rt_prio);
 
 bool set_oom_score_adjust(pid_t pid, int value);
 
+std::string_view test_latnice_support() noexcept;
+
 } // namespace priority
 
 #endif // ANANICY_CPP_PRIORITY_HPP

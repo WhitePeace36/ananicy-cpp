@@ -3,6 +3,7 @@
 //
 
 #include "config.hpp"
+#include "core/priority.hpp"
 #include <chrono>
 #include <filesystem>
 #include <format>
@@ -32,6 +33,9 @@ Config::Config(const std::filesystem::path &config_path) {
   for (const auto &item : default_config) {
     config[std::string(item.first)] = item.second;
   }
+
+  // Testing latency nice support.
+  config["apply_latnice"] = priority::test_latnice_support();
 
   if (!exists(config_path)) {
     spdlog::error("{}: file {} does not exist", __func__, config_path.string());
