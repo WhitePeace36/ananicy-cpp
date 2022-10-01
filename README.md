@@ -39,6 +39,9 @@ _Beta status_
   Notably, `<concepts>` and `std::jthread` are required. Work is in progress to add support to `g++ ~= 9`, see https://gitlab.com/ananicy-cpp/ananicy-cpp/-/issues/28 for more info.
 - _Optional_: libsystemd (if you want systemd support)
 
+#### Debian/Ubuntu
+Install the prerequisites: `sudo apt install git cmake build-essential g++ libsystemd-dev`
+
 ### Linux
 It should be a fully drop-in replacement from Ananicy.  
 If you detect a difference in behavior (except for bugs in Ananicy that are fixed in `ananicy-cpp`),
@@ -66,9 +69,9 @@ clone the repository (or download a release archive), and do the following comma
   - `git clone --recurse-submodules https://gitlab.com/ananicy-cpp/ananicy-cpp.git`
   - `cd ananicy-cpp`
 - If using release archive:
-  - `wget https://gitlab.com/ananicy-cpp/ananicy-cpp/-/archive/v1.0.0-rc5/ananicy-cpp-v1.0.0-rc5.tar.gz`
-  - `tar -xvf ananicy-cpp-v1.0.0-rc5.tar.gz`
-  - `cd ananicy-cpp-v1.0.0-rc5`
+  - `wget https://gitlab.com/ananicy-cpp/ananicy-cpp/-/archive/v1.0.0-rc7/ananicy-cpp-v1.0.0-rc7.tar.gz`
+  - `tar -xvf ananicy-cpp-v1.0.0-rc7.tar.gz`
+  - `cd ananicy-cpp-v1.0.0-rc7`
 
 ```
 cmake -B build \
