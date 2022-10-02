@@ -29,10 +29,8 @@ static constexpr inline T to_int(const std::string_view &str) {
 }
 
 template <std::integral T = std::size_t>
-static constexpr inline std::string_view to_str(T number) {
-  std::array<char, 35> str{};
-  auto [ptr, _] = std::to_chars(str.data(), str.data() + str.size(), number);
-  return std::string_view(std::to_address(str.data()), static_cast<std::size_t>(ptr - str.data()));
+static constexpr inline std::string to_str(T number) {
+  return fmt::format("{}", number);
 }
 
 static autogroup get_autogroup_from_str(const std::string &str) {
@@ -299,8 +297,7 @@ nlohmann::json get_process_info_map() {
         if (pid == 0 || process_map.contains(to_str(pid)))
           continue;
 
-        std::optional<process_info> info =
-            get_process_info(static_cast<uint32_t>(pid));
+        const auto info = get_process_info(static_cast<uint32_t>(pid));
         if (info.has_value()) {
           process_map[to_str(pid).data()] = info.value();
         }
