@@ -29,6 +29,7 @@ Options:
   --libdir=                    Specify lib directory.
   --path=, -p=                 Specify build directory.
   --use_clang                  Use Clang compiler.
+  --enable_systemd             Enable systemd support.
   --enable_sanitizer_address   Enable ASAN.
   --enable_sanitizer_ub        Enable UBSAN.
   --enable_sanitizer_leak      Enable LEAKSAN.
@@ -42,6 +43,7 @@ _prefix="/usr/local"
 _libdir="lib"
 _buildtype="RelWithDebInfo"
 _use_clang=false
+_enable_systemd=false
 _sanitizer_address=OFF
 _sanitizer_UB=OFF
 _sanitizer_leak=OFF
@@ -65,6 +67,10 @@ for i in "$@"; do
       ;;
     --use_clang)
       _use_clang=true
+      shift # past argument=value
+      ;;
+    --enable_systemd)
+      _enable_systemd=true
       shift # past argument=value
       ;;
     --enable_sanitizer_address)
@@ -93,12 +99,16 @@ if ${_use_clang}; then
   export RANLIB=llvm-ranlib
 fi
 
+if ${_enable_systemd}; then
+  _configure_flags+=('-DENABLE_SYSTEMD=ON')
+fi
+
 if command -v ninja &> /dev/null; then
-    _configure_flags+=('-GNinja')
+  _configure_flags+=('-GNinja')
 fi
 
 if command -v mold &> /dev/null; then
-    _configure_flags+=('-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"')
+  _configure_flags+=('-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"')
 fi
 
 cmake -S . -B ${_buildpath}/${_buildtype} \
