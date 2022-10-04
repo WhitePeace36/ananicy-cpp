@@ -224,7 +224,14 @@ std::string_view test_latnice_support() noexcept {
   const int saved_latnice = get_latnice(pid);
   errno = 0;
 
-  const int err = set_latnice(pid, latency_nice);
+  // Use this here instead of function,
+  // to suppress errors from function call.
+  struct sched_attr attr = {
+    .size = sizeof(struct sched_attr),
+    .sched_flags = SCHED_FLAG_LATENCY_NICE,
+    .sched_latency_nice = latency_nice,
+  };
+  const int err = sched_setattr(pid, &attr, 0);
   bool is_supported{};
   if (err == 0 && errno == 0) {
     set_latnice(pid, saved_latnice);
