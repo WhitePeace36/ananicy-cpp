@@ -51,6 +51,22 @@ void Worker::work(const std::stop_token &stop_token) {
               continue;
           }
 
+          if (config->apply_latnice() && (rule.contains("latency_nice") || rule.contains("nice"))) {
+            int latnice_value{};
+            if (rule.contains("latency_nice")) {
+              latnice_value = rule["latency_nice"];
+            } else if (rule.contains("nice")) {
+              const int& nice_value = rule["nice"];
+              latnice_value = (config->convert_latnice())
+                  ? priority::convert_nice_to_lat(nice_value) : nice_value;
+            }
+            spdlog::debug("Setting latency nice of {}({}) to {}", p.name,
+                                p.pid, latnice_value);
+            if (!priority::set_latency_nice(p.pid, latnice_value)) {
+                continue;
+            }
+          }
+
           if (config->apply_sched() && rule.contains("sched")) {
             const auto &rt_prio = rule.contains("rtprio")
                                              ? static_cast<unsigned>(rule["rtprio"])

@@ -3,6 +3,7 @@
 //
 
 #include "config.hpp"
+#include "core/priority.hpp"
 #include <chrono>
 #include <filesystem>
 #include <format>
@@ -12,6 +13,7 @@
 const Config::ConfigInit &&Config::default_config = {
     {"apply_nice", "true"},   {"apply_sched", "true"},
     {"apply_ionice", "true"}, {"apply_oom_score_adj", "true"},
+    {"apply_latnice", "true"}, {"convert_latnice", "false"},
     {"cgroup_load", "true"},  {"type_load", "true"},
     {"rule_load", "true"},    {"cgroup_realtime_workaround", "true"},
     {"loglevel", "info"},     {"check_freq", "60"}};
@@ -31,6 +33,9 @@ Config::Config(const std::filesystem::path &config_path) {
   for (const auto &item : default_config) {
     config[std::string(item.first)] = item.second;
   }
+
+  // Testing latency nice support.
+  config["apply_latnice"] = priority::test_latnice_support();
 
   if (!exists(config_path)) {
     spdlog::error("{}: file {} does not exist", __func__, config_path.string());

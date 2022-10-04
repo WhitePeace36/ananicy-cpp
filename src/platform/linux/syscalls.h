@@ -5,6 +5,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include <cstdio>
 #include <cstdint>
 
 /**
@@ -56,6 +57,11 @@ static int ioprio_get(__priority_which_t _which, id_t _who) {
  * sched_(set|get)attr
  */
 
+// #include <linux/sched/types.h>
+#ifndef SCHED_FLAG_LATENCY_NICE
+#define SCHED_FLAG_LATENCY_NICE         0x80
+#endif
+
 struct [[gnu::packed]] sched_attr {
   uint32_t size;
 
@@ -72,6 +78,13 @@ struct [[gnu::packed]] sched_attr {
   uint64_t sched_runtime;
   uint64_t sched_deadline;
   uint64_t sched_period;
+
+  /* Utilization hints */
+  uint32_t sched_util_min;
+  uint32_t sched_util_max;
+
+  /* latency requirement hints */
+  int32_t sched_latency_nice;
 };
 
 static int sched_setattr(pid_t pid, const struct sched_attr *attr,
@@ -82,6 +95,29 @@ static int sched_setattr(pid_t pid, const struct sched_attr *attr,
 static int sched_getattr(pid_t pid, struct sched_attr *attr, unsigned int size,
                          unsigned int flags) {
   return static_cast<int>(syscall(__NR_sched_getattr, pid, attr, size, flags));
+}
+
+static int get_latnice(pid_t pid) {
+  // pid==0 refers to calling thread
+  struct sched_attr attr = { .size = sizeof(struct sched_attr) };
+  if (sched_getattr(pid, &attr, sizeof(attr), 0) < 0) {
+      std::perror("sched_getattr");
+  }
+  return attr.sched_latency_nice; // defaults to 0
+}
+
+static int set_latnice(pid_t pid, int latency_nice) {
+  // pid==0 refers to calling thread
+  struct sched_attr attr = {
+    .size = sizeof(struct sched_attr),
+    .sched_flags = SCHED_FLAG_LATENCY_NICE,
+    .sched_latency_nice = latency_nice,
+  };
+  const int err = sched_setattr(pid, &attr, 0);
+  if (err < 0) {
+    std::perror("sched_setattr");
+  }
+  return err;
 }
 
 #endif // ANANICY_CPP_SYSCALLS_H

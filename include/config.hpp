@@ -31,6 +31,8 @@ public:
 
   // static_assert(default_config.);
   bool apply_nice() { return check_rule("apply_nice"); }
+  bool apply_latnice() { return check_rule("apply_latnice"); }
+  bool convert_latnice() { return check_rule("convert_latnice"); }
 
   bool apply_sched() { return check_rule("apply_sched"); }
   bool apply_ionice() { return check_rule("apply_ionice"); }
