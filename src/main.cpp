@@ -16,6 +16,7 @@
 #include "utility/process_info.hpp"
 #include "utility/utils.hpp"
 #include "version.hpp"
+
 #include <csignal>
 #include <cstdlib>
 #include <filesystem>

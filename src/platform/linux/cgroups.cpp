@@ -68,7 +68,7 @@ int control_groups::create_cgroup(const std::string &name) {
 }
 
 int control_groups::set_cgroup_cpu_quota(const std::string &name,
-                                         unsigned           quota) {
+                                         std::uint32_t      quota) {
   int errors = 0;
   switch (get_cgroup_version().version) {
 
@@ -110,9 +110,9 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
         break;
       }
       std::ofstream cpu_weight_file(cpu_max_path);
-      unsigned      max_period = 100000u;
-      unsigned      period = max_period * std::thread::hardware_concurrency() *
-                        std::clamp(quota, 0u, 100u) / 100u;
+      std::uint32_t max_period = 100000u;
+      std::uint32_t period = max_period * std::thread::hardware_concurrency() *
+                             std::clamp(quota, 0u, 100u) / 100u;
       cpu_weight_file << std::format("{} {}", period, max_period) << std::endl;
       std::string content_check;
       std::getline(std::ifstream{cpu_max_path}, content_check);
