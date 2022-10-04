@@ -3,16 +3,19 @@
 //
 
 #include "core/priority.hpp"
-#include "utility/utils.hpp"
 #include "syscalls.h"
+#include "utility/utils.hpp"
+
 #include <cerrno>
+#include <sched.h>
+
 #include <filesystem>
 #include <format>
 #include <fstream>
-#include <sched.h>
-#include <spdlog/spdlog.h>
 #include <stdexcept>
 #include <type_traits>
+
+#include <spdlog/spdlog.h>
 
 namespace fs = std::filesystem;
 

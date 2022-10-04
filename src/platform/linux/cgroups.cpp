@@ -7,8 +7,9 @@
 #include <iostream>
 #include <mutex>
 #include <optional>
-#include <spdlog/spdlog.h>
 #include <thread>
+
+#include <spdlog/spdlog.h>
 
 namespace fs = std::filesystem;
 
@@ -77,13 +78,13 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
     break;
   case cgroup_info::v1:
     try {
-      const auto &cpu_quota_path =
-          get_cgroup_path(name) / "cpu.cfs_quota_us";
-      const auto &cpu_period_path =
-          get_cgroup_path(name) / "cpu.cfs_period_us";
-      unsigned period_us = 1000u * 1000u; // maximum is 1s
-      unsigned quota_us = period_us * std::thread::hardware_concurrency() *
-                          std::clamp(quota, 0u, 100u) / 100u;
+      const auto &cpu_quota_path = get_cgroup_path(name) / "cpu.cfs_quota_us";
+      const auto &cpu_period_path = get_cgroup_path(name) / "cpu.cfs_period_us";
+
+      const std::uint32_t period_us = 1000u * 1000u; // maximum is 1s
+      const std::uint32_t quota_us = period_us *
+                                     std::thread::hardware_concurrency() *
+                                     std::clamp(quota, 0u, 100u) / 100u;
       std::ofstream{cpu_quota_path} << quota_us << std::endl;
       std::ofstream{cpu_period_path} << period_us << std::endl;
 
@@ -202,7 +203,7 @@ int control_groups::add_pid_to_cgroup(pid_t              pid,
 control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
   using namespace std::chrono_literals;
 
-  static std::mutex info_mutex{};
+  static std::mutex           info_mutex{};
   std::lock_guard<std::mutex> lock{info_mutex};
 
   static std::optional<cgroup_info> info{};
@@ -240,7 +241,8 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
               break;
             }
 
-            const auto controllers_path = fs::path{test_cgroup} / "cgroup.controllers";
+            const auto controllers_path =
+                fs::path{test_cgroup} / "cgroup.controllers";
             std::ifstream controllers_file{controllers_path};
             // controllers_file.exceptions(std::fstream::failbit);
 
@@ -316,7 +318,7 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
 #if ENABLE_SYSTEMD == 1
 extern "C" int sd_pid_get_cgroup(pid_t, char **cgroup);
 #endif
-std::string    control_groups::get_cgroup_for_pid(pid_t pid) {
+std::string control_groups::get_cgroup_for_pid(pid_t pid) {
 #if ENABLE_SYSTEMD == 1
   char *cgroup;
   sd_pid_get_cgroup(pid, &cgroup);

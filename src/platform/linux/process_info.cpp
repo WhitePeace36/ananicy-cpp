@@ -1,8 +1,8 @@
 #include <utility/process_info.hpp>
 
 #include "core/priority.hpp"
-#include "utility/utils.hpp"
 #include "syscalls.h"
+#include "utility/utils.hpp"
 
 #include <concepts>
 #include <core/process.hpp>
@@ -64,7 +64,7 @@ nlohmann::json get_autogroup_map() {
 }
 
 static nlohmann::json parse_proc_status(process_id_t pid) {
-  std::ifstream status_file{std::format("/proc/{}/status", pid)};
+  std::ifstream  status_file{std::format("/proc/{}/status", pid)};
   nlohmann::json status = nlohmann::json::object();
 
   std::string line;

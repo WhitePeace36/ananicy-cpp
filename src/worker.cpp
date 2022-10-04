@@ -9,6 +9,7 @@
 
 #include <chrono>
 #include <functional>
+
 #include <spdlog/spdlog.h>
 
 using namespace std::chrono_literals;
@@ -44,28 +45,27 @@ void Worker::work(const std::stop_token &stop_token) {
         try {
           if (config->apply_nice() && rule.contains("nice")) {
             const int &rule_nice = rule["nice"];
-            spdlog::debug("Setting priority of {}({}) to {}", p.name,
-                                p.pid, rule_nice);
+            spdlog::debug("Setting priority of {}({}) to {}", p.name, p.pid,
+                          rule_nice);
             if (!priority::set_priority(p.pid, rule_nice))
               continue;
           }
 
           if (config->apply_sched() && rule.contains("sched")) {
-            const auto &rt_prio =
-                      rule.contains("rtprio")
-                          ? static_cast<unsigned>(rule["rtprio"])
-                          : 1u;
+            const auto &rt_prio = rule.contains("rtprio")
+                                             ? static_cast<unsigned>(rule["rtprio"])
+                                             : 1u;
             const std::string &rule_sched = rule["sched"];
-            spdlog::debug("Setting scheduler of {}({}) to {}", p.name,
-                                p.pid, rule_sched);
+            spdlog::debug("Setting scheduler of {}({}) to {}", p.name, p.pid,
+                          rule_sched);
             if (!priority::set_sched(p.pid, rule_sched.c_str(), rt_prio))
               continue;
           }
 
           if (config->apply_ionice() && rule.contains("ioclass")) {
             const std::string &rule_ioclass = rule["ioclass"];
-            spdlog::debug("Setting ioclass of {}({}) to {}", p.name,
-                                p.pid, rule_ioclass);
+            spdlog::debug("Setting ioclass of {}({}) to {}", p.name, p.pid,
+                          rule_ioclass);
             int io_val = 0;
             if (rule.contains("ionice") && rule["ionice"].is_number_integer()) {
               io_val = rule["ionice"];
@@ -88,7 +88,8 @@ void Worker::work(const std::stop_token &stop_token) {
                           "scheduling for now (linux limitation)");
           } else if (config->apply_cgroups() && rule.contains("cgroup")) {
             const std::string &rule_cgroup = rule["cgroup"];
-            spdlog::debug("Adding process {}({}) to cgroup {}", p.name, p.pid, rule_cgroup);
+            spdlog::debug("Adding process {}({}) to cgroup {}", p.name, p.pid,
+                          rule_cgroup);
             if (!control_groups::add_pid_to_cgroup(p.pid, rule_cgroup))
               continue;
           }

@@ -1,10 +1,11 @@
 #include "utility/backtrace.hpp"
 
+#include <cstdlib>
 #include <cxxabi.h>
 #include <execinfo.h>
+
 #include <format>
 #include <iostream>
-#include <cstdlib>
 #include <stdexcept>
 
 static constexpr int BACKTRACE_LENGTH = 20;
@@ -12,9 +13,9 @@ static constexpr int BACKTRACE_LENGTH = 20;
 namespace backtrace_handler {
 
 void print_trace() {
-  void* backtrace_buffer[BACKTRACE_LENGTH];
+  void  *backtrace_buffer[BACKTRACE_LENGTH];
   int    size = backtrace(backtrace_buffer, BACKTRACE_LENGTH);
-  char** lines = backtrace_symbols(backtrace_buffer, size);
+  char **lines = backtrace_symbols(backtrace_buffer, size);
   if (lines != nullptr) {
     std::cerr << std::format("Obtained {} stack frames.\n", size);
     for (int i = 0; i < size; ++i) {
@@ -28,8 +29,7 @@ void print_trace() {
   free(lines);
 }
 
-[[noreturn]]
-static void terminate_handler() {
+[[noreturn]] static void terminate_handler() {
   [[maybe_unused]] static int tried_throw = 0;
 
   try {

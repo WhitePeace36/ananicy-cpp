@@ -5,20 +5,24 @@
 #include "core/process.hpp"
 #include "utility/synchronized_queue.hpp"
 #include "utility/utils.hpp"
-#include <cctype>
-#include <cerrno>
-#include <filesystem>
-#include <format>
-#include <fstream>
+
 #include <linux/cn_proc.h>
 #include <linux/connector.h>
 #include <linux/netlink.h>
+
+#include <cctype>
+#include <cerrno>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#include <filesystem>
+#include <format>
+#include <fstream>
 #include <mutex>
 #include <queue>
-#include <spdlog/spdlog.h>
-#include <sys/socket.h>
 #include <thread>
-#include <unistd.h>
+
+#include <spdlog/spdlog.h>
 
 #include "process_helpers.hpp"
 

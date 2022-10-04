@@ -26,8 +26,8 @@ public:
   void               stop();
 
 private:
-  std::condition_variable    m_exit_condition;
-  std::mutex                 m_exit_mutex;
+  std::condition_variable m_exit_condition;
+  std::mutex              m_exit_mutex;
 
   // NOTE: do we really need to use volatile here?
   volatile std::atomic_bool m_need_exit;

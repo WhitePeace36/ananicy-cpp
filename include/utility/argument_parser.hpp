@@ -5,12 +5,13 @@
 #include <format>
 #include <map>
 #include <optional>
-#include <spdlog/spdlog.h>
 #include <string>
 #include <typeindex>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include <spdlog/spdlog.h>
 
 namespace argparse {
 
@@ -91,13 +92,14 @@ public:
 
   [[nodiscard]] operator std::string() const;
 
-
-#if (__cpp_constexpr >= 202002) || (defined(__clang__) && (__cpp_constexpr >= 201907))
+#if (__cpp_constexpr >= 202002) ||                                             \
+    (defined(__clang__) && (__cpp_constexpr >= 201907))
   constexpr
 #else
   inline
 #endif
-  friend bool operator==(const argument &arg, const std::string &name) {
+  friend bool
+  operator==(const argument &arg, const std::string &name) {
     return arg.m_name == name;
   }
 };
@@ -113,7 +115,7 @@ public:
 
   argument &add_argument();
   argument &add_argument(const argument &argument);
-  argument &add_argument(const std::string& name);
+  argument &add_argument(const std::string &name);
 
   std::optional<argument> get_arg(const std::string &name);
   std::string             get_program_name();
@@ -140,7 +142,8 @@ constexpr auto std::formatter<argparse::argument>::parse(ParseContext &ctx) {
 }
 
 template <typename FormatContext>
-constexpr auto std::formatter<argparse::argument>::format(const argparse::argument &arg,
-                                                FormatContext &           ctx) {
+constexpr auto
+std::formatter<argparse::argument>::format(const argparse::argument &arg,
+                                           FormatContext            &ctx) {
   return std::format_to(ctx.out(), arg.operator std::string());
 }
