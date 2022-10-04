@@ -3,10 +3,9 @@
 //
 
 #include "core/priority.hpp"
+#include "utility/utils.hpp"
 #include "syscalls.h"
 #include <cerrno>
-#include <charconv>
-#include <concepts>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -16,13 +15,6 @@
 #include <type_traits>
 
 namespace fs = std::filesystem;
-
-template <std::integral T = std::size_t>
-static constexpr inline T to_int(const std::string_view &str) {
-  T result = 0;
-  std::from_chars(str.data(), str.data() + str.size(), result);
-  return result;
-}
 
 static int test_errno(int errcode, const std::string_view &func_name,
                       pid_t pid) {
@@ -51,7 +43,7 @@ bool set_priority(pid_t pid, int nice_value) {
   try {
     for (const auto &path :
          fs::directory_iterator(std::format("/proc/{}/task", pid))) {
-      const int tid = static_cast<int>(to_int(path.path().filename().string()));
+      const std::int32_t tid = to_int(path.path().filename().string());
       errno = 0;
       if (tid > 0)
         setpriority(PRIO_PROCESS, static_cast<id_t>(tid), nice_value);

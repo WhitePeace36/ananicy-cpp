@@ -284,7 +284,7 @@ void ProcessQueue::full_scan() {
   for (const fs::path &process_path : fs::directory_iterator("/proc")) {
     const std::string pid_str = process_path.filename().string();
     if (isdigit(pid_str[0])) {
-      const int pid = std::stoi(pid_str);
+      const std::int32_t pid = to_int(pid_str);
       // spdlog::trace("Pushing existing process: {}", pid);
       const auto &command = get_command_from_pid(pid);
 

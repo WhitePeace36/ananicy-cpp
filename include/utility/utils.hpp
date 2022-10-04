@@ -6,6 +6,8 @@
 #define ANANICY_CPP_UTILS_HPP
 
 #include <atomic>
+#include <charconv>
+#include <concepts>
 #include <condition_variable>
 #include <mutex>
 #include <optional>
@@ -36,5 +38,12 @@ std::optional<std::string> get_env(const std::string &name);
 std::string get_error_string(int error_number);
 
 std::string read_file(const std::string &path);
+
+template <std::integral T = std::size_t>
+constexpr inline T to_int(const std::string_view &str) {
+  T result = 0;
+  std::from_chars(str.data(), str.data() + str.size(), result);
+  return result;
+}
 
 #endif // ANANICY_CPP_UTILS_HPP

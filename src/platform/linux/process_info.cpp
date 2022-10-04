@@ -1,9 +1,9 @@
 #include <utility/process_info.hpp>
 
 #include "core/priority.hpp"
+#include "utility/utils.hpp"
 #include "syscalls.h"
 
-#include <charconv>
 #include <concepts>
 #include <core/process.hpp>
 #include <filesystem>
@@ -20,13 +20,6 @@
 namespace fs = std::filesystem;
 
 namespace process_info {
-
-template <std::integral T = std::size_t>
-static constexpr inline T to_int(const std::string_view &str) {
-  T result = 0;
-  std::from_chars(str.data(), str.data() + str.size(), result);
-  return result;
-}
 
 template <std::integral T = std::size_t>
 static constexpr inline std::string to_str(T number) {
