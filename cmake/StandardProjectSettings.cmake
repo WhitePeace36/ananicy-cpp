@@ -26,6 +26,8 @@ set(CMAKE_MESSAGE_CONTEXT_SHOW ON)
 # Generate compile_commands.json to make it easier to work with clang based tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(JSON_MultipleHeaders ON CACHE INTERNAL "" FORCE)
+
 option(USE_EXTERNAL_JSON "Use an external JSON library" OFF)
 option(USE_EXTERNAL_SPDLOG "Use external Spdlog library" OFF)
 option(USE_EXTERNAL_FMTLIB "Use external fmt library" OFF)
