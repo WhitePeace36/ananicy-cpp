@@ -117,6 +117,11 @@ static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
       if (errnum == EINTR || errnum == EAGAIN) {
         continue;
       }
+      if (errnum == ENOBUFS) {
+        spdlog::error("Received message overrun - ({})",
+                      get_error_string(errnum));
+        return EXIT_FAILURE;
+      }
       spdlog::error("Bad netlink status ({}): {}", errnum,
                     get_error_string(errnum));
       return EXIT_FAILURE;
