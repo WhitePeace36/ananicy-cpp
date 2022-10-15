@@ -28,7 +28,7 @@ using namespace std::chrono_literals;
 using std::filesystem::path;
 
 int main(const int argc, const char **argv) {
-  if constexpr (std::string_view(BUILD_TYPE) == "Debug") {
+  if constexpr (BUILD_TYPE == "Debug") {
     spdlog::set_level(spdlog::level::trace);
   } else {
     spdlog::set_level(spdlog::level::info);
@@ -85,9 +85,8 @@ int main(const int argc, const char **argv) {
     return EXIT_SUCCESS;
   }
 
-  static constexpr std::string_view version(VERSION);
   if (parser["version"]) {
-    std::cout << std::format("Ananicy Cpp {}\n", version);
+    std::cout << std::format("Ananicy Cpp {}\n", VERSION);
     return EXIT_SUCCESS;
   }
 
@@ -127,7 +126,7 @@ int main(const int argc, const char **argv) {
 
   service::set_status(service::STARTING);
 
-  std::cout << std::format("Ananicy Cpp {}\n", version) << std::flush;
+  std::cout << std::format("Ananicy Cpp {}\n", VERSION) << std::flush;
 
   InterruptHandler ih({SIGINT, SIGTERM});
 

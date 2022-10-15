@@ -1,9 +1,14 @@
-#pragma once
+#ifndef ANANICY_CPP_VERSION_HPP
+#define ANANICY_CPP_VERSION_HPP
 
-#define MAJOR_VERSION @CMAKE_PROJECT_VERSION_MAJOR@
-#define MINOR_VERSION @CMAKE_PROJECT_VERSION_MINOR@
-#define PATCH_VERSION @CMAKE_PROJECT_VERSION_PATCH@
-#define VERSION       "@VERSION@"
-#define COMMIT_HASH   "@COMMIT_HASH@"
-#define FULL_VERSION  "@FULL_VERSION@"
-#define BUILD_TYPE    "@CMAKE_BUILD_TYPE@"
+#include <string_view>
+
+static constexpr auto MAJOR_VERSION = @CMAKE_PROJECT_VERSION_MAJOR@;
+static constexpr auto MINOR_VERSION = @CMAKE_PROJECT_VERSION_MINOR@;
+static constexpr auto PATCH_VERSION = @CMAKE_PROJECT_VERSION_PATCH@;
+static constexpr std::string_view VERSION = "@VERSION@";
+static constexpr std::string_view COMMIT_HASH = "@COMMIT_HASH@";
+static constexpr std::string_view FULL_VERSION = "@FULL_VERSION@";
+static constexpr std::string_view BUILD_TYPE = "@CMAKE_BUILD_TYPE@";
+
+#endif // ANANICY_CPP_VERSION_HPP
