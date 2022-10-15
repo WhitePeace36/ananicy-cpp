@@ -45,6 +45,8 @@ int main(const int argc, const char **argv) {
       .description("Increase verbosity level");
   parser.add_argument().name("--help").name("-h").description(
       "Print this help and exit");
+  parser.add_argument().name("--version").description(
+      "Print version information");
   parser.add_argument()
       .name("--benchmark")
       .description("Should we activate benchmark mode or not");
@@ -78,6 +80,17 @@ int main(const int argc, const char **argv) {
     return EXIT_FAILURE;
   }
 
+  if (parser["help"]) {
+    parser.print_help();
+    return EXIT_SUCCESS;
+  }
+
+  static constexpr std::string_view version(VERSION);
+  if (parser["version"]) {
+    std::cout << std::format("Ananicy Cpp {}\n", version);
+    return EXIT_SUCCESS;
+  }
+
   const std::string config_dir_path =
       get_env("ANANICY_CPP_CONFDIR").value_or("/etc/ananicy.d");
   const std::string config_path =
@@ -88,10 +101,6 @@ int main(const int argc, const char **argv) {
 
   spdlog::set_level(conf.loglevel());
 
-  if (parser["help"]) {
-    parser.print_help();
-    return EXIT_SUCCESS;
-  }
 
   if (parser["verbose"]) {
     spdlog::debug("Verbose flag set!");
@@ -117,8 +126,6 @@ int main(const int argc, const char **argv) {
   }
 
   service::set_status(service::STARTING);
-
-  constexpr std::string_view version(VERSION);
 
   std::cout << std::format("Ananicy Cpp {}\n", version) << std::flush;
 
