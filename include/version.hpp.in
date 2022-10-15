@@ -3,9 +3,9 @@
 
 #include <string_view>
 
-static constexpr auto MAJOR_VERSION = @CMAKE_PROJECT_VERSION_MAJOR@;
-static constexpr auto MINOR_VERSION = @CMAKE_PROJECT_VERSION_MINOR@;
-static constexpr auto PATCH_VERSION = @CMAKE_PROJECT_VERSION_PATCH@;
+#define MAJOR_VERSION @CMAKE_PROJECT_VERSION_MAJOR@
+#define MINOR_VERSION @CMAKE_PROJECT_VERSION_MINOR@
+#define PATCH_VERSION @CMAKE_PROJECT_VERSION_PATCH@
 static constexpr std::string_view VERSION = "@VERSION@";
 static constexpr std::string_view COMMIT_HASH = "@COMMIT_HASH@";
 static constexpr std::string_view FULL_VERSION = "@FULL_VERSION@";
