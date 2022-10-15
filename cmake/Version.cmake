@@ -9,7 +9,8 @@ if(VERSION STREQUAL "0.0.0")
         message(STATUS "Git found: ${GIT_EXECUTABLE}")
 
         execute_process(
-                COMMAND ${GIT_EXECUTABLE} describe --long
+                COMMAND ${GIT_EXECUTABLE} describe --tags --always
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 OUTPUT_VARIABLE OUTPUT
                 RESULT_VARIABLE STATUS
         )
