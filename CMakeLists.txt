@@ -51,6 +51,7 @@ list(APPEND LINUX_SOURCES
         src/platform/linux/backtrace.cpp
         src/platform/linux/cgroups.cpp
         src/platform/linux/debug.cpp
+        src/platform/linux/singleton_process.cpp
         src/platform/linux/process_info.cpp)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")

@@ -14,6 +14,7 @@
 #include "utility/argument_parser.hpp"
 #include "utility/debug.hpp"
 #include "utility/process_info.hpp"
+#include "utility/singleton_process.hpp"
 #include "utility/utils.hpp"
 #include "version.hpp"
 
@@ -124,8 +125,6 @@ int main(const int argc, const char **argv) {
     spdlog::info("Checking frequency set to {}", conf.check_freq());
   }
 
-  service::set_status(service::STARTING);
-
   std::cout << std::format("Ananicy Cpp {}\n", VERSION) << std::flush;
 
   InterruptHandler ih({SIGINT, SIGTERM});
@@ -139,6 +138,7 @@ int main(const int argc, const char **argv) {
     parser.print_help();
     std::exit(EXIT_FAILURE);
   } else if (action == "start") {
+    service::set_status(service::STARTING);
     spdlog::info("Starting Ananicy");
   } else if (action == "dump") {
     if (!sub_action.has_value()) {
@@ -170,6 +170,13 @@ int main(const int argc, const char **argv) {
     std::exit(EXIT_SUCCESS);
   } else {
     spdlog::critical("Unknown action requested: {}", action.value());
+  }
+
+  SingletonProcess singleton("/AnanicyCppMutex");
+  if (!singleton.try_create()) {
+    std::cerr << "Ananicy Cpp is already running!\n";
+    ih.stop();
+    return EXIT_FAILURE;
   }
 
   rules.show_all_rules();
@@ -214,6 +221,8 @@ int main(const int argc, const char **argv) {
   }
   spdlog::info("Stopping Ananicy Cpp...");
   service::set_status(service::STOPPING);
+
+  SingletonProcess::remove(singleton.get_name());
 
   processListener.stop();
   spdlog::debug("Stopped process listener");
