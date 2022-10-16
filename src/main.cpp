@@ -80,7 +80,7 @@ int main(const int argc, const char **argv) {
     return EXIT_FAILURE;
   }
 
-  if (parser["help"]) {
+  if (parser["help"] || (argc < 2)) {
     parser.print_help();
     return EXIT_SUCCESS;
   }
