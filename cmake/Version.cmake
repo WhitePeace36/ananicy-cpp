@@ -13,6 +13,7 @@ if(VERSION STREQUAL "0.0.0")
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 OUTPUT_VARIABLE OUTPUT
                 RESULT_VARIABLE STATUS
+                OUTPUT_STRIP_TRAILING_WHITESPACE
         )
         if (STATUS EQUAL 0)
             string(REGEX REPLACE "v([0-9A-Za-z.-]+)-([0-9]+)-([a-zA-Z0-9]+).+" "\\1.r\\2.\\3" FULL_VERSION "${OUTPUT}")
