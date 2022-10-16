@@ -157,7 +157,7 @@ else()
         GIT_TAG v1.10.0
         EXCLUDE_FROM_ALL YES)
 endif()
-target_link_libraries(ananicy-cpp PRIVATE project_options spdlog::spdlog fmt::fmt)
+target_link_libraries(ananicy-cpp PRIVATE project_options spdlog::spdlog fmt::fmt rt)
 set(CMAKE_MESSAGE_CONTEXT "")
 
 
