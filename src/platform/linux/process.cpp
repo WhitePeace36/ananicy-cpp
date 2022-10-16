@@ -118,7 +118,7 @@ static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
         continue;
       }
       if (errnum == ENOBUFS) {
-        spdlog::error("Received message overrun - ({})",
+        spdlog::warn("Received message overrun - ({})",
                       get_error_string(errnum));
         return EXIT_FAILURE;
       }
