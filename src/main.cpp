@@ -48,6 +48,8 @@ int main(const int argc, const char **argv) {
       "Print this help and exit");
   parser.add_argument().name("--version").description(
       "Print version information");
+  parser.add_argument().name("--force-remove-semaphore").description(
+      "Don't use it, unless you know what you are doing.");
   parser.add_argument()
       .name("--benchmark")
       .description("Should we activate benchmark mode or not");
@@ -88,6 +90,16 @@ int main(const int argc, const char **argv) {
 
   if (parser["version"]) {
     std::cout << std::format("Ananicy Cpp {}\n", VERSION);
+    return EXIT_SUCCESS;
+  }
+
+  SingletonProcess singleton("/AnanicyCppMutex");
+  if (parser["force-remove-semaphore"]) {
+    if (!SingletonProcess::remove(singleton.get_name())) {
+        std::cerr << std::format("Failed to remove semaphore! msg '{}'\n", strerror(errno));
+        return EXIT_FAILURE;
+    }
+    std::cerr << "Semaphore was successfully removed!\n";
     return EXIT_SUCCESS;
   }
 
@@ -172,7 +184,6 @@ int main(const int argc, const char **argv) {
     spdlog::critical("Unknown action requested: {}", action.value());
   }
 
-  SingletonProcess singleton("/AnanicyCppMutex");
   if (!singleton.try_create()) {
     std::cerr << "Ananicy Cpp is already running!\n";
     ih.stop();
