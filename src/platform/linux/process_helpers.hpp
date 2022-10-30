@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <format>
 
 namespace process_info {
 static std::vector<std::string> get_cmdline_from_pid(int pid) {

@@ -3,30 +3,122 @@
 //
 
 #include "core/process.hpp"
+#include "process_helpers.hpp"
 #include "utility/synchronized_queue.hpp"
 #include "utility/utils.hpp"
 
+#ifndef USE_BPF_PROC_IMPL
 #include <linux/cn_proc.h>
 #include <linux/connector.h>
 #include <linux/netlink.h>
-
-#include <cctype>
-#include <cerrno>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#include <cerrno>
+#endif
 
 #include <filesystem>
 #include <format>
 #include <fstream>
-#include <mutex>
-#include <queue>
 #include <thread>
 
 #include <spdlog/spdlog.h>
 
-#include "process_helpers.hpp"
-
 namespace fs = std::filesystem;
+
+#ifdef USE_BPF_PROC_IMPL
+static volatile std::atomic<bool>   g_exiting;
+static synchronized_queue<Process> *g_process_queue;
+
+void ProcessQueue::init() noexcept {
+  g_process_queue = &this->process_queue;
+  this->full_scan();
+
+  g_exiting.store(false, std::memory_order_relaxed);
+  if (!m_bpf_program.initialize()) {
+    spdlog::error("Failed to initialize the BPF program");
+  }
+}
+
+extern "C" void handle_event(void *ctx, int32_t cpu, void *data,
+                             uint32_t data_sz) {
+  static constexpr auto TASK_COMM_LEN = 16;
+
+  struct event {
+    pid_t pid;
+    pid_t prev_pid;
+    __u64 delta_us;
+    char  task[TASK_COMM_LEN];
+  };
+
+  auto *e = static_cast<struct event *>(data);
+
+  if (e->pid == 0 || !g_process_queue || e->pid == e->prev_pid) {
+    return;
+  }
+
+  std::string &&command = get_command_from_pid(e->pid);
+  if (command.ends_with(".exe")) {
+    std::replace(command.begin(), command.end(), '\\', '/');
+    fs::path cmd_path{command.c_str()};
+    command = cmd_path.filename().string();
+  }
+
+  Process process{
+      .delta_us = e->delta_us, .pid = e->pid, .name = std::move(command)};
+  spdlog::trace("Pushing new process: pid = {}", e->pid);
+  g_process_queue->push(process);
+}
+
+extern "C" void handle_lost_events(void *ctx, int cpu, __u64 lost_cnt) {
+  fmt::print(stderr, "Lost {} events on CPU {}!\n", lost_cnt, cpu);
+}
+
+static std::int32_t handle_events(BPFProgram                  *bpf_program,
+                                  synchronized_queue<Process> *queue,
+                                  const std::stop_token       &stop_token) {
+
+  std::int32_t status{};
+  // while (!stop_token.stop_requested()) {
+  while (!g_exiting.load(std::memory_order_consume)) {
+    status = bpf_program->pool_event();
+    if (status < 0 && status != -EINTR) {
+      spdlog::error("Error received ({}): {}", status,
+                    get_error_string(-status));
+      return EXIT_FAILURE;
+    }
+    /* reset err to return 0 if exiting */
+    status = 0;
+  }
+
+  return status;
+}
+
+void ProcessQueue::start() {
+  this->event_thread =
+      std::jthread([this](const std::stop_token &stop_token) -> void {
+        int ret = EXIT_FAILURE;
+        while (ret == EXIT_FAILURE && !stop_token.stop_requested()) {
+          spdlog::trace("Starting handle_events");
+
+          ret = handle_events(&m_bpf_program, &this->process_queue, stop_token);
+
+          if (ret == EXIT_SUCCESS || stop_token.stop_requested())
+            break;
+
+          spdlog::warn("restarting socket connection!");
+          g_exiting.store(true, std::memory_order_relaxed);
+          m_bpf_program.destroy();
+          this->init();
+        }
+      });
+}
+
+#else
+
+struct ProcessQueue::Socket {
+  int socket;
+};
 
 static int connect_netlink_socket() {
 
@@ -119,7 +211,7 @@ static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
       }
       if (errnum == ENOBUFS) {
         spdlog::warn("Received message overrun - ({})",
-                      get_error_string(errnum));
+                     get_error_string(errnum));
         return EXIT_FAILURE;
       }
       spdlog::error("Bad netlink status ({}): {}", errnum,
@@ -152,7 +244,7 @@ static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
             last_process) { // Fix
                             // https://gitlab.com/ananicy-cpp/ananicy-cpp/-/issues/20
           spdlog::trace("Pushing new process: pid = {}", pid);
-          queue->push(process);
+          queue->push(std::move(process));
         }
       }
     } catch (std::exception &e) {
@@ -162,6 +254,27 @@ static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
 
   return static_cast<int>(status);
 }
+
+void ProcessQueue::start() {
+  this->event_thread =
+      std::jthread([this](const std::stop_token &stop_token) -> void {
+        int ret = EXIT_FAILURE;
+        while (ret == EXIT_FAILURE && !stop_token.stop_requested()) {
+          spdlog::trace("Starting handle_events");
+          ret = handle_events(this->sock->socket, &this->process_queue,
+                              stop_token);
+
+          if (ret == EXIT_SUCCESS || stop_token.stop_requested())
+            break;
+
+          spdlog::warn("restarting socket connection!");
+          set_event_subscription(this->sock->socket, false);
+          close(this->sock->socket);
+          this->init();
+        };
+      });
+}
+#endif
 
 #ifndef COMMAND_NAME_HEURISTIC_SKIP_EXE_FAILURES
 #define COMMAND_NAME_HEURISTIC_SKIP_EXE_FAILURES 5
@@ -238,68 +351,19 @@ std::string get_command_from_pid(pid_t pid) {
   return {"<unknown>"};
 }
 
-struct ProcessQueue::Socket {
-  int socket;
-};
-
-int ProcessQueue::init() noexcept(false) {
-  full_scan();
-
-  const int socket = connect_netlink_socket();
-
-  if (socket == -1) {
-    [[unlikely]] throw std::runtime_error("Couldn't open netlink socket!");
-  }
-
-  const int listen_status = set_event_subscription(socket, true);
-  if (listen_status == 0) {
-    [[unlikely]] close(socket);
-    throw std::runtime_error("Couldn't subscribe to process events!");
-  }
-
-  this->sock = std::make_unique<ProcessQueue::Socket>(
-      ProcessQueue::Socket{.socket = socket});
-
-  return socket;
-}
-
-ProcessQueue::ProcessQueue() { init(); }
-
-void ProcessQueue::start() {
-  this->event_thread =
-      std::jthread([this](const std::stop_token &stop_token) -> void {
-        int ret = EXIT_FAILURE;
-        while (ret == EXIT_FAILURE && !stop_token.stop_requested()) {
-          spdlog::trace("Starting handle_events");
-          ret = handle_events(this->sock->socket, &this->process_queue,
-                              stop_token);
-
-          if (ret == EXIT_SUCCESS || stop_token.stop_requested())
-            break;
-
-          spdlog::warn("restarting socket connection!");
-          set_event_subscription(this->sock->socket, false);
-          close(this->sock->socket);
-          this->init();
-        };
-      });
-}
-
-ProcessQueue::~ProcessQueue() noexcept { stop(); }
-
 void ProcessQueue::full_scan() {
   spdlog::info("Doing a full scan");
-  unsigned n_process_found = 0;
+  std::uint32_t n_process_found{};
   for (const fs::path &process_path : fs::directory_iterator("/proc")) {
     const std::string pid_str = process_path.filename().string();
     if (isdigit(pid_str[0])) {
       const std::int32_t pid = to_int(pid_str);
       // spdlog::trace("Pushing existing process: {}", pid);
-      const auto &command = get_command_from_pid(pid);
+      auto &&command = get_command_from_pid(pid);
 
-      process_queue.push(Process{
+      this->process_queue.push(Process{
           .pid = pid,
-          .name = command,
+          .name = std::move(command),
       });
       n_process_found++;
     }
@@ -309,12 +373,19 @@ void ProcessQueue::full_scan() {
 }
 
 void ProcessQueue::stop() noexcept {
+#ifdef USE_BPF_PROC_IMPL
+  g_exiting.store(true, std::memory_order_relaxed);
+#endif
   if (!this->event_thread.get_stop_token().stop_requested()) {
     this->event_thread.request_stop();
     this->event_thread.join();
   }
+#ifdef USE_BPF_PROC_IMPL
+  m_bpf_program.destroy();
+#else
   set_event_subscription(this->sock->socket, false);
   close(this->sock->socket);
+#endif
 }
 
 pid_t get_pid() { return getpid(); }

@@ -169,6 +169,11 @@ if(ENABLE_SYSTEMD)
     set(CMAKE_MESSAGE_CONTEXT "")
 endif()
 
+if(USE_BPF_PROC_IMPL)
+    add_subdirectory(libananicycpp_bpf)
+    target_link_libraries(ananicy-cpp PRIVATE ananicy_cpp_bpf_cpp::ananicy_cpp_bpf_cpp ananicy_cpp_bpf_c::ananicy_cpp_bpf_c)
+endif()
+
 target_include_directories(ananicy-cpp PRIVATE "${CMAKE_HOME_DIRECTORY}/include")
 
 install(TARGETS ananicy-cpp

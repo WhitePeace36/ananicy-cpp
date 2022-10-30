@@ -58,6 +58,13 @@ int main(const int argc, const char **argv) {
       .type(typeid(uint))
       .description("How many pids to process before stopping");
 
+#ifdef USE_BPF_PROC_IMPL
+  parser.add_argument()
+      .name("--bpf-min-us")
+      .type(typeid(uint64_t))
+      .description("Trace latency");
+#endif
+
   parser.add_argument()
       .name("--manual-scanning")
       .name("--manualscanning")
@@ -195,7 +202,12 @@ int main(const int argc, const char **argv) {
   control_groups::get_cgroup_version();
   rules.create_cgroups();
 
+#ifdef USE_BPF_PROC_IMPL
+  const uint64_t bpf_min_us = parser["bpf-min-us"].value<uint64_t>().value_or(30);
+  ProcessQueue processListener(bpf_min_us, parser["verbose"]);
+#else
   ProcessQueue processListener;
+#endif
 
   processListener.start();
 
