@@ -171,6 +171,7 @@ endif()
 
 if(USE_BPF_PROC_IMPL)
     add_subdirectory(libananicycpp_bpf)
+    add_dependencies(ananicy-cpp ananicy_cpp_bpf_c::ananicy_cpp_bpf_c)
     target_link_libraries(ananicy-cpp PRIVATE ananicy_cpp_bpf_cpp::ananicy_cpp_bpf_cpp ananicy_cpp_bpf_c::ananicy_cpp_bpf_c)
 endif()
 

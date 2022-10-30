@@ -115,8 +115,8 @@ target_include_directories(ananicy_cpp_bpf_c PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}
 target_link_libraries(ananicy_cpp_bpf_c PRIVATE ananicy_cpp_skel)
 add_library(ananicy_cpp_bpf_c::ananicy_cpp_bpf_c ALIAS ananicy_cpp_bpf_c)
 
-add_library(ananicy_cpp_bpf_cpp INTERFACE include_cpp/bpf_program.hpp)
-target_include_directories(ananicy_cpp_bpf_cpp INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include_cpp")
+add_library(ananicy_cpp_bpf_cpp INTERFACE)
+target_include_directories(ananicy_cpp_bpf_cpp INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include_cpp>)
 add_dependencies(ananicy_cpp_bpf_cpp ananicy_cpp_bpf_c)
 add_library(ananicy_cpp_bpf_cpp::ananicy_cpp_bpf_cpp ALIAS ananicy_cpp_bpf_cpp)
 
