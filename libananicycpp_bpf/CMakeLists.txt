@@ -9,7 +9,7 @@ include(CPM)
 include(ExternalProject)
 
 option(BPF_BUILD_SAMPLES "Build ananicy_cpp_bpf samples" OFF)
-option(BPF_BUILD_LIBBPF  "Build libbpf" OFF)
+option(BPF_BUILD_LIBBPF  "Build libbpf" ON)
 option(BPF_BUILD_BPFTOOL "Build bpftool" OFF)
 
 if(BPF_BUILD_LIBBPF)
