@@ -44,9 +44,22 @@ if(BPF_BUILD_LIBBPF)
     #  STEP_TARGETS build
     #)
 
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/libbpf/bpf)
+
     file(GLOB libbpf_sources ${libbpf_SOURCE_DIR}/src/*.c)
+    file(GLOB libbpf_headers ${libbpf_SOURCE_DIR}/src/*.h)
+
     add_library(bpf STATIC ${libbpf_sources})
     add_library(bpf::bpf ALIAS bpf)
+
+    foreach(libbpf_header ${libbpf_headers})
+        add_custom_command(
+            TARGET bpf
+            PRE_BUILD
+            COMMAND ${CMAKE_COMMAND}
+            ARGS -E copy ${libbpf_header} ${CMAKE_CURRENT_BINARY_DIR}/libbpf/bpf
+        )
+    endforeach()
 
     set_target_properties(bpf PROPERTIES COMPILE_FLAGS "-g -O2 -Werror -Wall -std=gnu89 -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64")
 
@@ -54,6 +67,7 @@ if(BPF_BUILD_LIBBPF)
     target_include_directories(bpf SYSTEM PUBLIC $<BUILD_INTERFACE:${libbpf_SOURCE_DIR}/src>)
     target_include_directories(bpf SYSTEM PUBLIC $<BUILD_INTERFACE:${libbpf_SOURCE_DIR}/include>)
     target_include_directories(bpf SYSTEM PUBLIC $<BUILD_INTERFACE:${libbpf_SOURCE_DIR}/include/uapi>)
+    target_include_directories(bpf SYSTEM PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/libbpf>)
   endif()
 
   set(LIBBPF_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/libbpf")
