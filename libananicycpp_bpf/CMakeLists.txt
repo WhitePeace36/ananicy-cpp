@@ -9,74 +9,84 @@ include(CPM)
 include(ExternalProject)
 
 option(BPF_BUILD_SAMPLES "Build ananicy_cpp_bpf samples" OFF)
+option(BPF_BUILD_LIBBPF  "Build libbpf" OFF)
+option(BPF_BUILD_BPFTOOL "Build bpftool" OFF)
 
-CPMAddPackage(
-    NAME libbpf
-    GITHUB_REPOSITORY libbpf/libbpf
-    GIT_PROGRESS TRUE
-    GIT_SHALLOW TRUE
-    GIT_TAG c97b16d96c8b1771973dba1596477f7d7e9ba201
-    DOWNLOAD_ONLY YES
-    EXCLUDE_FROM_ALL YES
-)
+if(BPF_BUILD_LIBBPF)
+  CPMAddPackage(
+      NAME libbpf
+      GITHUB_REPOSITORY libbpf/libbpf
+      GIT_PROGRESS TRUE
+      GIT_SHALLOW TRUE
+      GIT_TAG c97b16d96c8b1771973dba1596477f7d7e9ba201
+      DOWNLOAD_ONLY YES
+      EXCLUDE_FROM_ALL YES
+  )
 
-CPMAddPackage(
-    NAME bpftool
-    GITHUB_REPOSITORY libbpf/bpftool
-    GIT_PROGRESS TRUE
-    GIT_SHALLOW TRUE
-    GIT_TAG 8e721a476f58cb2ce16035cbaeca0352174aaa9e
-    DOWNLOAD_ONLY YES
-    EXCLUDE_FROM_ALL YES
-)
+  if(libbpf_ADDED)
+    # libbpf has no CMakeLists, so we create our own target
 
-if(libbpf_ADDED)
-  # libbpf has no CMakeLists, so we create our own target
+    # Build vendored libbpf
+    #ExternalProject_Add(libbpf
+    #  PREFIX libbpf
+    #  SOURCE_DIR ${libbpf_SOURCE_DIR}/src
+    #  CONFIGURE_COMMAND ""
+    #  BUILD_COMMAND make
+    #    BUILD_STATIC_ONLY=1
+    #    OBJDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf
+    #    DESTDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf
+    #    INCLUDEDIR=
+    #    LIBDIR=
+    #    UAPIDIR=
+    #    install
+    #  BUILD_IN_SOURCE TRUE
+    #  INSTALL_COMMAND ""
+    #  STEP_TARGETS build
+    #)
 
-  # Build vendored libbpf
-#  ExternalProject_Add(libbpf
-#    PREFIX libbpf
-#    SOURCE_DIR ${libbpf_SOURCE_DIR}/src
-#    CONFIGURE_COMMAND ""
-#    BUILD_COMMAND make
-#      BUILD_STATIC_ONLY=1
-#      OBJDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf
-#      DESTDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf
-#      INCLUDEDIR=
-#      LIBDIR=
-#      UAPIDIR=
-#      install
-#    BUILD_IN_SOURCE TRUE
-#    INSTALL_COMMAND ""
-#    STEP_TARGETS build
-#  )
+    file(GLOB libbpf_sources ${libbpf_SOURCE_DIR}/src/*.c)
+    add_library(bpf STATIC ${libbpf_sources})
+    add_library(bpf::bpf ALIAS bpf)
 
-  file(GLOB libbpf_sources ${libbpf_SOURCE_DIR}/src/*.c)
-  add_library(bpf STATIC ${libbpf_sources})
-  add_library(bpf::bpf ALIAS bpf)
+    set_target_properties(bpf PROPERTIES COMPILE_FLAGS "-g -O2 -Werror -Wall -std=gnu89 -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64")
 
-  set_target_properties(bpf PROPERTIES COMPILE_FLAGS "-g -O2 -Werror -Wall -std=gnu89 -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64")
+    target_include_directories(bpf SYSTEM PUBLIC $<BUILD_INTERFACE:${libbpf_SOURCE_DIR}>)
+    target_include_directories(bpf SYSTEM PUBLIC $<BUILD_INTERFACE:${libbpf_SOURCE_DIR}/src>)
+    target_include_directories(bpf SYSTEM PUBLIC $<BUILD_INTERFACE:${libbpf_SOURCE_DIR}/include>)
+    target_include_directories(bpf SYSTEM PUBLIC $<BUILD_INTERFACE:${libbpf_SOURCE_DIR}/include/uapi>)
+  endif()
 
-  target_include_directories(bpf SYSTEM PUBLIC $<BUILD_INTERFACE:${libbpf_SOURCE_DIR}>)
-  target_include_directories(bpf SYSTEM PUBLIC $<BUILD_INTERFACE:${libbpf_SOURCE_DIR}/src>)
-  target_include_directories(bpf SYSTEM PUBLIC $<BUILD_INTERFACE:${libbpf_SOURCE_DIR}/include>)
-  target_include_directories(bpf SYSTEM PUBLIC $<BUILD_INTERFACE:${libbpf_SOURCE_DIR}/include/uapi>)
+  set(LIBBPF_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/libbpf")
+  set(LIBBPF_LIBRARIES "${CMAKE_CURRENT_BINARY_DIR}/libbpf.a")
 endif()
 
-if(bpftool_ADDED)
-  # bpftool has no CMakeLists, so we create our own target
-
-  # Build vendored bpftool
-  ExternalProject_Add(bpftool
-    PREFIX bpftool
-    SOURCE_DIR ${bpftool_SOURCE_DIR}/src
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND make
-      OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/bpftool/
-    BUILD_IN_SOURCE TRUE
-    INSTALL_COMMAND ""
-    STEP_TARGETS build
+if(BPF_BUILD_BPFTOOL)
+  CPMAddPackage(
+      NAME bpftool
+      GITHUB_REPOSITORY libbpf/bpftool
+      GIT_PROGRESS TRUE
+      GIT_SHALLOW TRUE
+      GIT_TAG 8e721a476f58cb2ce16035cbaeca0352174aaa9e
+      DOWNLOAD_ONLY YES
+      EXCLUDE_FROM_ALL YES
   )
+
+  if(bpftool_ADDED)
+    # bpftool has no CMakeLists, so we create our own target
+
+    # Build vendored bpftool
+    ExternalProject_Add(bpftool
+      PREFIX bpftool
+      SOURCE_DIR ${bpftool_SOURCE_DIR}/src
+      CONFIGURE_COMMAND ""
+      BUILD_COMMAND make
+        OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/bpftool/
+      BUILD_IN_SOURCE TRUE
+      INSTALL_COMMAND ""
+      STEP_TARGETS build
+    )
+  endif()
+  set(BPFOBJECT_BPFTOOL_EXE "${CMAKE_CURRENT_BINARY_DIR}/bpftool/bpftool")
 endif()
 
 # Get target arch
@@ -94,16 +104,18 @@ endif()
 
 # Set BpfObject input parameters -- note this is usually not necessary unless
 # you're in a highly vendored environment (like libbpf-bootstrap)
-set(BPFOBJECT_BPFTOOL_EXE "${CMAKE_CURRENT_BINARY_DIR}/bpftool/bpftool")
 set(BPFOBJECT_VMLINUX_H "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_ARCH}/vmlinux.h")
-set(LIBBPF_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/libbpf")
-set(LIBBPF_LIBRARIES "${CMAKE_CURRENT_BINARY_DIR}/libbpf.a")
 set(BPF_ADDITIONAL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
 include(FindBpfObject)
 
 # Build object skeleton and depend skeleton on libbpf build
 bpf_object(ananicy_cpp src/ananicy_cpp.bpf.c)
-add_dependencies(ananicy_cpp_skel libbpf bpftool)
+if(BPF_BUILD_LIBBPF)
+  add_dependencies(ananicy_cpp_skel libbpf)
+endif()
+if(BPF_BUILD_BPFTOOL)
+  add_dependencies(ananicy_cpp_skel bpftool)
+endif()
 
 add_library(ananicy_cpp_bpf_c STATIC
   src/bpf_program_utils.c

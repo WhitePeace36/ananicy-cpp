@@ -8,7 +8,7 @@ variables:
 default:
   before_script:
     - apt-get -y update
-    - apt-get -y install build-essential cmake git libsystemd-dev libelf-dev libcap-dev llvm clang
+    - apt-get -y install build-essential cmake git libsystemd-dev libelf-dev libbpf-dev linux-tools-common llvm clang
 
 build:
   stage: build
@@ -19,7 +19,7 @@ build:
 build-static:
   stage: build
   script:
-    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DSTATIC=On -DENABLE_SYSTEMD=Off -S .
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DSTATIC=ON -DENABLE_SYSTEMD=OFF -S .
     - cmake --build build -j
   artifacts:
     paths:
