@@ -8,7 +8,7 @@ variables:
 default:
   before_script:
     - apt-get -y update
-    - apt-get -y install cmake git libsystemd-dev
+    - apt-get -y install build-essential cmake git libsystemd-dev llvm clang
 
 build:
   stage: build
