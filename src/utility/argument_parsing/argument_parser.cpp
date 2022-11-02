@@ -129,7 +129,7 @@ argparse_error argument_parser::parse_args(const int argc, const char **argv) {
   std::vector<std::string> args;
   args.reserve(static_cast<std::size_t>(argc));
   for (int i = 0; i < argc; ++i) {
-    args.emplace_back(std::string{argv[i]});
+    args.emplace_back(argv[i]);
   }
   return parse_args(args);
 }
@@ -155,7 +155,7 @@ argument_value argument_parser::operator[](const std::string &name) {
     throw std::runtime_error(std::format("Unknown argument: {}", name));
   }
 
-  return argument_value(arg->get_value(), arg->get_type());
+  return {arg->get_value(), arg->get_type()};
 }
 
 argument_value::operator bool() const {
