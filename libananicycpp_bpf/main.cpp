@@ -39,8 +39,6 @@ static const struct argp_option opts[] = {
 static error_t parse_arg(int key, char *arg, struct argp_state *state) {
   static int pos_args;
 
-  const std::string_view arg_str = arg;
-
   switch (key) {
   case 'h':
     argp_state_help(state, stderr, ARGP_HELP_STD_HELP);
@@ -48,7 +46,8 @@ static error_t parse_arg(int key, char *arg, struct argp_state *state) {
   case 'v':
     env.verbose = true;
     break;
-  case ARGP_KEY_ARG:
+  case ARGP_KEY_ARG: {
+    const std::string_view arg_str = arg;
     if (pos_args++) {
       fmt::print(stderr, "Unrecognized positional argument: {}\n", arg_str);
       argp_usage(state);
@@ -62,6 +61,7 @@ static error_t parse_arg(int key, char *arg, struct argp_state *state) {
     }
     env.min_us = min_us;
     break;
+  }
   default:
     return ARGP_ERR_UNKNOWN;
   }
