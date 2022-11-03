@@ -28,10 +28,10 @@
 
 namespace fs = std::filesystem;
 
-static int connect_netlink_socket() {
+static std::int32_t connect_netlink_socket() noexcept(false) {
 
   errno = 0;
-  int nl_sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_CONNECTOR);
+  std::int32_t nl_sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_CONNECTOR);
   if (nl_sock == -1) {
     [[unlikely]] spdlog::error("Couldn't create netlink socket, errno = {}",
                                get_error_string(errno));
@@ -45,7 +45,7 @@ static int connect_netlink_socket() {
   };
 
   errno = 0;
-  int rc =
+  std::int32_t rc =
       bind(nl_sock, reinterpret_cast<struct sockaddr *>(&sa_nl), sizeof(sa_nl));
   if (rc == -1) {
     [[unlikely]] spdlog::error("Couldn't bind to socket: {}",
@@ -64,7 +64,7 @@ static int connect_netlink_socket() {
   return nl_sock;
 }
 
-static int set_event_subscription(int nl_sock, bool enable) {
+static std::int32_t set_event_subscription(std::int32_t nl_sock, bool enable) {
   struct alignas(NLMSG_ALIGNTO) nl_cn_msg {
     struct nlmsghdr nl_hdr{};
     struct [[gnu::packed]] {
@@ -90,11 +90,11 @@ static int set_event_subscription(int nl_sock, bool enable) {
   netlink_connection_message.cn_mcast =
       enable ? PROC_CN_MCAST_LISTEN : PROC_CN_MCAST_IGNORE;
 
-  return static_cast<int>(
+  return static_cast<std::int32_t>(
       send(nl_sock, &netlink_connection_message, sizeof(nl_cn_msg), 0));
 }
 
-static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
+static std::int32_t handle_events(std::int32_t nl_sock, synchronized_queue<Process> *queue,
                          const std::stop_token &stop_token) {
   struct alignas(NLMSG_ALIGNTO) nl_cn_msg {
     struct nlmsghdr nl_hdr{};
@@ -110,7 +110,7 @@ static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
     errno = 0;
     status = recv(nl_sock, &netlink_connection_message,
                   sizeof(netlink_connection_message), 0);
-    const int errnum = errno;
+    const std::int32_t errnum = errno;
     if (status == 0) {
       return EXIT_SUCCESS;
     } else if (status == -1) {
@@ -160,7 +160,7 @@ static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
     }
   }
 
-  return static_cast<int>(status);
+  return static_cast<std::int32_t>(status);
 }
 
 #ifndef COMMAND_NAME_HEURISTIC_SKIP_EXE_FAILURES
@@ -168,7 +168,7 @@ static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
 #endif
 
 std::string get_command_from_pid(pid_t pid) {
-  static uint exe_fail_count = 0;
+  static std::uint32_t exe_fail_count = 0;
 
   // Cmdline method
   try {
@@ -239,19 +239,19 @@ std::string get_command_from_pid(pid_t pid) {
 }
 
 struct ProcessQueue::Socket {
-  int socket;
+    std::int32_t socket;
 };
 
-int ProcessQueue::init() noexcept(false) {
+std::int32_t ProcessQueue::init() noexcept(false) {
   full_scan();
 
-  const int socket = connect_netlink_socket();
+  const std::int32_t socket = connect_netlink_socket();
 
   if (socket == -1) {
     [[unlikely]] throw std::runtime_error("Couldn't open netlink socket!");
   }
 
-  const int listen_status = set_event_subscription(socket, true);
+  const std::int32_t listen_status = set_event_subscription(socket, true);
   if (listen_status == 0) {
     [[unlikely]] close(socket);
     throw std::runtime_error("Couldn't subscribe to process events!");
@@ -268,7 +268,7 @@ ProcessQueue::ProcessQueue() { init(); }
 void ProcessQueue::start() {
   this->event_thread =
       std::jthread([this](const std::stop_token &stop_token) -> void {
-        int ret = EXIT_FAILURE;
+        std::int32_t ret = EXIT_FAILURE;
         while (ret == EXIT_FAILURE && !stop_token.stop_requested()) {
           spdlog::trace("Starting handle_events");
           ret = handle_events(this->sock->socket, &this->process_queue,
@@ -293,7 +293,7 @@ void ProcessQueue::full_scan() {
   for (const fs::path &process_path : fs::directory_iterator("/proc")) {
     const std::string pid_str = process_path.filename().string();
     if (isdigit(pid_str[0])) {
-      const std::int32_t pid = to_int(pid_str);
+      const auto pid = to_int<std::int32_t>(pid_str);
       // spdlog::trace("Pushing existing process: {}", pid);
       const auto &command = get_command_from_pid(pid);
 

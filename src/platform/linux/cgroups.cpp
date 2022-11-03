@@ -35,7 +35,7 @@ static fs::path get_cgroup_path(const std::string_view &cgroup_name) {
   return cgroup_path;
 }
 
-int control_groups::create_cgroup(const std::string &name) {
+std::int32_t control_groups::create_cgroup(const std::string &name) {
   switch (get_cgroup_version().version) {
 
   case cgroup_info::none:
@@ -67,9 +67,9 @@ int control_groups::create_cgroup(const std::string &name) {
   return false;
 }
 
-int control_groups::set_cgroup_cpu_quota(const std::string &name,
+std::int32_t control_groups::set_cgroup_cpu_quota(const std::string &name,
                                          std::uint32_t      quota) {
-  int errors = 0;
+  std::int32_t errors = 0;
   switch (get_cgroup_version().version) {
 
   case cgroup_info::none:
@@ -130,10 +130,10 @@ int control_groups::set_cgroup_cpu_quota(const std::string &name,
   return errors;
 }
 
-int control_groups::add_pid_to_cgroup(pid_t              pid,
+int32_t control_groups::add_pid_to_cgroup(pid_t              pid,
                                       const std::string &cgroup_name) {
-  int errors = 0;
-  int error_code = 0;
+  std::int32_t errors = 0;
+  std::int32_t error_code = 0;
   switch (get_cgroup_version().version) {
 
   case cgroup_info::none:

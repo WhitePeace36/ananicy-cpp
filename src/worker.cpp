@@ -69,8 +69,8 @@ void Worker::work(const std::stop_token &stop_token) {
 
           if (config->apply_sched() && rule.contains("sched")) {
             const auto &rt_prio = rule.contains("rtprio")
-                                             ? static_cast<unsigned>(rule["rtprio"])
-                                             : 1u;
+                                             ? static_cast<std::uint32_t>(rule["rtprio"])
+                                             : 1U;
             const std::string &rule_sched = rule["sched"];
             spdlog::debug("Setting scheduler of {}({}) to {}", p.name, p.pid,
                           rule_sched);

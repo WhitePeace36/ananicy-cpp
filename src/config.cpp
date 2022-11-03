@@ -103,8 +103,8 @@ Config::operator std::string() const {
   return config_string;
 }
 
-std::chrono::duration<uint32_t, std::ratio<1, 1>> Config::check_freq() {
-  uint32_t frequency = 60;
+std::chrono::duration<std::uint32_t, std::ratio<1, 1>> Config::check_freq() {
+  std::uint32_t frequency = 60;
   if (config.contains("check_freq"))
     frequency = static_cast<uint32_t>(std::stoul(config.at("check_freq")));
 

@@ -155,11 +155,11 @@ int main(const int argc, const char **argv) {
       spdlog::error("A sub-action must be specified for {}.", action.value());
       std::exit(EXIT_FAILURE);
     } else if (sub_action == "rules") {
-      rules.show_rules(Rules::rules);
+      rules.show_rules(Rules::rule_type::rules);
     } else if (sub_action == "types") {
-      rules.show_rules(Rules::types);
+      rules.show_rules(Rules::rule_type::types);
     } else if (sub_action == "cgroups") {
-      rules.show_rules(Rules::cgroups);
+      rules.show_rules(Rules::rule_type::cgroups);
     } else if (sub_action == "proc") {
       std::cout << process_info::get_process_info_map().dump(4) << std::endl;
     } else if (sub_action == "autogroup") {
@@ -212,8 +212,9 @@ int main(const int argc, const char **argv) {
   while (!ih.should_exit()) {
     if (parser["benchmark"]) {
       std::this_thread::sleep_for(30s);
-    } else
+    } else {
       ih.wait_for(conf.check_freq());
+    }
 
     if (ih.should_exit() || parser["benchmark"] ||
         (benchmark_count.has_value() &&

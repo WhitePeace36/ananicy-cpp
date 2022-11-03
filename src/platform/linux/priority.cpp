@@ -26,30 +26,29 @@ namespace fs = std::filesystem;
  * latency requirements, in contrast to the task with latency_nice == -20
  * which should be given priority in terms of lower latency.
  */
-#define MAX_LATENCY_NICE   19
-#define MIN_LATENCY_NICE   -20
+#define MAX_LATENCY_NICE 19
+#define MIN_LATENCY_NICE -20
 
-#define LATENCY_NICE_WIDTH \
-   (MAX_LATENCY_NICE - MIN_LATENCY_NICE + 1)
+#define LATENCY_NICE_WIDTH (MAX_LATENCY_NICE - MIN_LATENCY_NICE + 1)
 
 /*
  * Default tasks should be treated as a task with latency_nice = 0.
  */
-#define DEFAULT_LATENCY_NICE   0
+#define DEFAULT_LATENCY_NICE 0
 
-#define DEFAULT_LATENCY_NICE   0
-#define DEFAULT_LATENCY_PRIO   (DEFAULT_LATENCY_NICE + LATENCY_NICE_WIDTH/2)
+#define DEFAULT_LATENCY_NICE 0
+#define DEFAULT_LATENCY_PRIO (DEFAULT_LATENCY_NICE + LATENCY_NICE_WIDTH / 2)
 
 /*
  * Convert user-nice values [ -20 ... 0 ... 19 ]
  * to static latency [ 0..39 ],
  * and back.
  */
-#define NICE_TO_LATENCY(nice)  ((nice) + DEFAULT_LATENCY_PRIO)
-#define LATENCY_TO_NICE(prio)  ((prio) - DEFAULT_LATENCY_PRIO)
+#define NICE_TO_LATENCY(nice) ((nice) + DEFAULT_LATENCY_PRIO)
+#define LATENCY_TO_NICE(prio) ((prio)-DEFAULT_LATENCY_PRIO)
 
-static int test_errno(int errcode, const std::string_view &func_name,
-                      pid_t pid) {
+static std::int32_t test_errno(std::int32_t            errcode,
+                               const std::string_view &func_name, pid_t pid) {
   if (errcode == 0) {
     spdlog::debug("{}: Successfully applied to {}", func_name, pid);
     return 1;
@@ -70,12 +69,12 @@ static int test_errno(int errcode, const std::string_view &func_name,
 
 namespace priority {
 
-bool set_priority(pid_t pid, int nice_value) {
-  int errcode = 0;
+bool set_priority(pid_t pid, std::int32_t nice_value) {
+  std::int32_t errcode = 0;
   try {
     for (const auto &path :
          fs::directory_iterator(std::format("/proc/{}/task", pid))) {
-      const std::int32_t tid = to_int(path.path().filename().string());
+      const auto tid = to_int<std::int32_t>(path.path().filename().string());
       errno = 0;
       if (tid > 0)
         setpriority(PRIO_PROCESS, static_cast<id_t>(tid), nice_value);
@@ -92,12 +91,12 @@ bool set_priority(pid_t pid, int nice_value) {
   return test_errno(errcode, __func__, pid);
 }
 
-bool set_latency_nice(pid_t pid, int latency_nice_value) {
-  int errcode = 0;
+bool set_latency_nice(pid_t pid, std::int32_t latency_nice_value) {
+  std::int32_t errcode = 0;
   try {
     for (const auto &path :
          fs::directory_iterator(std::format("/proc/{}/task", pid))) {
-      const int tid = static_cast<int>(to_int(path.path().filename().string()));
+      const auto tid = to_int<std::int32_t>(path.path().filename().string());
       errno = 0;
       if (tid > 0)
         set_latnice(tid, latency_nice_value);
@@ -114,20 +113,19 @@ bool set_latency_nice(pid_t pid, int latency_nice_value) {
   return test_errno(errcode, __func__, pid);
 }
 
-int get_latency_nice(pid_t pid) {
-    return get_latnice(pid);
+std::int32_t get_latency_nice(pid_t pid) { return get_latnice(pid); }
+
+std::int32_t convert_nice_to_lat(std::int32_t nice_value) {
+  return NICE_TO_LATENCY(nice_value);
 }
 
-int convert_nice_to_lat(int nice_value) {
-    return NICE_TO_LATENCY(nice_value);
+std::int32_t convert_lat_to_nice(std::int32_t lat_value) {
+  return LATENCY_TO_NICE(lat_value);
 }
 
-int convert_lat_to_nice(int lat_value) {
-    return LATENCY_TO_NICE(lat_value);
-}
-
-bool set_io_priority(pid_t pid, const std::string_view &io_class, int value) {
-  int io_class_value = 0;
+bool set_io_priority(pid_t pid, const std::string_view &io_class,
+                     std::int32_t value) {
+  std::int32_t io_class_value = 0;
   if (io_class == "best-effort") {
     io_class_value = IOPRIO_CLASS_BE;
   } else if (io_class == "realtime") {
@@ -141,7 +139,7 @@ bool set_io_priority(pid_t pid, const std::string_view &io_class, int value) {
     return true;
   }
 
-  const int io_prio = IOPRIO_PRIO_VALUE(io_class_value, value);
+  const std::int32_t io_prio = IOPRIO_PRIO_VALUE(io_class_value, value);
 
   if (!ioprio_valid(io_prio)) {
     spdlog::error("IO priority is invalid, skipping...");
@@ -156,18 +154,18 @@ bool set_io_priority(pid_t pid, const std::string_view &io_class, int value) {
 
 bool set_sched(pid_t pid, const std::string_view &sched_name,
                unsigned rt_prio) {
-  int         sched = 0;
-  sched_param param = {};
+  std::int32_t sched = 0;
+  sched_param  param = {};
   if (sched_name == "idle") {
     sched = SCHED_IDLE;
   } else if (sched_name == "normal" || sched_name == "other") {
     sched = SCHED_OTHER;
   } else if (sched_name == "rr") {
     sched = SCHED_RR;
-    param.sched_priority = static_cast<int>(rt_prio);
+    param.sched_priority = static_cast<std::int32_t>(rt_prio);
   } else if (sched_name == "fifo") {
     sched = SCHED_FIFO;
-    param.sched_priority = static_cast<int>(rt_prio);
+    param.sched_priority = static_cast<std::int32_t>(rt_prio);
   } else if (sched_name == "deadline") {
     spdlog::warn("deadline scheduler is not available yet (due to its "
                  "different behavior)");
@@ -182,7 +180,7 @@ bool set_sched(pid_t pid, const std::string_view &sched_name,
   errno = 0;
   sched_setscheduler(pid, sched, &param);
 
-  const int success = test_errno(errno, __func__, pid);
+  const std::int32_t success = test_errno(errno, __func__, pid);
   if (success == -1)
     spdlog::error("{}: Error info: sched_name: {}, pid: {}", __func__,
                   sched_name, pid);
@@ -190,7 +188,7 @@ bool set_sched(pid_t pid, const std::string_view &sched_name,
   return success;
 }
 
-bool set_oom_score_adjust(pid_t pid, int value) {
+bool set_oom_score_adjust(pid_t pid, std::int32_t value) {
 
   try {
     const fs::path oom_score_path(std::format("/proc/{}/oom_score_adj", pid));
@@ -213,21 +211,21 @@ bool set_oom_score_adjust(pid_t pid, int value) {
 }
 
 std::string_view test_latnice_support() noexcept {
-  pid_t pid{0};
-  int latency_nice{-20};
+  pid_t        pid{0};
+  std::int32_t latency_nice{-20};
 
-  const int saved_latnice = get_latnice(pid);
+  const std::int32_t saved_latnice = get_latnice(pid);
   errno = 0;
 
   // Use this here instead of function,
   // to suppress errors from function call.
   struct sched_attr attr = {
-    .size = sizeof(struct sched_attr),
-    .sched_flags = SCHED_FLAG_LATENCY_NICE,
-    .sched_latency_nice = latency_nice,
+      .size = sizeof(struct sched_attr),
+      .sched_flags = SCHED_FLAG_LATENCY_NICE,
+      .sched_latency_nice = latency_nice,
   };
-  const int err = sched_setattr(pid, &attr, 0);
-  bool is_supported{};
+  const std::int32_t err = sched_setattr(pid, &attr, 0);
+  bool               is_supported{};
   if (err == 0 && errno == 0) {
     set_latnice(pid, saved_latnice);
     is_supported = true;

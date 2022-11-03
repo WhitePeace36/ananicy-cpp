@@ -14,7 +14,7 @@
 
 class InterruptHandler {
 public:
-  InterruptHandler(std::initializer_list<int> signals);
+  InterruptHandler(std::initializer_list<std::int32_t>&& signals);
 
   template <class Rep, class Period>
   inline void wait_for(std::chrono::duration<Rep, Period> duration) {
@@ -35,7 +35,7 @@ private:
 
 std::optional<std::string> get_env(const std::string &name);
 
-std::string get_error_string(int error_number);
+std::string get_error_string(std::int32_t error_number);
 
 std::string read_file(const std::string &path);
 
