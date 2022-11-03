@@ -33,7 +33,7 @@ option(ENABLE_SYSTEMD "Include systemd headers and install service file" ON)
 option(STATIC "Build static binary" OFF)
 option(OPTIMIZE_FOR_NATIVE_MICROARCH "Enable -march=native flag on the CXX compiler. This makes build NOT portable." OFF)
 option(USE_EXPERIMENTAL_IMPL "Use experimental impl" ON)
-option(USE_BPF_PROC_IMPL "Use BPF as a proc listener impl" ON)
+option(USE_BPF_PROC_IMPL "Use BPF as a proc listener impl" OFF)
 
 option(ENABLE_IPO "Enable Interprocedural Optimization, aka Link Time Optimization (LTO)" OFF)
 
