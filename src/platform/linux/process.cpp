@@ -238,15 +238,11 @@ std::string get_command_from_pid(pid_t pid) {
   return {"<unknown>"};
 }
 
-struct ProcessQueue::Socket {
-    std::int32_t socket;
-};
-
-std::int32_t ProcessQueue::init() noexcept(false) {
+void ProcessQueue::init() noexcept(false) {
   full_scan();
 
+  this->sock = 0;
   const std::int32_t socket = connect_netlink_socket();
-
   if (socket == -1) {
     [[unlikely]] throw std::runtime_error("Couldn't open netlink socket!");
   }
@@ -257,10 +253,7 @@ std::int32_t ProcessQueue::init() noexcept(false) {
     throw std::runtime_error("Couldn't subscribe to process events!");
   }
 
-  this->sock = std::make_unique<ProcessQueue::Socket>(
-      ProcessQueue::Socket{.socket = socket});
-
-  return socket;
+  this->sock = socket;
 }
 
 ProcessQueue::ProcessQueue() { init(); }
@@ -271,15 +264,15 @@ void ProcessQueue::start() {
         std::int32_t ret = EXIT_FAILURE;
         while (ret == EXIT_FAILURE && !stop_token.stop_requested()) {
           spdlog::trace("Starting handle_events");
-          ret = handle_events(this->sock->socket, &this->process_queue,
+          ret = handle_events(this->sock, &this->process_queue,
                               stop_token);
 
           if (ret == EXIT_SUCCESS || stop_token.stop_requested())
             break;
 
           spdlog::warn("restarting socket connection!");
-          set_event_subscription(this->sock->socket, false);
-          close(this->sock->socket);
+          set_event_subscription(this->sock, false);
+          close(this->sock);
           this->init();
         };
       });
@@ -313,8 +306,8 @@ void ProcessQueue::stop() noexcept {
     this->event_thread.request_stop();
     this->event_thread.join();
   }
-  set_event_subscription(this->sock->socket, false);
-  close(this->sock->socket);
+  set_event_subscription(this->sock, false);
+  close(this->sock);
 }
 
 pid_t get_pid() { return getpid(); }

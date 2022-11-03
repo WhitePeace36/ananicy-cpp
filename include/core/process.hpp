@@ -28,12 +28,10 @@ struct Process {
 
 class ProcessQueue {
 private:
-  struct Socket;
+  void init() noexcept(false);
 
-  int init() noexcept(false);
-
-  std::unique_ptr<Socket> sock;
-  std::jthread            event_thread;
+  int32_t      sock;
+  std::jthread event_thread;
 
 public:
   ProcessQueue();
