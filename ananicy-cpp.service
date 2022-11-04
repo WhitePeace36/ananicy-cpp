@@ -26,10 +26,9 @@ ProtectKernelLogs=true
 ProtectKernelModules=true
 ProtectKernelTunables=true
 
-#CapabilityBoundingSet=~CAP_SYS_PTRACE CAP_CHOWN CAP_FSETID CAP_SETFCAP CAP_SETUID CAP_SETGID CAP_SETPCAP
+CapabilityBoundingSet=~CAP_SYS_PTRACE CAP_CHOWN CAP_FSETID CAP_SETFCAP CAP_SETUID CAP_SETGID CAP_SETPCAP
 ProcSubset=pid
-#RestrictAddressFamilies=AF_UNIX AF_NETLINK
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
 NoNewPrivileges=true
 
 RestrictSUIDSGID=true
@@ -39,9 +38,9 @@ LockPersonality=true
 MemoryDenyWriteExecute=true
 
 # Filter system calls to those absolutely requrired for correct functioning.
-SystemCallErrorNumber=EPERM
-SystemCallFilter=@system-service
-SystemCallFilter=~@debug @module @mount @reboot @swap @clock @obsolete @cpu-emulation
+#SystemCallErrorNumber=EPERM
+#SystemCallFilter=@system-service
+#SystemCallFilter=~@debug @module @mount @reboot @swap @clock @obsolete @cpu-emulation
 
 
 # Required to see other processes
