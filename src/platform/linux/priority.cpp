@@ -19,34 +19,6 @@
 
 namespace fs = std::filesystem;
 
-/*
- * Latency nice is meant to provide scheduler hints about the relative
- * latency requirements of a task with respect to other tasks.
- * Thus a task with latency_nice == 19 can be hinted as the task with no
- * latency requirements, in contrast to the task with latency_nice == -20
- * which should be given priority in terms of lower latency.
- */
-#define MAX_LATENCY_NICE 19
-#define MIN_LATENCY_NICE -20
-
-#define LATENCY_NICE_WIDTH (MAX_LATENCY_NICE - MIN_LATENCY_NICE + 1)
-
-/*
- * Default tasks should be treated as a task with latency_nice = 0.
- */
-#define DEFAULT_LATENCY_NICE 0
-
-#define DEFAULT_LATENCY_NICE 0
-#define DEFAULT_LATENCY_PRIO (DEFAULT_LATENCY_NICE + LATENCY_NICE_WIDTH / 2)
-
-/*
- * Convert user-nice values [ -20 ... 0 ... 19 ]
- * to static latency [ 0..39 ],
- * and back.
- */
-#define NICE_TO_LATENCY(nice) ((nice) + DEFAULT_LATENCY_PRIO)
-#define LATENCY_TO_NICE(prio) ((prio)-DEFAULT_LATENCY_PRIO)
-
 static std::int32_t test_errno(std::int32_t            errcode,
                                const std::string_view &func_name, pid_t pid) {
   if (errcode == 0) {
@@ -114,14 +86,6 @@ bool set_latency_nice(pid_t pid, std::int32_t latency_nice_value) {
 }
 
 std::int32_t get_latency_nice(pid_t pid) { return get_latnice(pid); }
-
-std::int32_t convert_nice_to_lat(std::int32_t nice_value) {
-  return NICE_TO_LATENCY(nice_value);
-}
-
-std::int32_t convert_lat_to_nice(std::int32_t lat_value) {
-  return LATENCY_TO_NICE(lat_value);
-}
 
 bool set_io_priority(pid_t pid, const std::string_view &io_class,
                      std::int32_t value) {

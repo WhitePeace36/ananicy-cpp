@@ -56,9 +56,7 @@ void Worker::work(const std::stop_token &stop_token) {
             if (rule.contains("latency_nice")) {
               latnice_value = rule["latency_nice"];
             } else if (rule.contains("nice")) {
-              const int& nice_value = rule["nice"];
-              latnice_value = (config->convert_latnice())
-                  ? priority::convert_nice_to_lat(nice_value) : nice_value;
+              latnice_value = rule["nice"];
             }
             spdlog::debug("Setting latency nice of {}({}) to {}", p.name,
                                 p.pid, latnice_value);
