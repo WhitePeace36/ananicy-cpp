@@ -7,7 +7,7 @@
 #include "utility/synchronized_queue.hpp"
 #include "utility/utils.hpp"
 
-#ifndef USE_BPF_PROC_IMPL
+#if !defined(USE_BPF_PROC_IMPL)
 #include <linux/cn_proc.h>
 #include <linux/connector.h>
 #include <linux/netlink.h>
@@ -26,7 +26,7 @@
 
 namespace fs = std::filesystem;
 
-#ifdef USE_BPF_PROC_IMPL
+#if defined(USE_BPF_PROC_IMPL)
 static volatile std::atomic<bool>   g_exiting;
 static synchronized_queue<Process> *g_process_queue;
 
@@ -115,10 +115,6 @@ void ProcessQueue::start() {
 }
 
 #else
-
-struct ProcessQueue::Socket {
-  int socket;
-};
 
 static int connect_netlink_socket() {
 
@@ -255,6 +251,27 @@ static int handle_events(int nl_sock, synchronized_queue<Process> *queue,
   return static_cast<int>(status);
 }
 
+std::int32_t ProcessQueue::init() noexcept(false) {
+  full_scan();
+
+  const std::int32_t socket = connect_netlink_socket();
+
+  if (socket == -1) {
+    [[unlikely]] throw std::runtime_error("Couldn't open netlink socket!");
+  }
+
+  const std::int32_t listen_status = set_event_subscription(socket, true);
+  if (listen_status == 0) {
+    [[unlikely]] close(socket);
+    throw std::runtime_error("Couldn't subscribe to process events!");
+  }
+
+  this->sock = std::make_unique<ProcessQueue::Socket>(
+     ProcessQueue::Socket{.socket = socket});
+
+  return socket;
+}
+
 void ProcessQueue::start() {
   this->event_thread =
       std::jthread([this](const std::stop_token &stop_token) -> void {
@@ -274,6 +291,7 @@ void ProcessQueue::start() {
         };
       });
 }
+
 #endif
 
 #ifndef COMMAND_NAME_HEURISTIC_SKIP_EXE_FAILURES
@@ -373,14 +391,14 @@ void ProcessQueue::full_scan() {
 }
 
 void ProcessQueue::stop() noexcept {
-#ifdef USE_BPF_PROC_IMPL
+#if defined(USE_BPF_PROC_IMPL)
   g_exiting.store(true, std::memory_order_relaxed);
 #endif
   if (!this->event_thread.get_stop_token().stop_requested()) {
     this->event_thread.request_stop();
     this->event_thread.join();
   }
-#ifdef USE_BPF_PROC_IMPL
+#if defined(USE_BPF_PROC_IMPL)
   m_bpf_program.destroy();
 #else
   set_event_subscription(this->sock->socket, false);

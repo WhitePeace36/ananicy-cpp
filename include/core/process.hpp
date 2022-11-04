@@ -41,7 +41,7 @@ struct Process {
 
 class ProcessQueue {
 private:
-#ifdef USE_BPF_PROC_IMPL
+#if defined(USE_BPF_PROC_IMPL)
   void init() noexcept;
 
   bool       m_verbose{false};
@@ -49,16 +49,16 @@ private:
   BPFProgram m_bpf_program{};
 
 #else
-  struct Socket;
+  struct Socket { std::int32_t socket; };
 
-  int init() noexcept(false);
+  int32_t init() noexcept(false);
 
   std::unique_ptr<Socket> sock;
 #endif
   std::jthread event_thread;
 
 public:
-#ifdef USE_BPF_PROC_IMPL
+#if defined(USE_BPF_PROC_IMPL)
   ProcessQueue(uint64_t min_us, bool verbose)
       : m_min_us(min_us), m_verbose(verbose),
         m_bpf_program(m_min_us, m_verbose) {
