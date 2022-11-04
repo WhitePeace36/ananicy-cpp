@@ -190,6 +190,7 @@ int main(const int argc, const char **argv) {
   }
 
   if (!singleton.try_create()) {
+    service::set_status(service::STOPPING);
     std::cerr << "Ananicy Cpp is already running!\n";
     ih.stop();
     return EXIT_FAILURE;
@@ -206,6 +207,14 @@ int main(const int argc, const char **argv) {
 #else
   ProcessQueue processListener;
 #endif
+
+  if (!processListener.status()) {
+    service::set_status(service::STOPPING);
+    std::cerr << "processListener initialization failed!\n";
+    SingletonProcess::remove(singleton.get_name());
+    ih.stop();
+    return EXIT_FAILURE;
+  }
 
   processListener.start();
 

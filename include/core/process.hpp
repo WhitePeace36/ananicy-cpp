@@ -41,19 +41,17 @@ struct Process {
 
 class ProcessQueue {
 private:
-#if defined(USE_BPF_PROC_IMPL)
   void init() noexcept;
-
+#if defined(USE_BPF_PROC_IMPL)
   bool       m_verbose{false};
   uint64_t   m_min_us{30};
   BPFProgram m_bpf_program{};
 
 #else
-  void init() noexcept(false);
-
   int32_t sock;
 #endif
   std::jthread event_thread;
+  bool m_status{true};
 
 public:
 #if defined(USE_BPF_PROC_IMPL)
@@ -69,6 +67,8 @@ public:
 
   void start();
   void stop() noexcept;
+
+  bool status() noexcept { return m_status; }
 
   void full_scan();
 

@@ -37,6 +37,7 @@ void ProcessQueue::init() noexcept {
   g_exiting.store(false, std::memory_order_relaxed);
   if (!m_bpf_program.initialize()) {
     spdlog::error("Failed to initialize the BPF program");
+    m_status = false;
   }
 }
 
@@ -250,19 +251,23 @@ static std::int32_t handle_events(std::int32_t nl_sock, synchronized_queue<Proce
   return static_cast<std::int32_t>(status);
 }
 
-void ProcessQueue::init() noexcept(false) {
+void ProcessQueue::init() noexcept {
   full_scan();
 
   this->sock = 0;
   const std::int32_t socket = connect_netlink_socket();
   if (socket == -1) {
-    [[unlikely]] throw std::runtime_error("Couldn't open netlink socket!");
+    spdlog::error("Couldn't open netlink socket!");
+    m_status = false;
+    return;
   }
 
   const std::int32_t listen_status = set_event_subscription(socket, true);
   if (listen_status == 0) {
     [[unlikely]] close(socket);
-    throw std::runtime_error("Couldn't subscribe to process events!");
+    spdlog::error("Couldn't subscribe to process events!");
+    m_status = false;
+    return;
   }
 
   this->sock = socket;
