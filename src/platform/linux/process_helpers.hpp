@@ -4,7 +4,7 @@
 #include <format>
 
 namespace process_info {
-static std::vector<std::string> get_cmdline_from_pid(int pid) {
+static std::vector<std::string> get_cmdline_from_pid(int32_t pid) {
   std::string cmdline_value;
   std::getline(std::ifstream(std::format("/proc/{}/cmdline", pid)),
                cmdline_value);

@@ -55,10 +55,10 @@ int main(const int argc, const char **argv) {
       .description("Should we activate benchmark mode or not");
   parser.add_argument()
       .name("--benchmark-count")
-      .type(typeid(uint))
+      .type(typeid(uint32_t))
       .description("How many pids to process before stopping");
 
-#ifdef USE_BPF_PROC_IMPL
+#if defined(USE_BPF_PROC_IMPL)
   parser.add_argument()
       .name("--bpf-min-us")
       .type(typeid(uint64_t))
@@ -120,7 +120,6 @@ int main(const int argc, const char **argv) {
 
   spdlog::set_level(conf.loglevel());
 
-
   if (parser["verbose"]) {
     spdlog::debug("Verbose flag set!");
     const int loglevel =
@@ -131,7 +130,8 @@ int main(const int argc, const char **argv) {
   if (parser["benchmark"]) {
     spdlog::warn("Benchmark enabled!");
   }
-  std::optional<uint> benchmark_count = parser["benchmark-count"].value<uint>();
+
+  auto benchmark_count = parser["benchmark-count"].value<uint32_t>();
   if (benchmark_count.has_value()) {
     spdlog::warn("Benchmark count: {}", benchmark_count.value());
   }
@@ -140,14 +140,12 @@ int main(const int argc, const char **argv) {
     spdlog::info("Manual scanning enabled! Increasing Ananicy Nice value to "
                  "prevent lag.");
     priority::set_priority(get_pid(), 19);
-
     spdlog::info("Checking frequency set to {}", conf.check_freq());
   }
 
   std::cout << std::format("Ananicy Cpp {}\n", VERSION) << std::flush;
 
   InterruptHandler ih({SIGINT, SIGTERM});
-
   Rules rules(config_dir_path, &conf);
 
   const std::optional<std::string> action = parser["action"];
@@ -164,11 +162,11 @@ int main(const int argc, const char **argv) {
       spdlog::error("A sub-action must be specified for {}.", action.value());
       std::exit(EXIT_FAILURE);
     } else if (sub_action == "rules") {
-      rules.show_rules(Rules::rules);
+      rules.show_rules(Rules::rule_type::rules);
     } else if (sub_action == "types") {
-      rules.show_rules(Rules::types);
+      rules.show_rules(Rules::rule_type::types);
     } else if (sub_action == "cgroups") {
-      rules.show_rules(Rules::cgroups);
+      rules.show_rules(Rules::rule_type::cgroups);
     } else if (sub_action == "proc") {
       std::cout << process_info::get_process_info_map().dump(4) << std::endl;
     } else if (sub_action == "autogroup") {
@@ -202,7 +200,7 @@ int main(const int argc, const char **argv) {
   control_groups::get_cgroup_version();
   rules.create_cgroups();
 
-#ifdef USE_BPF_PROC_IMPL
+#if defined(USE_BPF_PROC_IMPL)
   const uint64_t bpf_min_us = parser["bpf-min-us"].value<uint64_t>().value_or(30);
   ProcessQueue processListener(bpf_min_us, parser["verbose"]);
 #else
@@ -212,7 +210,6 @@ int main(const int argc, const char **argv) {
   processListener.start();
 
   Worker worker(&rules, &conf, &processListener.process_queue);
-
   worker.start();
 
   if (conf.cgroup_realtime_workaround()) {
@@ -228,8 +225,9 @@ int main(const int argc, const char **argv) {
   while (!ih.should_exit()) {
     if (parser["benchmark"]) {
       std::this_thread::sleep_for(30s);
-    } else
+    } else {
       ih.wait_for(conf.check_freq());
+    }
 
     if (ih.should_exit() || parser["benchmark"] ||
         (benchmark_count.has_value() &&

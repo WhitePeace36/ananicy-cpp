@@ -47,7 +47,7 @@ nlohmann::json get_autogroup_map() {
   for (auto process_info : process_info_map) {
     if (process_info["autogroup"] != nullptr) {
       const auto autogroup_num =
-          to_str(static_cast<int>(process_info["autogroup"]["group"]));
+          to_str(static_cast<std::int32_t>(process_info["autogroup"]["group"]));
       if (!autogroup_map.contains(autogroup_num)) {
         autogroup_map[autogroup_num.data()] = nlohmann::json::object();
         autogroup_map[autogroup_num.data()]["nice"] =
@@ -55,7 +55,7 @@ nlohmann::json get_autogroup_map() {
         autogroup_map[autogroup_num.data()]["proc"] = nlohmann::json::object();
       }
       process_info.erase("autogroup");
-      const auto pid = to_str(static_cast<int>(process_info["tpid"]));
+      const auto pid = to_str(static_cast<std::int32_t>(process_info["tpid"]));
       autogroup_map[autogroup_num.data()]["proc"][pid.data()] = process_info;
     }
   }
@@ -134,12 +134,13 @@ enum io_prio_class {
 
 struct io_prio_attributes {
   io_prio_class io_class;
-  int           io_nice;
+  std::int32_t  io_nice;
 };
 
 static io_prio_attributes get_io_prio_attributes(process_id_t pid) {
-  const int io_prio_data = ioprio_get(IOPRIO_WHO_PROCESS, pid);
-  const int io_nice = IOPRIO_PRIO_DATA(static_cast<std::size_t>(io_prio_data));
+  const std::int32_t io_prio_data = ioprio_get(IOPRIO_WHO_PROCESS, pid);
+  const std::int32_t io_nice =
+      IOPRIO_PRIO_DATA(static_cast<std::size_t>(io_prio_data));
 
   io_prio_class io_class;
   switch (IOPRIO_PRIO_CLASS(io_prio_data)) {
@@ -208,8 +209,8 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
 
     info["sched"] = get_sched_policy_name(sched_info.sched_policy);
     info["rtprio"] = uint32_t(sched_info.sched_priority);
-    info["nice"] = int(sched_info.sched_nice);
-    info["latency_nice"] = int(sched_info.sched_latency_nice);
+    info["nice"] = int32_t(sched_info.sched_nice);
+    info["latency_nice"] = int32_t(sched_info.sched_latency_nice);
 
     const auto io_data = get_io_prio_attributes(pid);
 
@@ -242,7 +243,7 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
     std::ifstream{std::format("/proc/{}/oom_score_adj", pid)} >> oom_score_adj;
     info["oom_score_adj"] = oom_score_adj;
 
-    info["cmdline"] = get_cmdline_from_pid(static_cast<int>(pid));
+    info["cmdline"] = get_cmdline_from_pid(static_cast<int32_t>(pid));
 
   } catch (const fs::filesystem_error &e) {
     spdlog::trace("{}: Error getting {} infos: {} ({}, {})", __func__, pid,

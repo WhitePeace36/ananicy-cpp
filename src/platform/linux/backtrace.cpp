@@ -8,11 +8,11 @@
 #include <iostream>
 #include <stdexcept>
 
-static constexpr int BACKTRACE_LENGTH = 20;
+static constexpr std::int32_t BACKTRACE_LENGTH = 20;
 
 namespace backtrace_handler {
 
-void print_trace() {
+void print_trace() noexcept {
   void  *backtrace_buffer[BACKTRACE_LENGTH];
   int    size = backtrace(backtrace_buffer, BACKTRACE_LENGTH);
   char **lines = backtrace_symbols(backtrace_buffer, size);
@@ -29,7 +29,7 @@ void print_trace() {
   free(lines);
 }
 
-[[noreturn]] static void terminate_handler() {
+[[noreturn]] static void terminate_handler() noexcept(false) {
   [[maybe_unused]] static int tried_throw = 0;
 
   try {
@@ -49,7 +49,6 @@ void print_trace() {
   }
 
   print_trace();
-
   abort();
 }
 

@@ -4,6 +4,7 @@
 #include <format>
 #include <functional>
 #include <iostream>
+#include <algorithm>
 #include <queue>
 #include <spdlog/spdlog.h>
 #include <utility>
@@ -37,10 +38,10 @@ argument_parser::parse_args(const std::vector<std::string> &params) {
     }
   }
 
-  for (unsigned int i = 0; i < params.size(); i++) {
+  for (uint32_t i = 0; i < params.size(); i++) {
     const auto                &param = params[i];
     std::optional<std::string> value = {};
-    if (i + 1 < params.size()) {
+    if ((i + 1) < params.size()) {
       value = params[i + 1];
     }
 
@@ -125,11 +126,11 @@ argument &argument_parser::add_argument(const std::string &name) {
   return m_args[arg.id];
 }
 
-argparse_error argument_parser::parse_args(const int argc, const char **argv) {
+argparse_error argument_parser::parse_args(const int32_t argc, const char **argv) {
   std::vector<std::string> args;
   args.reserve(static_cast<std::size_t>(argc));
-  for (int i = 0; i < argc; ++i) {
-    args.emplace_back(std::string{argv[i]});
+  for (int32_t i = 0; i < argc; ++i) {
+    args.emplace_back(argv[i]);
   }
   return parse_args(args);
 }
@@ -140,12 +141,10 @@ argument_parser::argument_parser(std::string program_name)
 }
 
 std::optional<argument> argument_parser::get_arg(const std::string &name) {
-  for (const auto &arg : m_args) {
-    if (arg.second == name) {
-      return arg.second;
-    }
-  }
-  return {};
+  auto&& result = std::find_if(m_args.begin(), m_args.end(), [name](auto&& arg) {
+    return (arg.second == name);
+  });
+  return (result != m_args.end()) ? std::optional{result->second} : std::nullopt;
 }
 
 argument_value argument_parser::operator[](const std::string &name) {
@@ -155,9 +154,10 @@ argument_value argument_parser::operator[](const std::string &name) {
     throw std::runtime_error(std::format("Unknown argument: {}", name));
   }
 
-  return argument_value(arg->get_value(), arg->get_type());
+  return {arg->get_value(), arg->get_type()};
 }
 
+[[gnu::pure]]
 argument_value::operator bool() const {
   if (!m_value.has_value())
     return false;

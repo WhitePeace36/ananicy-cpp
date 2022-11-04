@@ -184,4 +184,6 @@ json Rules::get_rule(const std::string &name) const noexcept {
   return rule;
 }
 
-size_t Rules::size() const noexcept { return program_rules.size(); }
+[[gnu::pure]] size_t Rules::size() const noexcept {
+  return program_rules.size();
+}

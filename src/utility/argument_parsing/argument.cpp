@@ -21,7 +21,7 @@ std::string demangle_symbol(const std::type_index &type_index) {
   std::unique_ptr<char, decltype(&free)> buffer(
       static_cast<char *>(std::malloc(sz)), free);
   std::memset(buffer.get(), 0, sz);
-  int   status{};
+  int32_t   status{};
   char *demangle_name =
       abi::__cxa_demangle(type_index.name(), buffer.get(), &sz, &status);
   if (!demangle_name) {

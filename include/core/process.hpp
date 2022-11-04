@@ -5,7 +5,7 @@
 #ifndef ANANICY_CPP_PROCESS_HPP
 #define ANANICY_CPP_PROCESS_HPP
 
-#ifdef USE_BPF_PROC_IMPL
+#if defined(USE_BPF_PROC_IMPL)
 #include "bpf_program.hpp"
 #endif
 #include "utility/synchronized_queue.hpp"
@@ -18,13 +18,13 @@ pid_t get_pid();
 std::string get_command_from_pid(pid_t pid);
 
 struct Process {
-#ifdef USE_BPF_PROC_IMPL
+#if defined(USE_BPF_PROC_IMPL)
   uint64_t delta_us{};
 #endif
   pid_t       pid{};
   std::string name{};
 
-#ifdef USE_BPF_PROC_IMPL
+#if defined(USE_BPF_PROC_IMPL)
   constexpr inline bool operator==(const Process &other) const {
     return (delta_us == other.delta_us) && (pid == other.pid) &&
            (name == other.name);
@@ -49,11 +49,9 @@ private:
   BPFProgram m_bpf_program{};
 
 #else
-  struct Socket { std::int32_t socket; };
+  void init() noexcept(false);
 
-  int32_t init() noexcept(false);
-
-  std::unique_ptr<Socket> sock;
+  int32_t sock;
 #endif
   std::jthread event_thread;
 
