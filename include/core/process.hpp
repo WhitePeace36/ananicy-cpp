@@ -7,6 +7,8 @@
 
 #if defined(USE_BPF_PROC_IMPL)
 #include "bpf_program.hpp"
+#else
+#include "netlink_program.hpp"
 #endif
 #include "utility/synchronized_queue.hpp"
 #include "utility/utils.hpp"
@@ -48,7 +50,7 @@ private:
   BPFProgram m_bpf_program{};
 
 #else
-  int32_t sock;
+  NetlinkProgram m_netlink_program{};
 #endif
   std::jthread event_thread;
   bool m_status{true};
