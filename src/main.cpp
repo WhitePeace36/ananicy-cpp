@@ -35,6 +35,7 @@ int main(const int argc, const char **argv) {
     spdlog::set_level(spdlog::level::info);
   }
 
+  const auto myuid = getuid();
   const auto start_time = std::chrono::system_clock::now();
 
   argparse::argument_parser parser(
@@ -145,7 +146,6 @@ int main(const int argc, const char **argv) {
 
   std::cout << std::format("Ananicy Cpp {}\n", VERSION) << std::flush;
 
-  InterruptHandler ih({SIGINT, SIGTERM});
   Rules rules(config_dir_path, &conf);
 
   const std::optional<std::string> action = parser["action"];
@@ -189,10 +189,16 @@ int main(const int argc, const char **argv) {
     spdlog::critical("Unknown action requested: {}", action.value());
   }
 
+  // Check if we have sufficient permission for the requested operation
+  if (myuid > 0) {
+    service::set_status(service::STOPPING);
+    std::cerr << "You cannot perform this operation unless you are root!\n";
+    return EXIT_FAILURE;
+  }
+
   if (!singleton.try_create()) {
     service::set_status(service::STOPPING);
     std::cerr << "Ananicy Cpp is already running!\n";
-    ih.stop();
     return EXIT_FAILURE;
   }
 
@@ -200,6 +206,8 @@ int main(const int argc, const char **argv) {
 
   control_groups::get_cgroup_version();
   rules.create_cgroups();
+
+  InterruptHandler ih({SIGINT, SIGTERM});
 
 #if defined(USE_BPF_PROC_IMPL)
   const uint64_t bpf_min_us = parser["bpf-min-us"].value<uint64_t>().value_or(30);
