@@ -38,6 +38,10 @@ _Beta status_
 - C++ compiler compatible with C++20 (`g++ >= 10` or `clang++ >= 10`).
   Notably, `<concepts>` and `std::jthread` are required. Work is in progress to add support to `g++ ~= 9`, see https://gitlab.com/ananicy-cpp/ananicy-cpp/-/issues/28 for more info.
 - _Optional_: libsystemd (if you want systemd support)
+              [bpf] (https://www.kernel.org) _(required for bpf implementation)_
+              [libbpf] (https://github.com/libbpf/libbpf) _(required for bpf implementation)_
+              [libelf] (https://sourceware.org/elfutils/) _(required for bpf implementation)_
+              [clang] (https://clang.llvm.org/) clang++ >= 10 _(required for bpf implementation)_
 
 #### Debian/Ubuntu
 Install the prerequisites: `sudo apt install git cmake build-essential g++ libsystemd-dev`
@@ -58,6 +62,8 @@ The effects are mainly on the default compiler flags `ananicy-cpp` is built with
 - `USE_EXTERNAL_SPDLOG:BOOL`: Use system spdlog library,
 - `USE_EXTERNAL_FMTLIB:BOOL`: Use system fmtlib,
 - `ENABLE_SYSTEMD:BOOL`: Add systemd support,
+- `USE_BPF_PROC_IMPL:BOOL`: Use BPF for processing,
+- `BPF_BUILD_LIBBPF:BOOL`: Build libbpf instead of using system libary,
 - `STATIC:BOOL`: Build a static binary,
 
 #### Building
@@ -82,6 +88,11 @@ cmake --build build --target ananicy-cpp
 sudo cmake --install build --component Runtime
 ```
 
+- If using install-deps.sh and configure.sh (example using BPF_PROC_IMPL)
+  - `git clone --recurse-submodules https://gitlab.com/ananicy-cpp/ananicy-cpp.git`
+  - `cd ananicy-cpp`
+  - `env USE_BPF=ON ./install-deps.sh && ./configure.sh --use_bpf_proc`
+
 #### Service
 
 To enable the systemd service,
@@ -101,7 +112,7 @@ You can have more information in `systemd`'s man page (`man systemd` on Linux)
 There is an AUR package named `ananicy-cpp`, which is maintained by me.
 You can simply use your preferred AUR-helper to install it.
 
-There is also binaries in `chaotic-aur`, although `ananicy-cpp` is relatively fast to build.
+There is also binaries in `cachyos` and `chaotic-aur`, although `ananicy-cpp` is relatively fast to build.
 
 
 ## Configuration
@@ -117,7 +128,7 @@ For instance, to add a rule for GCC, you could do the following:
 
 - Create the `/etc/ananicy.d/10-compilers` folder.
 - Create the `/etc/ananicy.d/10-compilers/gcc.rules` file
-- Add `{"name": "gcc", "nice": 19, "sched": "batch", "ioclass": "idle"}` to the file.
+- Add `{"name": "gcc", "nice": 19, "latency_nice": 19, "sched": "batch", "ioclass": "idle"}` to the file.
 
 You can then (re)start `ananicy-cpp.service`.
 
@@ -126,6 +137,9 @@ You can then (re)start `ananicy-cpp.service`.
 - `nice: [-20-19]`: Set the nice value of the process.
 A process with a higher nice value will be more "polite", and will get less
 cpu time than processes with a lower nice value.
+- `latency_nice: [-20-19]`: Set the latency_nice value of the process.
+A process with a lower latency_nice value indicates the task to have the least
+latency as compared to the task having a higher latency_nice
 - `sched: {"fifo", "rr", "normal", "batch", "idle"}`:
 Set the scheduling policy.
   - `fifo` and `rr` (for round-robin) are realtime scheduling policies, and must only be used for
