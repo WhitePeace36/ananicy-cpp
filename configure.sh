@@ -29,6 +29,7 @@ Options:
   --libdir=                    Specify lib directory.
   --path=, -p=                 Specify build directory.
   --use_clang                  Use Clang compiler.
+  --use_bpf_proc               Use BPF as a proc listener.
   --enable_systemd             Enable systemd support.
   --enable_sanitizer_address   Enable ASAN.
   --enable_sanitizer_ub        Enable UBSAN.
@@ -43,6 +44,7 @@ _prefix="/usr/local"
 _libdir="lib"
 _buildtype="RelWithDebInfo"
 _use_clang=false
+_use_bpf_proc=false
 _enable_systemd=false
 _sanitizer_address=OFF
 _sanitizer_UB=OFF
@@ -67,6 +69,10 @@ for i in "$@"; do
       ;;
     --use_clang)
       _use_clang=true
+      shift # past argument=value
+      ;;
+    --use_bpf_proc)
+      _use_bpf_proc=true
       shift # past argument=value
       ;;
     --enable_systemd)
@@ -97,6 +103,10 @@ if ${_use_clang}; then
   export CXX=clang++
   export NM=llvm-nm
   export RANLIB=llvm-ranlib
+fi
+
+if ${_use_bpf_proc}; then
+  _configure_flags+=('-DUSE_BPF_PROC_IMPL=ON')
 fi
 
 if ${_enable_systemd}; then
