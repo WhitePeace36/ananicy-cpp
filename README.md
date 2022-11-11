@@ -37,11 +37,12 @@ _Beta status_
 - [nlohmann_json](https://github.com/nlohmann/json) 3.9+ _(can be automatically downloaded)_
 - C++ compiler compatible with C++20 (`g++ >= 10` or `clang++ >= 10`).
   Notably, `<concepts>` and `std::jthread` are required. Work is in progress to add support to `g++ ~= 9`, see https://gitlab.com/ananicy-cpp/ananicy-cpp/-/issues/28 for more info.
-- _Optional_: libsystemd (if you want systemd support)
-              [bpf] (https://www.kernel.org) _(required for bpf implementation)_
-              [libbpf] (https://github.com/libbpf/libbpf) _(required for bpf implementation)_
-              [libelf] (https://sourceware.org/elfutils/) _(required for bpf implementation)_
-              [clang] (https://clang.llvm.org/) clang++ >= 10 _(required for bpf implementation)_
+- _Optional_:
+	- libsystemd (if you want systemd support)
+	- [bpf](https://www.kernel.org) _(required for bpf implementation)_
+	- [libbpf](https://github.com/libbpf/libbpf) _(required for bpf implementation)_
+	- [libelf](https://sourceware.org/elfutils/) _(required for bpf implementation)_
+	- [clang](https://clang.llvm.org/) clang++ >= 10 _(required for bpf implementation)_
 
 #### Debian/Ubuntu
 Install the prerequisites: `sudo apt install git cmake build-essential g++ libsystemd-dev`
@@ -139,7 +140,8 @@ A process with a higher nice value will be more "polite", and will get less
 cpu time than processes with a lower nice value.
 - `latency_nice: [-20-19]`: Set the latency_nice value of the process.
 A process with a lower latency_nice value indicates the task to have the least
-latency as compared to the task having a higher latency_nice
+latency as compared to the task having a higher latency_nice.
+A additonal kernel patch is needed see [latency_nice](https://lore.kernel.org/lkml/20221110175009.18458-1-vincent.guittot@linaro.org/)
 - `sched: {"fifo", "rr", "normal", "batch", "idle"}`:
 Set the scheduling policy.
   - `fifo` and `rr` (for round-robin) are realtime scheduling policies, and must only be used for
