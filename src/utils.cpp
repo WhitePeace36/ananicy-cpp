@@ -6,8 +6,8 @@
 #include <csignal>
 #include <cstring>
 #include <fstream>
-#include <optional>
 #include <functional>
+#include <optional>
 
 static std::function<void(int)> handler;
 void                            on_signal(int unused) { handler(unused); }

@@ -14,7 +14,7 @@
 
 class InterruptHandler {
 public:
-  InterruptHandler(std::initializer_list<std::int32_t>&& signals);
+  InterruptHandler(std::initializer_list<std::int32_t> &&signals);
 
   template <class Rep, class Period>
   inline void wait_for(std::chrono::duration<Rep, Period> duration) {

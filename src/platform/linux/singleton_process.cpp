@@ -23,7 +23,7 @@ bool SingletonProcess::try_create() {
   m_handle = shm_open(m_filename.data(), m_mode, unix_perm);
   if (m_handle == -1) {
     if (errno != EEXIST)
-        spdlog::error("Could not create: {}", std::strerror(errno));
+      spdlog::error("Could not create: {}", std::strerror(errno));
     return false;
   }
   // If successful change real permissions

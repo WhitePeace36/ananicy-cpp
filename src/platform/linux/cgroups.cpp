@@ -68,7 +68,7 @@ std::int32_t control_groups::create_cgroup(const std::string &name) {
 }
 
 std::int32_t control_groups::set_cgroup_cpu_quota(const std::string &name,
-                                         std::uint32_t      quota) {
+                                                  std::uint32_t      quota) {
   std::int32_t errors = 0;
   switch (get_cgroup_version().version) {
 
@@ -131,7 +131,7 @@ std::int32_t control_groups::set_cgroup_cpu_quota(const std::string &name,
 }
 
 int32_t control_groups::add_pid_to_cgroup(pid_t              pid,
-                                      const std::string &cgroup_name) {
+                                          const std::string &cgroup_name) {
   std::int32_t errors = 0;
   std::int32_t error_code = 0;
   switch (get_cgroup_version().version) {

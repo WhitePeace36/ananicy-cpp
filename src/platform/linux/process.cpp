@@ -114,8 +114,9 @@ void ProcessQueue::start() {
 
 #else
 
-static std::int32_t handle_events(NetlinkProgram *netlink_program, synchronized_queue<Process> *queue,
-                         const std::stop_token &stop_token) {
+static std::int32_t handle_events(NetlinkProgram              *netlink_program,
+                                  synchronized_queue<Process> *queue,
+                                  const std::stop_token       &stop_token) {
   ssize_t status = 0;
   while (!stop_token.stop_requested()) {
     errno = 0;
@@ -141,7 +142,8 @@ static std::int32_t handle_events(NetlinkProgram *netlink_program, synchronized_
     /// if it's equal to the previous one.
     /// @see: https://gitlab.com/ananicy-cpp/ananicy-cpp/-/issues/20
     static pid_t prev_pid;
-    pid_t pid = netlink_program->get_pid();
+
+    const pid_t pid = netlink_program->get_pid();
     if (pid == 0 || pid == prev_pid) {
       continue;
     }
@@ -159,7 +161,8 @@ void ProcessQueue::init() noexcept {
   this->full_scan();
 
   if (!m_netlink_program.initialize()) {
-    spdlog::error("Failed to initialize the NETLINK program : {}", get_error_string(errno));
+    spdlog::error("Failed to initialize the NETLINK program : {}",
+                  get_error_string(errno));
     m_status = false;
   }
 }
@@ -171,7 +174,8 @@ void ProcessQueue::start() {
         while (ret == EXIT_FAILURE && !stop_token.stop_requested()) {
           spdlog::trace("Starting handle_events");
 
-          ret = handle_events(&m_netlink_program, &this->process_queue, stop_token);
+          ret = handle_events(&m_netlink_program, &this->process_queue,
+                              stop_token);
           if (ret == EXIT_SUCCESS || stop_token.stop_requested())
             break;
 
@@ -185,7 +189,7 @@ void ProcessQueue::start() {
 #endif
 
 std::string get_command_from_pid(pid_t pid) {
-  static std::uint32_t exe_fail_count = 0;
+  static std::uint32_t  exe_fail_count = 0;
   static constexpr auto COMMAND_NAME_HEURISTIC_SKIP_EXE_FAILURES = 5;
 
   // Cmdline method

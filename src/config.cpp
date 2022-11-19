@@ -10,6 +10,7 @@
 #include <fstream>
 #include <spdlog/spdlog.h>
 
+/* clang-format off */
 const Config::ConfigInit &&Config::default_config = {
     {"apply_nice", "true"},   {"apply_sched", "true"},
     {"apply_ionice", "true"}, {"apply_oom_score_adj", "true"},
@@ -17,6 +18,7 @@ const Config::ConfigInit &&Config::default_config = {
     {"cgroup_load", "true"},  {"type_load", "true"},
     {"rule_load", "true"},    {"cgroup_realtime_workaround", "true"},
     {"loglevel", "info"},     {"check_freq", "60"}};
+/* clang-format on */
 
 static std::string trim(const std::string &str) {
   const std::size_t first = str.find_first_not_of(' ');

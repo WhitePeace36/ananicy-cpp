@@ -47,10 +47,12 @@ int main(const int argc, const char **argv) {
       .description("Increase verbosity level");
   parser.add_argument().name("--help").name("-h").description(
       "Print this help and exit");
-  parser.add_argument().name("--version").description(
-      "Print version information");
-  parser.add_argument().name("--force-remove-semaphore").description(
-      "Don't use it, unless you know what you are doing.");
+  parser.add_argument()
+      .name("--version")
+      .description("Print version information");
+  parser.add_argument()
+      .name("--force-remove-semaphore")
+      .description("Don't use it, unless you know what you are doing.");
   parser.add_argument()
       .name("--benchmark")
       .description("Should we activate benchmark mode or not");
@@ -104,8 +106,9 @@ int main(const int argc, const char **argv) {
   SingletonProcess singleton("/AnanicyCppMutex");
   if (parser["force-remove-semaphore"]) {
     if (!SingletonProcess::remove(singleton.get_name())) {
-        std::cerr << std::format("Failed to remove semaphore! msg '{}'\n", strerror(errno));
-        return EXIT_FAILURE;
+      std::cerr << std::format("Failed to remove semaphore! msg '{}'\n",
+                               strerror(errno));
+      return EXIT_FAILURE;
     }
     std::cerr << "Semaphore was successfully removed!\n";
     return EXIT_SUCCESS;
@@ -210,7 +213,8 @@ int main(const int argc, const char **argv) {
   InterruptHandler ih({SIGINT, SIGTERM});
 
 #if defined(USE_BPF_PROC_IMPL)
-  const uint64_t bpf_min_us = parser["bpf-min-us"].value<uint64_t>().value_or(30);
+  const uint64_t bpf_min_us =
+      parser["bpf-min-us"].value<uint64_t>().value_or(30);
   ProcessQueue processListener(bpf_min_us, parser["verbose"]);
 #else
   ProcessQueue processListener;

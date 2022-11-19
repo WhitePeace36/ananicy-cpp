@@ -53,7 +53,7 @@ private:
   NetlinkProgram m_netlink_program{};
 #endif
   std::jthread event_thread;
-  bool m_status{true};
+  bool         m_status{true};
 
 public:
 #if defined(USE_BPF_PROC_IMPL)
