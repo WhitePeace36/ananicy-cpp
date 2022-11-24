@@ -38,17 +38,17 @@ _Beta status_
 - C++ compiler compatible with C++20 (`g++ >= 10` or `clang++ >= 10`).
   Notably, `<concepts>` and `std::jthread` are required. Work is in progress to add support to `g++ ~= 9`, see https://gitlab.com/ananicy-cpp/ananicy-cpp/-/issues/28 for more info.
 - _Optional_:
-	- libsystemd (if you want systemd support)
-	- [bpf](https://www.kernel.org) _(required for bpf implementation)_
-	- [libbpf](https://github.com/libbpf/libbpf) _(required for bpf implementation)_
-	- [libelf](https://sourceware.org/elfutils/) _(required for bpf implementation)_
-	- [clang](https://clang.llvm.org/) clang++ >= 10 _(required for bpf implementation)_
+    - libsystemd (if you want systemd support)
+    - [bpf](https://www.kernel.org) _(required for bpf implementation)_
+    - [libbpf](https://github.com/libbpf/libbpf) _(required for bpf implementation)_
+    - [libelf](https://sourceware.org/elfutils/) _(required for bpf implementation)_
+    - [clang](https://clang.llvm.org/) clang++ >= 10 _(required for bpf implementation)_
 
 #### Debian/Ubuntu
 Install the prerequisites: `sudo apt install git cmake build-essential g++ libsystemd-dev`
 
 ### Linux
-It should be a fully drop-in replacement from Ananicy.  
+It should be a fully drop-in replacement from Ananicy.
 If you detect a difference in behavior (except for bugs in Ananicy that are fixed in `ananicy-cpp`),
 please create an issue.
 
@@ -76,9 +76,9 @@ clone the repository (or download a release archive), and do the following comma
   - `git clone --recurse-submodules https://gitlab.com/ananicy-cpp/ananicy-cpp.git`
   - `cd ananicy-cpp`
 - If using release archive:
-  - `wget https://gitlab.com/ananicy-cpp/ananicy-cpp/-/archive/v1.0.0-rc7/ananicy-cpp-v1.0.0-rc7.tar.gz`
-  - `tar -xvf ananicy-cpp-v1.0.0-rc7.tar.gz`
-  - `cd ananicy-cpp-v1.0.0-rc7`
+  - `wget https://gitlab.com/ananicy-cpp/ananicy-cpp/-/archive/v1.0.1/ananicy-cpp-v1.0.1.tar.gz`
+  - `tar -xvf ananicy-cpp-v1.0.1.tar.gz`
+  - `cd ananicy-cpp-v1.0.1`
 
 ```
 cmake -B build \
@@ -103,7 +103,7 @@ systemctl enable --now ananicy-cpp.service
 ```
 If you want to stop or disable it later, you can use:
 ```
-systemctl (stop|disable) ananicy-cpp.service 
+systemctl (stop|disable) ananicy-cpp.service
 ```
 You can have more information in `systemd`'s man page (`man systemd` on Linux)
 
@@ -123,7 +123,7 @@ There is also binaries in `cachyos` and `chaotic-aur`, although `ananicy-cpp` is
 ### Rules
 
 Add rules in `/etc/ananicy.d`. This path can be overridden with `ANANICY_CPP_CONFDIR`
-environment variable.  
+environment variable.
 Rules are defined in files ending with `.rules`.
 For instance, to add a rule for GCC, you could do the following:
 
@@ -161,7 +161,7 @@ latency critical programs, like `Xorg` or `pulseaudio` for instance. Nice values
 of a process is a realtime one, i.e. `fifo`, `rr` or `deadline`.
 A higher value means a higher priority.
 - `ioclass: {"best-effort", "realtime", "idle", "none"}`:
-Define the IO scheduling policy. By default, it is `best-effort`.  
+Define the IO scheduling policy. By default, it is `best-effort`.
 **Only the CFQ I/O scheduler supports `ioclass` and `ionice`, see [ioprio_set](https://man7.org/linux/man-pages/man2/ioprio_set.2.html)**.
   - `realtime` is to be used cautiously, as the process will have the absolute priority
   above all `best-effort` processes, and can [starve][wikipedia:starvation] them.
@@ -179,7 +179,7 @@ Define the IO scheduling policy. By default, it is `best-effort`.
 - `cgroup`: Put the process in the specified cgroup. This can be any cgroup, including those created outside `ananicy-cpp`.
 - `type`: Set the type of the rule. All options defined in the type will be used as if written explicitly in the rule,
 although you can override each option if needed.
-    
+
 
 [wikipedia:starvation]: https://en.wikipedia.org/wiki/Starvation_(computer_science)
 
@@ -219,7 +219,7 @@ Only one attribute is supported, `CPUQuota`:
 ~~~
 
 One major limitations of `cgroups` right now is that they can only be created by the `root` user.
-You can _not_ use a `CAP_SYS_CGROUP` capability thing like for other things, because it simply does not exist yet.  
+You can _not_ use a `CAP_SYS_CGROUP` capability thing like for other things, because it simply does not exist yet.
 If it is ever implemented in the Linux kernel, please create an issue.
 
 ### Community rules
@@ -232,4 +232,4 @@ You can use the original Ananicy's rules by copying the `00-default`, `00-types.
 I mostly used Ananicy on older computers to improve interactivity. However, having Ananicy use megabytes of RAM
 and a decent amount of CPU time troubled me. Thus I decided to rewrite it in C++, using an event based approach.
 RAM usage is much lower (only a few thousands of bytes !), and CPU usage is almost always zero thanks to its
-event-based implementation. 
+event-based implementation.
