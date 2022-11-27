@@ -17,34 +17,34 @@ void print_file(const std::string &path) {
 
   std::cout << std::format("#### BEGIN {0} #####\n"
                            "{1:s}\n"
-                           "#### END {0} #####",
-                           path, file_data)
-            << std::endl;
+                           "#### END {0} #####\n",
+                           path, file_data);
 }
 
 template <> void print_debug_for_issue<21>() {
   print_file("/etc/mtab");
 
+  namespace fs = std::filesystem;
+
   try {
-    const auto cgroup_info = control_groups::get_cgroup_version();
+    const auto &cgroup_info = control_groups::get_cgroup_version();
+    const auto &cgroup_path = cgroup_info.path.c_str();
+
     if (cgroup_info.version != control_groups::cgroup_info::none) {
-      std::cout << std::format("#### BEGIN listing files in {0} #####\n",
-                               cgroup_info.path.string());
-      for (const auto &file :
-           std::filesystem::directory_iterator(cgroup_info.path)) {
-        std::cout << file << std::endl;
+      std::cout << std::format("#### BEGIN listing files in {} #####\n",
+                               cgroup_path);
+      for (const auto &dir_entry : fs::directory_iterator(cgroup_path)) {
+        std::cout << dir_entry << '\n';
       }
-      std::cout << std::format("#### END listing files in {0} #####\n",
-                               cgroup_info.path.string());
+      std::cout << std::format("#### END listing files in {} #####\n",
+                               cgroup_path);
     }
   } catch (const std::exception &e) {
     spdlog::warn("{}: error: {}", __func__, e.what());
   }
 
-  std::cout << std::format("Unit name: {}", service::get_unit_name())
-            << std::endl;
-  std::cout << std::format("Cgroup: {}",
-                           control_groups::get_cgroup_for_pid(getpid()))
-            << std::endl;
+  std::cout << std::format("Unit name: {}\n", service::get_unit_name());
+  std::cout << std::format("Cgroup: {}\n",
+                           control_groups::get_cgroup_for_pid(getpid()));
 }
 } // namespace ananicy_debug
