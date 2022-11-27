@@ -263,19 +263,20 @@ std::string get_command_from_pid(pid_t pid) {
 void ProcessQueue::full_scan() {
   spdlog::info("Doing a full scan");
   std::uint32_t n_process_found{};
-  for (const fs::path &process_path : fs::directory_iterator("/proc")) {
-    const std::string pid_str = process_path.filename().string();
-    if (isdigit(pid_str[0])) {
-      const auto pid = to_int<std::int32_t>(pid_str);
-      // spdlog::trace("Pushing existing process: {}", pid);
-      auto &&command = get_command_from_pid(pid);
-
-      this->process_queue.push(Process{
-          .pid = pid,
-          .name = std::move(command),
-      });
-      n_process_found++;
+  for (const auto &dir_entry : fs::directory_iterator("/proc")) {
+    const auto &pid_str = dir_entry.path().filename().c_str();
+    if (!isdigit(pid_str[0])) {
+      continue;
     }
+    const auto pid = to_int<std::int32_t>(pid_str);
+    // spdlog::trace("Pushing existing process: {}", pid);
+    auto &&command = get_command_from_pid(pid);
+
+    this->process_queue.push(Process{
+        .pid = pid,
+        .name = std::move(command),
+    });
+    n_process_found++;
   }
 
   spdlog::debug("Full scan found {:d} processes", n_process_found);
