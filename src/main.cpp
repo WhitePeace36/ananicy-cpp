@@ -214,7 +214,7 @@ int main(const int argc, const char **argv) {
 
 #if defined(USE_BPF_PROC_IMPL)
   const uint64_t bpf_min_us =
-      parser["bpf-min-us"].value<uint64_t>().value_or(30);
+      parser["bpf-min-us"].value<uint64_t>().value_or(60);
   ProcessQueue processListener(bpf_min_us, parser["verbose"]);
 #else
   ProcessQueue processListener;
