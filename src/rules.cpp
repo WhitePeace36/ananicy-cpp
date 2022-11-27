@@ -14,7 +14,7 @@
 namespace fs = std::filesystem;
 
 Rules::Rules(const fs::path &ruleset_directory, Config *config_src)
-    : config(config_src) {
+    : m_config(config_src) {
   if (!exists(ruleset_directory)) {
     spdlog::error("{}: directory {} does not exist", __func__,
                   ruleset_directory.string());
@@ -48,19 +48,19 @@ void Rules::load_rule_from_string(const std::string_view &line) {
       std::string_view{line.substr(first_pair).substr(0, second_pair + 1)};
 
   try {
-    const auto &&rule = json::parse(clean_line);
+    auto &&rule = json::parse(clean_line);
 
     if (rule.contains("name") && rule["name"].is_string()) { /* Program rule */
       const auto &rule_name = rule["name"];
-      program_rules.insert_or_assign(rule_name, rule);
+      m_program_rules.insert_or_assign(rule_name, rule);
     } else if (rule.contains("type") &&
                rule["type"].is_string()) { /* Type rule */
       const auto &rule_type = rule["type"];
-      type_rules.insert_or_assign(rule_type, rule);
+      m_type_rules.insert_or_assign(rule_type, rule);
     } else if (rule.contains("cgroup") &&
                rule["cgroup"].is_string()) { /* Cgroup rule */
       const auto &rule_cgroup = rule["cgroup"];
-      cgroup_rules.insert_or_assign(rule_cgroup, rule);
+      m_cgroup_rules.insert_or_assign(rule_cgroup, rule);
     } else {
       spdlog::error("Rule does not have a name, or name is not a string: {}",
                     rule.dump());
@@ -81,21 +81,21 @@ void Rules::load_rules_from_file(const fs::path &path) {
 }
 
 void Rules::show_all_rules() const noexcept {
-  for (const auto &rule : cgroup_rules) {
+  for (const auto &rule : m_cgroup_rules) {
     spdlog::debug("Cgroup: {}, {}", rule.first, rule.second.dump());
   }
-  for (const auto &rule : type_rules) {
+  for (const auto &rule : m_type_rules) {
     spdlog::debug("Type: {}, {}", rule.first, rule.second.dump());
   }
-  for (const auto &rule : program_rules) {
+  for (const auto &rule : m_program_rules) {
     spdlog::debug("Rule: {}, {}", rule.first, rule.second.dump());
   }
 }
 
 void Rules::show_rules(rule_type type) const noexcept {
-  const auto &rules = (type == rule_type::types)     ? type_rules
-                      : (type == rule_type::cgroups) ? cgroup_rules
-                                                     : program_rules;
+  const auto &rules = (type == rule_type::types)     ? m_type_rules
+                      : (type == rule_type::cgroups) ? m_cgroup_rules
+                                                     : m_program_rules;
 
   json rules_display;
 
@@ -113,51 +113,27 @@ void Rules::show_rules(rule_type type) const noexcept {
 }
 
 void Rules::load_rules_from_directory(const fs::path &dir_path) {
-  std::stack<fs::path> directories;
-  directories.emplace(dir_path);
+  const auto &is_valid_file = [](auto &&config_ref, auto &&file_ext) {
+    return ((config_ref->cgroup_load() && file_ext.compare(".cgroups") == 0) ||
+            (config_ref->type_load() && file_ext.compare(".types") == 0) ||
+            (config_ref->rule_load() && file_ext.compare(".rules") == 0));
+  };
 
-  while (!directories.empty()) {
-    const auto directory = directories.top();
-    spdlog::debug("Scanning directory {}", directory.string());
-    directories.pop();
+  for (const auto &dir_entry : fs::recursive_directory_iterator{dir_path}) {
+    if (fs::is_directory(dir_entry)) {
+      spdlog::debug("Scanning directory {}", dir_entry.path().c_str());
+      continue;
+    }
 
-    for (const fs::path &file : fs::directory_iterator(directory)) {
-      std::stringstream ss;
-      ss << "Found file " << file.filename();
-
-      if (fs::is_directory(file)) {
-        ss << " (directory)";
-
-        directories.emplace(file);
-      }
-
-      bool valid_file = false;
-
-      if (config->cgroup_load() && file.extension().compare(".cgroups") == 0) {
-        ss << " (CGROUP)";
-        valid_file = true;
-      } else if (config->type_load() &&
-                 file.extension().compare(".types") == 0) {
-        ss << " (TYPES)";
-        valid_file = true;
-      } else if (config->rule_load() &&
-                 file.extension().compare(".rules") == 0) {
-        ss << " (RULES)";
-        valid_file = true;
-      }
-
-      if (valid_file) {
-        load_rules_from_file(file);
-      }
-
-      spdlog::trace(ss.str());
+    if (is_valid_file(m_config, std::move(dir_entry.path().extension()))) {
+      load_rules_from_file(dir_entry.path());
     }
   }
 }
 
 void Rules::create_cgroups() const noexcept {
   spdlog::info("Creating Cgroups...");
-  for (const auto &cgroup_rule : cgroup_rules) {
+  for (const auto &cgroup_rule : m_cgroup_rules) {
     control_groups::create_cgroup(cgroup_rule.first);
     if (cgroup_rule.second.contains("CPUQuota")) {
       control_groups::set_cgroup_cpu_quota(
@@ -169,12 +145,12 @@ void Rules::create_cgroups() const noexcept {
 
 json Rules::get_rule(const std::string &name) const noexcept {
   json rule;
-  if (program_rules.contains(name)) {
-    rule = program_rules.at(name);
-    if (rule.contains("type") && type_rules.contains(rule["type"])) {
+  if (m_program_rules.contains(name)) {
+    rule = m_program_rules.at(name);
+    if (rule.contains("type") && m_type_rules.contains(rule["type"])) {
       json type_rule =
-          type_rules.at(rule["type"]); // We create a copy of the type rule to
-                                       // avoid overwriting it
+          m_type_rules.at(rule["type"]); // We create a copy of the type rule to
+                                         // avoid overwriting it
       type_rule.merge_patch(
           rule); // We then merge the rule into it, overriding parameters from
                  // the type with those explicitly specified in the rule
@@ -185,5 +161,5 @@ json Rules::get_rule(const std::string &name) const noexcept {
 }
 
 [[gnu::pure]] size_t Rules::size() const noexcept {
-  return program_rules.size();
+  return m_program_rules.size();
 }

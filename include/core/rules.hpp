@@ -19,10 +19,10 @@ using ruleset = std::unordered_map<std::string, json>;
 
 class Rules {
 private:
-  Config *config;
-  ruleset program_rules{};
-  ruleset type_rules{};
-  ruleset cgroup_rules{};
+  Config *m_config;
+  ruleset m_program_rules{};
+  ruleset m_type_rules{};
+  ruleset m_cgroup_rules{};
 
 public:
   explicit Rules(const std::filesystem::path &ruleset_directory,
