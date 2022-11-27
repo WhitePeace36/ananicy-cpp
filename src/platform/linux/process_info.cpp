@@ -11,7 +11,6 @@
 #include <fstream>
 #include <iostream>
 #include <optional>
-#include <queue>
 #include <spdlog/spdlog.h>
 #include <string_view>
 
@@ -173,7 +172,7 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
     nlohmann::json status = parse_proc_status(pid);
     if (status["PPid"] == 0) {
       spdlog::trace("{}: {} is a kernel thread, skipping", __func__, pid);
-      return std::optional<process_info>();
+      return {};
     }
 
     info["pid"] = to_int(static_cast<std::string>(status["Tgid"]));
@@ -262,45 +261,44 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
 nlohmann::json get_process_info_map() {
   nlohmann::json process_map = nlohmann::json::object();
 
-  std::queue<fs::path> directories{};
-  for (const fs::path &process_path : fs::directory_iterator("/proc")) {
+  const auto &is_valid_entry = [&process_map](auto &&entry_path) {
+    const auto &entry_filename = entry_path.filename().c_str();
+    if (!isdigit(entry_filename[0])) {
+      spdlog::trace("{}: Skipping entry '{}'", __func__, entry_path.c_str());
+      return false;
+    }
 
-    if (!isdigit(process_path.filename().string()[0])) {
-      spdlog::trace("{}: Skipping entry '{}'", __func__, process_path.string());
+    if (entry_filename == "0" || process_map.contains(entry_filename)) {
+      return false;
+    }
+
+    return true;
+  };
+
+  for (const auto &dir_entry : fs::directory_iterator("/proc")) {
+    const auto &entry_path = dir_entry.path();
+    if (!is_valid_entry(entry_path)) {
       continue;
     }
 
-    const auto pid = to_int(process_path.filename().string());
-    if (pid == 0 || process_map.contains(to_str(pid)))
-      continue;
-
-    directories.emplace(fs::path(std::format("/proc/{}/task", pid)));
-  }
-
-  while (!directories.empty()) {
-    const auto &directory = directories.front();
-
     try {
-      for (const fs::path &process_path : fs::directory_iterator(directory)) {
-        if (!isdigit(process_path.filename().string()[0])) {
-          spdlog::trace("{}: Skipping entry '{}'", __func__,
-                        process_path.string());
+      const auto &tasks_dir = std::format("{}/task", entry_path.c_str());
+      for (const auto &dir_nested_entry : fs::directory_iterator(tasks_dir)) {
+        const auto &nested_entry_path = dir_nested_entry.path();
+        if (!is_valid_entry(nested_entry_path)) {
           continue;
         }
+        const auto &nested_entry_filename =
+            nested_entry_path.filename().c_str();
 
-        const auto pid = to_int(process_path.filename().string());
-        if (pid == 0 || process_map.contains(to_str(pid)))
-          continue;
-
-        const auto info = get_process_info(static_cast<uint32_t>(pid));
-        if (info.has_value()) {
-          process_map[to_str(pid).data()] = info.value();
+        const auto pid = to_int<std::uint32_t>(nested_entry_filename);
+        const auto proc_info = get_process_info(pid);
+        if (proc_info.has_value()) {
+          process_map[nested_entry_filename] = proc_info.value();
         }
       }
     } catch (...) {
     }
-
-    directories.pop();
   }
 
   return process_map;
