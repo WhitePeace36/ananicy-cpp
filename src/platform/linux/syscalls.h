@@ -113,7 +113,7 @@ static int set_latnice(pid_t pid, int latency_nice) {
   // pid==0 refers to calling thread
   struct sched_attr attr = {
     .size = sizeof(struct sched_attr),
-    .sched_flags = SCHED_FLAG_LATENCY_NICE | SCHED_FLAG_KEEP_PARAMS,
+    .sched_flags = SCHED_FLAG_LATENCY_NICE,
     .sched_latency_nice = latency_nice,
   };
   const int err = sched_setattr(pid, &attr, 0);
