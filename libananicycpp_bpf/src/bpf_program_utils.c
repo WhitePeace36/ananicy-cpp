@@ -47,22 +47,6 @@ ananicy_cpp_bpf_t* initialize_bpf_program(uint64_t min_us, bool verbose) {
     obj->rodata->targ_pid = 0;
     obj->rodata->min_us = min_us;
 
-    //if (probe_tp_btf("sched_process_wait")) {
-    //    bpf_program__set_autoload(obj->progs.handle_sched_wakeup, false);
-    //    bpf_program__set_autoload(obj->progs.handle_sched_wakeup_new, false);
-    //    bpf_program__set_autoload(obj->progs.handle_sched_switch, false);
-    //}
-
-    /*if (probe_tp_btf("sched_wakeup")) {
-        bpf_program__set_autoload(obj->progs.handle_sched_wakeup, false);
-        bpf_program__set_autoload(obj->progs.handle_sched_wakeup_new, false);
-        bpf_program__set_autoload(obj->progs.handle_sched_switch, false);
-    } else {
-        bpf_program__set_autoload(obj->progs.sched_wakeup, false);
-        bpf_program__set_autoload(obj->progs.sched_wakeup_new, false);
-        bpf_program__set_autoload(obj->progs.sched_switch, false);
-    }*/
-
     int32_t err = ananicy_cpp_bpf__load(obj);
     if (err) {
         fprintf(stderr, "failed to load BPF object: %d\n", err);
