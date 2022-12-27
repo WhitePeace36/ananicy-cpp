@@ -3,6 +3,7 @@
 
 #include <sys/resource.h>
 #include <sys/syscall.h>
+#include <cerrno>
 #include <unistd.h>
 
 #include <cstdio>
@@ -64,6 +65,9 @@ static int ioprio_get(__priority_which_t _which, id_t _who) {
 #ifndef SCHED_FLAG_KEEP_PARAMS
 #define SCHED_FLAG_KEEP_PARAMS          0x10
 #endif
+#ifndef SCHED_FLAG_KEEP_POLICY
+#define SCHED_FLAG_KEEP_POLICY          0x08
+#endif
 
 struct [[gnu::packed]] sched_attr {
   uint32_t size;
@@ -113,11 +117,18 @@ static int set_latnice(pid_t pid, int latency_nice) {
   // pid==0 refers to calling thread
   struct sched_attr attr = {
     .size = sizeof(struct sched_attr),
-    .sched_flags = SCHED_FLAG_LATENCY_NICE,
+    .sched_flags = SCHED_FLAG_LATENCY_NICE | SCHED_FLAG_KEEP_PARAMS,
     .sched_latency_nice = latency_nice,
   };
   const int err = sched_setattr(pid, &attr, 0);
   if (err < 0) {
+    // sched_setattr failed
+    if (errno == EINVAL) {
+      // Don't print strerror for EINVAL
+      errno = 0;
+      return err;
+    }
+    // Other error occurred
     std::perror("sched_setattr");
   }
   return err;
