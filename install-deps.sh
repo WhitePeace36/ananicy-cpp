@@ -58,8 +58,8 @@ install_deps_ubuntu()
         if [ "${NAME}" = "Debian GNU/Linux" ]; then
             packages="$packages bpftool"
         else
-            # On Ubuntu bpftool is packaged as part of the `linux-tools-common` package. 
-            packages="$packages linux-tools-common"
+            # On Ubuntu bpftool is packaged as part of the `linux-tools-common` package.
+            packages="$packages linux-tools-common linux-tools-generic"
         fi
     fi
 
@@ -110,7 +110,7 @@ install_deps_fedora()
     if [ x$USE_BPF = xON ]; then
         packages="$packages elfutils-libelf zlib-devel bpftool libbpf llvm clang"
     fi
-   
+
     sudo dnf install $SYSDEP_ASSUME_YES $packages
 }
 
@@ -138,7 +138,7 @@ main()
         fedora)
             install_deps_fedora
             ;;
-        ubuntu|neon|debian)
+        ubuntu|neon|debian|linuxmint)
             install_deps_ubuntu
             ;;
         *)
