@@ -6,6 +6,7 @@
 #include "core/cgroups.hpp"
 #include "core/priority.hpp"
 #include "utility/process_info.hpp"
+#include "version.hpp"
 
 #include <chrono>
 #include <functional>
