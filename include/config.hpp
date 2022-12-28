@@ -29,7 +29,6 @@ class Config {
 public:
   explicit Config(const std::filesystem::path &config_path);
 
-  // static_assert(default_config.);
   bool apply_nice() { return check_rule("apply_nice"); }
   bool apply_latnice() { return check_rule("apply_latnice"); }
 
@@ -37,6 +36,7 @@ public:
   bool apply_ionice() { return check_rule("apply_ionice"); }
   bool apply_oom_score_adj() { return check_rule("apply_oom_score_adj"); }
   bool apply_cgroups() { return check_rule("apply_cgroup"); }
+  bool log_applied_rule() { return check_rule("log_applied_rule"); }
   bool cgroup_load() { return check_rule("cgroup_load"); }
   bool type_load() { return check_rule("type_load"); }
   bool rule_load() { return check_rule("rule_load"); }
