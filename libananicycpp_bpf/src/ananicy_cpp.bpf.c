@@ -7,6 +7,7 @@
 #include "core_fixes.bpf.h"
 
 #define TASK_COMM_LEN 16
+#define INVALID_UID ((uid_t)-1)
 
 struct event {
     pid_t pid;
@@ -15,11 +16,10 @@ struct event {
     char task[TASK_COMM_LEN];
 };
 
-#define TASK_RUNNING    0
-
 const volatile __u64 min_us = 0;
 const volatile pid_t targ_pid = 0;
 const volatile pid_t targ_tgid = 0;
+const volatile uid_t targ_uid = INVALID_UID;
 
 struct {
     __uint(type, BPF_MAP_TYPE_HASH);
@@ -28,97 +28,86 @@ struct {
     __type(value, u64);
 } start SEC(".maps");
 
+
+struct {
+    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, int);
+    __type(value, struct event);
+} heap SEC(".maps");
+
 struct {
     __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
     __uint(key_size, sizeof(u32));
     __uint(value_size, sizeof(u32));
 } events SEC(".maps");
 
-/* record enqueue timestamp */
-static int trace_enqueue(u32 tgid, u32 pid)
-{
-    u64 ts;
-
-    if (!pid)
-        return 0;
-    if (targ_tgid && targ_tgid != tgid)
-        return 0;
-    if (targ_pid && targ_pid != pid)
-        return 0;
-
-    ts = bpf_ktime_get_ns();
-    bpf_map_update_elem(&start, &pid, &ts, 0);
-    return 0;
+static __always_inline bool valid_uid(uid_t uid) {
+    return uid != INVALID_UID;
 }
 
-static int handle_switch(void *ctx, struct task_struct *prev, struct task_struct *next)
+static __always_inline struct event* handle_event(pid_t pid, pid_t* prev_pid, u64* prev_ts) {
+    struct event *e;
+    int zero = 0;
+    e = bpf_map_lookup_elem(&heap, &zero);
+    if (!e) /* can't happen */
+        return NULL;
+
+    u64 ts = bpf_ktime_get_ns();
+
+    // Compute delta_us
+    u64 delta_us = (ts - *prev_ts) / 1000;
+    //if (min_us && delta_us <= min_us)
+    //    return 0;
+
+    // Assign variables to event struct
+    e->pid = pid;
+    e->prev_pid = *prev_pid;
+    e->delta_us = delta_us;
+    bpf_get_current_comm(&e->task, sizeof(e->task));
+
+    // Update previous process's timestamp
+    *prev_pid = e->pid;
+    *prev_ts = ts;
+
+    return e;
+}
+
+SEC("tp/sched/sched_process_exec")
+int handle_exec(struct trace_event_raw_sched_process_exec* ctx)
 {
-    struct event event = {};
-    u64 *tsp, delta_us;
-    u32 pid;
+    static pid_t prev_pid;
+    static u64 prev_ts;
+    struct event *e;
 
-    /* ivcsw: treat like an enqueue event and store timestamp */
-    if (get_task_state(prev) == TASK_RUNNING)
-        trace_enqueue(BPF_CORE_READ(prev, tgid), BPF_CORE_READ(prev, pid));
-
-    pid = BPF_CORE_READ(next, pid);
-
-    /* fetch timestamp and calculate delta */
-    tsp = bpf_map_lookup_elem(&start, &pid);
-    if (!tsp)
-        return 0;   /* missed enqueue */
-
-    delta_us = (bpf_ktime_get_ns() - *tsp) / 1000;
-    if (min_us && delta_us <= min_us)
+    u32 pid = bpf_get_current_pid_tgid();
+    e = handle_event(pid, &prev_pid, &prev_ts);
+    if (!e) /* can't happen */
         return 0;
-
-    event.pid = pid;
-    event.prev_pid = BPF_CORE_READ(prev, pid);
-    event.delta_us = delta_us;
-    bpf_probe_read_kernel_str(&event.task, sizeof(event.task), next->comm);
 
     /* output */
     bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU,
-                  &event, sizeof(event));
-
-    bpf_map_delete_elem(&start, &pid);
+                  e, sizeof(*e));
     return 0;
 }
 
-SEC("tp_btf/sched_wakeup")
-int BPF_PROG(sched_wakeup, struct task_struct *p)
+SEC("tp/sched/sched_process_fork")
+int handle_fork(struct trace_event_raw_sched_process_fork* ctx)
 {
-    return trace_enqueue(p->tgid, p->pid);
-}
+    static pid_t prev_pid;
+    static u64 prev_ts;
+    struct event *e;
 
-SEC("tp_btf/sched_wakeup_new")
-int BPF_PROG(sched_wakeup_new, struct task_struct *p)
-{
-    return trace_enqueue(p->tgid, p->pid);
-}
+    //u32 pid = ctx->child_pid;
+    u32 pid = bpf_get_current_pid_tgid();
+    e = handle_event(pid, &prev_pid, &prev_ts);
+    if (!e) /* can't happen */
+        return 0;
 
-SEC("tp_btf/sched_switch")
-int BPF_PROG(sched_switch, bool preempt, struct task_struct *prev, struct task_struct *next)
-{
-    return handle_switch(ctx, prev, next);
-}
-
-SEC("raw_tp/sched_wakeup")
-int BPF_PROG(handle_sched_wakeup, struct task_struct *p)
-{
-    return trace_enqueue(BPF_CORE_READ(p, tgid), BPF_CORE_READ(p, pid));
-}
-
-SEC("raw_tp/sched_wakeup_new")
-int BPF_PROG(handle_sched_wakeup_new, struct task_struct *p)
-{
-    return trace_enqueue(BPF_CORE_READ(p, tgid), BPF_CORE_READ(p, pid));
-}
-
-SEC("raw_tp/sched_switch")
-int BPF_PROG(handle_sched_switch, bool preempt, struct task_struct *prev, struct task_struct *next)
-{
-    return handle_switch(ctx, prev, next);
+    /* output */
+    bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU,
+                  e, sizeof(*e));
+    return 0;
 }
 
 char LICENSE[] SEC("license") = "GPL";
