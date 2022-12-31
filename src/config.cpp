@@ -72,6 +72,9 @@ Config::Config(const std::filesystem::path &config_path) {
       }
     }
   }
+
+  // Re-Testing latency nice support.
+  config["apply_latnice"] = priority::test_latnice_support();
 }
 
 void Config::show() {
