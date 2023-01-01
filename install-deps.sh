@@ -138,7 +138,7 @@ main()
         fedora)
             install_deps_fedora
             ;;
-        ubuntu|neon|debian|linuxmint)
+        ubuntu|neon|debian|linuxmint|pop)
             install_deps_ubuntu
             ;;
         *)
