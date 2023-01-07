@@ -76,9 +76,10 @@ clone the repository (or download a release archive), and do the following comma
   - `git clone --recurse-submodules https://gitlab.com/ananicy-cpp/ananicy-cpp.git`
   - `cd ananicy-cpp`
 - If using release archive:
-  - `wget https://gitlab.com/ananicy-cpp/ananicy-cpp/-/archive/v1.0.1/ananicy-cpp-v1.0.1.tar.gz`
-  - `tar -xvf ananicy-cpp-v1.0.1.tar.gz`
-  - `cd ananicy-cpp-v1.0.1`
+  - `wget https://gitlab.com/ananicy-cpp/ananicy-cpp/-/archive/v1.0.2/ananicy-cpp-v1.0.2.tar.gz`
+  - `tar -xvf ananicy-cpp-v1.0.2.tar.gz`
+  - `cd ananicy-cpp-v1.0.2`
+  - `git clone https://gitlab.com/vnepogodin/std-format.git external/std-format`
 
 ```
 cmake -B build \
