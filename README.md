@@ -93,7 +93,8 @@ sudo cmake --install build --component Runtime
 - If using install-deps.sh and configure.sh (example using BPF_PROC_IMPL)
   - `git clone --recurse-submodules https://gitlab.com/ananicy-cpp/ananicy-cpp.git`
   - `cd ananicy-cpp`
-  - `env USE_BPF=ON ./install-deps.sh && ./configure.sh --use_bpf_proc`
+  - `env USE_BPF=ON ./install-deps.sh && ./configure.sh --use_bpf_proc && ./build.sh`
+  - `sudo cmake --install build/RelWithDebInfo --component Runtime`
 
 #### Service
 
