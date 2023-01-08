@@ -179,7 +179,7 @@ else()
     target_link_libraries(ananicy-cpp PRIVATE ananicy_cpp_netlink_cpp::ananicy_cpp_netlink_cpp ananicy_cpp_netlink_c::ananicy_cpp_netlink_c)
 endif()
 
-target_include_directories(ananicy-cpp PRIVATE "${CMAKE_HOME_DIRECTORY}/include")
+target_include_directories(ananicy-cpp PRIVATE "${CMAKE_SOURCE_DIR}/include")
 
 install(TARGETS ananicy-cpp
         RUNTIME DESTINATION bin COMPONENT Runtime)
