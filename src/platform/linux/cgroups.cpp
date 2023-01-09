@@ -35,7 +35,7 @@ static fs::path get_cgroup_path(const std::string_view &cgroup_name) {
   return cgroup_path;
 }
 
-std::int32_t control_groups::create_cgroup(const std::string &name) {
+std::int32_t control_groups::create_cgroup(const std::string_view &cgroup_name) {
   switch (get_cgroup_version().version) {
 
   case cgroup_info::none:
@@ -43,23 +43,24 @@ std::int32_t control_groups::create_cgroup(const std::string &name) {
         "Cgroups are not available on this platform (or are not enabled)");
     break;
   case cgroup_info::v1: {
-    const auto &cgroup_path = get_cgroup_path(name);
+    const auto &cgroup_path = get_cgroup_path(cgroup_name);
     if (exists(cgroup_path)) {
-      spdlog::warn("cgroup v1 {:s} already exists, ignoring.", name);
+      spdlog::warn("cgroup v1 {:s} already exists, ignoring.", cgroup_name);
       return false;
     }
-    spdlog::debug("Creating cgroup (v1) {:s} at {:s}", name,
+    spdlog::debug("Creating cgroup (v1) {:s} at {:s}", cgroup_name,
                   cgroup_path.string());
 
     return create_directory(cgroup_path);
   }
   case cgroup_info::v2: {
-    const auto &cgroup_path = get_cgroup_path(name);
+    const auto &cgroup_path = get_cgroup_path(cgroup_name);
     if (exists(cgroup_path)) {
-      spdlog::warn("cgroup {:s} already exists, ignoring.", name);
+      spdlog::warn("cgroup {:s} already exists, ignoring.", cgroup_name);
       return false;
     }
-    spdlog::debug("Creating cgroup {:s} at {:s}", name, cgroup_path.string());
+    spdlog::debug("Creating cgroup {:s} at {:s}", cgroup_name,
+                  cgroup_path.string());
 
     return create_directory(cgroup_path);
   }
