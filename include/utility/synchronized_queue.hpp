@@ -37,6 +37,10 @@ public:
     return {};
   }
 
+  [[nodiscard]] constexpr inline size_t size() const noexcept {
+    return this->was_size();
+  }
+
   synchronized_queue(const synchronized_queue &) = delete;
   synchronized_queue operator=(const synchronized_queue &) = delete;
 
