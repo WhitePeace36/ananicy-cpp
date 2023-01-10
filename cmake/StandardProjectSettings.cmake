@@ -34,6 +34,7 @@ option(STATIC "Build static binary" OFF)
 option(OPTIMIZE_FOR_NATIVE_MICROARCH "Enable -march=native flag on the CXX compiler. This makes build NOT portable." OFF)
 option(USE_EXPERIMENTAL_IMPL "Use experimental impl" ON)
 option(USE_BPF_PROC_IMPL "Use BPF as a proc listener impl" OFF)
+option(ENABLE_ANANICY_TESTS "Build AnanicyCpp tests" OFF)
 
 option(ENABLE_IPO "Enable Interprocedural Optimization, aka Link Time Optimization (LTO)" OFF)
 
