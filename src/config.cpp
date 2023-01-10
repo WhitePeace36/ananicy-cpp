@@ -36,8 +36,10 @@ Config::Config(const std::filesystem::path &config_path) {
     config[std::string(item.first)] = item.second;
   }
 
+  const auto latnice_support_status = priority::test_latnice_support();
+
   // Testing latency nice support.
-  config["apply_latnice"] = priority::test_latnice_support();
+  config["apply_latnice"] = latnice_support_status;
 
   if (!exists(config_path)) {
     spdlog::error("{}: file {} does not exist", __func__, config_path.string());
@@ -73,8 +75,11 @@ Config::Config(const std::filesystem::path &config_path) {
     }
   }
 
-  // Re-Testing latency nice support.
-  config["apply_latnice"] = priority::test_latnice_support();
+  // Disable latency nice if not supported by the kernel.
+  const bool is_latnice_supported = latnice_support_status == "true";
+  if (!is_latnice_supported) {
+    config["apply_latnice"] = latnice_support_status;
+  }
 }
 
 void Config::show() {
