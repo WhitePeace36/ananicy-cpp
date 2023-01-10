@@ -27,7 +27,7 @@ private:
 public:
   explicit Rules(const std::filesystem::path &ruleset_directory,
                  Config                      *config_src);
-  void load_rule_from_string(const std::string_view &line);
+  bool load_rule_from_string(const std::string_view &line);
   void load_rules_from_file(const std::filesystem::path &path);
   void load_rules_from_directory(const std::filesystem::path &dir_path);
   json get_rule(const std::string &name) const noexcept;

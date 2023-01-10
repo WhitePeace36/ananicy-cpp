@@ -23,7 +23,7 @@ Rules::Rules(const fs::path &ruleset_directory, Config *config_src)
   load_rules_from_directory(ruleset_directory);
 }
 
-void Rules::load_rule_from_string(const std::string_view &line) {
+bool Rules::load_rule_from_string(const std::string_view &line) {
   // NOTE: this technique makes it constexpr even in non constexpr context
   // Because since C++17 standard lambda functions are constexpr by default
   // @see https://en.cppreference.com/w/cpp/language/lambda
@@ -37,7 +37,7 @@ void Rules::load_rule_from_string(const std::string_view &line) {
     return s.empty() || is_comment_str(s);
   };
   if (is_invalid_str(line)) {
-    return;
+    return false;
   }
 
   auto &&first_pair = line.find_first_of('{');
@@ -64,11 +64,14 @@ void Rules::load_rule_from_string(const std::string_view &line) {
     } else {
       spdlog::error("Rule does not have a name, or name is not a string: {}",
                     rule.dump());
+      return false;
     }
   } catch (const std::exception &e) {
     spdlog::warn("Error parsing JSON: {}, line: {}", e.what(), line);
-    return;
+    return false;
   }
+
+  return true;
 }
 
 void Rules::load_rules_from_file(const fs::path &path) {
