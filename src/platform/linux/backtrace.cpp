@@ -4,6 +4,7 @@
 #include <cxxabi.h>
 #include <execinfo.h>
 
+#include <exception>
 #include <format>
 #include <iostream>
 #include <stdexcept>
@@ -30,11 +31,14 @@ void print_trace() noexcept {
 }
 
 [[noreturn]] static void terminate_handler() noexcept(false) {
-  [[maybe_unused]] static int tried_throw = 0;
+  // set the exception pointer in case of an exception
+  std::exception_ptr exception_ptr = std::current_exception();
 
   try {
-    if (tried_throw++ == 0)
-      throw;
+    // if exception was thrown - rethrow it
+    if (exception_ptr) {
+      std::rethrow_exception(exception_ptr);
+    }
   } catch (const std::exception &e) {
     std::cerr << std::format("{} caught unhandled exception: {} {}",
                              __PRETTY_FUNCTION__,
@@ -49,7 +53,7 @@ void print_trace() noexcept {
   }
 
   print_trace();
-  abort();
+  std::abort();
 }
 
 [[maybe_unused]] static const bool set_terminate =
