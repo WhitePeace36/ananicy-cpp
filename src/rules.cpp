@@ -43,6 +43,13 @@ bool Rules::load_rule_from_string(const std::string_view &line) {
   auto &&first_pair = line.find_first_of('{');
   auto &&second_pair = line.find_first_of('}');
 
+  // Return if not found brackets in the given string.
+  if (first_pair == std::string_view::npos ||
+      second_pair == std::string_view::npos) {
+    spdlog::error("Rule is invalid: pairs mismatch '}{'");
+    return false;
+  }
+
   // Remove trailing characters.
   auto &&clean_line =
       std::string_view{line.substr(first_pair).substr(0, second_pair + 1)};
