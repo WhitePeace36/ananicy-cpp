@@ -32,6 +32,7 @@ Options:
   --use_bpf_proc               Use BPF as a proc listener.
   --enable_systemd             Enable systemd support.
   --enable_tests               Enable AnanicyCpp tests.
+  --enable_fuzz_tests          Enable AnanicyCpp Fuzz tests.
   --enable_sanitizer_address   Enable ASAN.
   --enable_sanitizer_ub        Enable UBSAN.
   --enable_sanitizer_leak      Enable LEAKSAN.
@@ -48,6 +49,7 @@ _use_clang=false
 _use_bpf_proc=false
 _enable_systemd=false
 _enable_tests=false
+_enable_fuzz_tests=false
 _sanitizer_address=OFF
 _sanitizer_UB=OFF
 _sanitizer_leak=OFF
@@ -83,6 +85,10 @@ for i in "$@"; do
       ;;
     --enable_tests)
       _enable_tests=true
+      shift # past argument=value
+      ;;
+    --enable_fuzz_tests)
+      _enable_fuzz_tests=true
       shift # past argument=value
       ;;
     --enable_sanitizer_address)
@@ -121,6 +127,10 @@ fi
 
 if ${_enable_tests}; then
   _configure_flags+=('-DENABLE_ANANICY_TESTS=ON')
+fi
+
+if ${_enable_fuzz_tests}; then
+  _configure_flags+=('-DENABLE_ANANICY_FUZZ_TESTS=ON')
 fi
 
 if command -v ninja &> /dev/null; then

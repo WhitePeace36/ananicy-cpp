@@ -70,3 +70,25 @@ foreach(file ${files})
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
 endforeach()
+
+if(ENABLE_ANANICY_FUZZ_TESTS AND CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
+    #############################################################################
+    # one executable for each fuzz test file
+    #############################################################################
+
+    file(GLOB fuzz_files fuzzer-*.cpp)
+
+    foreach(file ${fuzz_files})
+        get_filename_component(file_basename ${file} NAME_WE)
+        string(REGEX REPLACE "fuzzer-([^$]+)" "fuzz-\\1" testcase ${file_basename})
+
+        add_executable(${testcase} ${file})
+        set_target_properties(${testcase} PROPERTIES COMPILE_FLAGS "-g -fsanitize=address,fuzzer")
+        set_target_properties(${testcase} PROPERTIES LINK_OPTIONS "-fsanitize=address,fuzzer")
+        target_compile_definitions(${testcase} PRIVATE TEST_DIR=${TEST_DIR})
+        target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include ${CMAKE_SOURCE_DIR}/include ${CMAKE_CURRENT_DIR})
+        target_link_libraries(${testcase} PRIVATE test_libreq stl_polyfill::format nlohmann_json::nlohmann_json spdlog::spdlog fmt::fmt)
+    endforeach()
+elseif(ENABLE_ANANICY_FUZZ_TESTS)
+    message(FATAL_ERROR "Clang compiler is required for fuzz tests")
+endif()
