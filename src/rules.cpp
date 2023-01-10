@@ -32,7 +32,7 @@ bool Rules::load_rule_from_string(const std::string_view &line) {
       std::string_view hash_str{s};
       hash_str.remove_prefix(
           std::min(hash_str.find_first_not_of(' '), hash_str.size()));
-      return hash_str[0] == '#';
+      return hash_str.empty() || (hash_str[0] == '#');
     };
     return s.empty() || is_comment_str(s);
   };
