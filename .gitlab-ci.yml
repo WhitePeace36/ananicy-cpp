@@ -13,8 +13,10 @@ default:
 build:
   stage: build
   script:
-    - cmake -B build -DCMAKE_BUILD_TYPE=Release -S .
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_ANANICY_TESTS=ON -S .
     - cmake --build build -j
+    - ./build/src/tests/test-core
+    - ./build/src/tests/test-utility --test-case-exclude="Process Info"
 
 build-static:
   stage: build

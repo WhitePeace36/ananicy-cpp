@@ -31,6 +31,7 @@ Options:
   --use_clang                  Use Clang compiler.
   --use_bpf_proc               Use BPF as a proc listener.
   --enable_systemd             Enable systemd support.
+  --enable_tests               Enable AnanicyCpp tests.
   --enable_sanitizer_address   Enable ASAN.
   --enable_sanitizer_ub        Enable UBSAN.
   --enable_sanitizer_leak      Enable LEAKSAN.
@@ -46,6 +47,7 @@ _buildtype="RelWithDebInfo"
 _use_clang=false
 _use_bpf_proc=false
 _enable_systemd=false
+_enable_tests=false
 _sanitizer_address=OFF
 _sanitizer_UB=OFF
 _sanitizer_leak=OFF
@@ -77,6 +79,10 @@ for i in "$@"; do
       ;;
     --enable_systemd)
       _enable_systemd=true
+      shift # past argument=value
+      ;;
+    --enable_tests)
+      _enable_tests=true
       shift # past argument=value
       ;;
     --enable_sanitizer_address)
@@ -111,6 +117,10 @@ fi
 
 if ${_enable_systemd}; then
   _configure_flags+=('-DENABLE_SYSTEMD=ON')
+fi
+
+if ${_enable_tests}; then
+  _configure_flags+=('-DENABLE_ANANICY_TESTS=ON')
 fi
 
 if command -v ninja &> /dev/null; then
