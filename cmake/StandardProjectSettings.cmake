@@ -36,6 +36,7 @@ option(USE_EXPERIMENTAL_IMPL "Use experimental impl" ON)
 option(USE_BPF_PROC_IMPL "Use BPF as a proc listener impl" OFF)
 option(ENABLE_ANANICY_TESTS "Build AnanicyCpp tests" OFF)
 option(ENABLE_ANANICY_FUZZ_TESTS "Build AnanicyCpp fuzz tests" OFF)
+option(ENABLE_ANANICY_BENCHMARKS "Build AnanicyCpp benchmark" OFF)
 
 option(ENABLE_IPO "Enable Interprocedural Optimization, aka Link Time Optimization (LTO)" OFF)
 

@@ -33,6 +33,7 @@ Options:
   --enable_systemd             Enable systemd support.
   --enable_tests               Enable AnanicyCpp tests.
   --enable_fuzz_tests          Enable AnanicyCpp Fuzz tests.
+  --enable_benchmarks          Enable AnanicyCpp benchmarks.
   --enable_sanitizer_address   Enable ASAN.
   --enable_sanitizer_ub        Enable UBSAN.
   --enable_sanitizer_leak      Enable LEAKSAN.
@@ -50,6 +51,7 @@ _use_bpf_proc=false
 _enable_systemd=false
 _enable_tests=false
 _enable_fuzz_tests=false
+_enable_benchmarks=false
 _sanitizer_address=OFF
 _sanitizer_UB=OFF
 _sanitizer_leak=OFF
@@ -89,6 +91,10 @@ for i in "$@"; do
       ;;
     --enable_fuzz_tests)
       _enable_fuzz_tests=true
+      shift # past argument=value
+      ;;
+    --enable_benchmarks)
+      _enable_benchmarks=true
       shift # past argument=value
       ;;
     --enable_sanitizer_address)
@@ -131,6 +137,10 @@ fi
 
 if ${_enable_fuzz_tests}; then
   _configure_flags+=('-DENABLE_ANANICY_FUZZ_TESTS=ON')
+fi
+
+if ${_enable_benchmarks}; then
+  _configure_flags+=('-DENABLE_ANANICY_BENCHMARKS=ON')
 fi
 
 if command -v ninja &> /dev/null; then

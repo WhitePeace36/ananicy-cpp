@@ -183,6 +183,10 @@ if(ENABLE_ANANICY_TESTS)
     add_subdirectory(src/tests)
 endif()
 
+if(ENABLE_ANANICY_BENCHMARKS)
+    add_subdirectory(benchmarks)
+endif()
+
 target_include_directories(ananicy-cpp PRIVATE "${CMAKE_SOURCE_DIR}/include")
 
 install(TARGETS ananicy-cpp
