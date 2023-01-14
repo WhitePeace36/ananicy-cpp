@@ -151,7 +151,7 @@ echo "==== Finished instrumenting ===="
 
 cd "${CURRENT_DIR}"
 
-MERGED_PROFILE="${RANDOM}-combined.fdata"
+MERGED_PROFILE="${BOLT_DATA_DIR}/${RANDOM}-combined.fdata"
 merge_instrumented_data "${BOLT_DATA_DIR}" "${MERGED_PROFILE}"
 
 echo "==== Start optimizing binary with merged profile ===="
