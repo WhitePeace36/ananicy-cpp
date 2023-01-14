@@ -123,14 +123,17 @@ BUILD_DIR="$PWD/build/Release"
 BOLT_DATA_DIR="$PWD/bolt-data"
 BOLT_BINARY_DIR="$PWD/bolt-binary"
 
+echo "==== Cleanup folders ===="
+rm -rf "${BUILD_DIR}"
 rm -rf "${BOLT_DATA_DIR}"
 rm -rf "${BOLT_BINARY_DIR}"
 
+echo "==== Creating necessary folders ===="
 mkdir -p "${BOLT_DATA_DIR}"
 mkdir -p "${BOLT_BINARY_DIR}"
 
 echo "==== Starting configuration step ===="
-./configure.sh --prefix=/usr -t=Release --use_clang --use_bpf_proc --enable_relocs --enable_tests || die "configure.sh failed!"
+./configure.sh -t=Release --use_clang --enable_relocs --enable_tests "${@}" || die "configure.sh failed!"
 echo "==== Starting build step ===="
 ./build.sh || die "build.sh failed!"
 
@@ -157,4 +160,4 @@ optimize_binary "${BUILD_DIR}/ananicy-cpp" "${MERGED_PROFILE}" "${BOLT_BINARY_DI
 
 echo "==== Finished optimizing ===="
 
-echo "The final optimized binary is ${BOLT_BINARY_DIR}/ananicy-cpp.bolt"
+echo "The final optimized binary is '${BOLT_BINARY_DIR}/ananicy-cpp.bolt'"

@@ -67,6 +67,11 @@ BUILD_DIR="$PWD/build/Release"
 PGO_DIR="$PWD/pgo-data"
 SAVED_CXXFLAGS="${CXXFLAGS}"
 
+echo "==== Cleanup folders ===="
+rm -rf "${BUILD_DIR}"
+rm -rf "${PGO_DIR}"
+
+echo "==== Creating necessary folders ===="
 mkdir -p "${PGO_DIR}"
 
 ## GCC
@@ -76,9 +81,9 @@ export CXXFLAGS="${SAVED_CXXFLAGS} -fprofile-dir=${PGO_DIR} -fprofile-generate=$
 
 echo "==== Starting configuration step ===="
 ## GCC
-./configure.sh --prefix=/usr -t=Release              --use_bpf_proc --enable_benchmarks --enable_tests || die "configure.sh failed!"
+./configure.sh -t=Release              --enable_benchmarks --enable_tests "${@}" || die "configure.sh failed!"
 ## Clang
-#./configure.sh --prefix=/usr -t=Release --use_clang --use_bpf_proc --enable_benchmarks --enable_tests || die "configure.sh failed!"
+#./configure.sh -t=Release --use_clang --enable_benchmarks --enable_tests "${@}" || die "configure.sh failed!"
 echo "==== Starting build step ===="
 ./build.sh || die "build.sh failed!"
 
@@ -99,10 +104,8 @@ export CXXFLAGS="${SAVED_CXXFLAGS} -fprofile-dir=${PGO_DIR} -fprofile-use=${PGO_
 
 echo "==== Starting configuration step with generated profiles ===="
 ## GCC
-./configure.sh --prefix=/usr -t=Release              --use_bpf_proc --enable_benchmarks --enable_tests || die "configure.sh failed!"
+./configure.sh -t=Release              --enable_benchmarks --enable_tests "${@}" || die "configure.sh failed!"
 ## Clang
-#./configure.sh --prefix=/usr -t=Release --use_clang --use_bpf_proc --enable_benchmarks --enable_tests || die "configure.sh failed!"
+#./configure.sh -t=Release --use_clang --enable_benchmarks --enable_tests "${@}" || die "configure.sh failed!"
 echo "==== Starting build step with generated profiles ===="
 ./build.sh || die "build.sh failed!"
-
-rm -rf "${PGO_DIR}"

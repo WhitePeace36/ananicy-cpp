@@ -24,6 +24,7 @@ cat<<EOF
 Usage: configure.sh [options]
 Options:
   --help                       Display this information.
+  --                           Pass options to the build system.
   --buildtype=, -t=            Specify build type.
   --prefix=                    Specify install prefix.
   --libdir=                    Specify lib directory.
@@ -47,6 +48,7 @@ _buildpath="build"
 _prefix="/usr/local"
 _libdir="lib"
 _buildtype="RelWithDebInfo"
+_external_flags=false
 _use_clang=false
 _use_bpf_proc=false
 _enable_systemd=false
@@ -115,8 +117,17 @@ for i in "$@"; do
       _sanitizer_leak=ON
       shift # past argument=value
       ;;
+    --)
+      _external_flags=true
+      shift # past argument=value
+      ;;
     *)
       # unknown option
+      if [ "${_external_flags}" = false ]; then
+          echo "Unknown option [$i]"
+          exit 255
+      fi
+      # option to be passed to the build system
       ;;
   esac
 done
@@ -159,6 +170,10 @@ fi
 
 if command -v mold &> /dev/null; then
   _configure_flags+=('-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"')
+fi
+
+if ${_external_flags}; then
+  _configure_flags+=("${@}")
 fi
 
 cmake -S . -B ${_buildpath}/${_buildtype} \
