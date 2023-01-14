@@ -67,6 +67,17 @@ BUILD_DIR="$PWD/build/Release"
 PGO_DIR="$PWD/pgo-data"
 SAVED_CXXFLAGS="${CXXFLAGS}"
 
+for i in "$@"; do
+  case $i in
+    --builddir=*)
+      BUILD_DIR="${i#*=}"
+      ;;
+    *)
+      # unknown option
+      ;;
+  esac
+done
+
 echo "==== Cleanup folders ===="
 rm -rf "${BUILD_DIR}"
 rm -rf "${PGO_DIR}"
