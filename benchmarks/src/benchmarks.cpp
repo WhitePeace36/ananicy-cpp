@@ -20,13 +20,12 @@ static void PushStructData(benchmark::State &state) {
     synchronized_queue<SomeStruct>    sync_queue;
 #endif
 
-    std::vector<std::size_t> input_data{};
-    input_data.reserve(state.range(0));
+    std::vector<std::size_t> input_data(state.range(0));
     std::iota(input_data.begin(), input_data.end(), 0);
 
     state.ResumeTiming();
-    std::for_each(std::execution::par, input_data.begin(), input_data.end(),
-                  [&](auto &&i) {
+    std::for_each(std::execution::par_unseq, input_data.begin(), input_data.end(),
+                  [&](auto i) {
                     sync_queue.push(SomeStruct{.first = i, .second = i * 2});
                   });
   }
@@ -45,13 +44,12 @@ static void PushSmallData(benchmark::State &state) {
     synchronized_queue<std::uint64_t> sync_queue;
 #endif
 
-    std::vector<std::size_t> input_data{};
-    input_data.reserve(state.range(0));
+    std::vector<std::size_t> input_data(state.range(0));
     std::iota(input_data.begin(), input_data.end(), 0);
 
     state.ResumeTiming();
-    std::for_each(std::execution::par, input_data.begin(), input_data.end(),
-                  [&](auto &&i) { sync_queue.push(i); });
+    std::for_each(std::execution::par_unseq, input_data.begin(), input_data.end(),
+                  [&](auto i) { sync_queue.push(i); });
   }
   state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) *
                           long(bytes));
