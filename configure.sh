@@ -65,6 +65,7 @@ for i in "$@"; do
   case $i in
     -t=*|--buildtype=*)
       _buildtype="${i#*=}"
+      _buildfolder="${_buildpath}/${_buildtype}"
       shift # past argument=value
       ;;
     --prefix=*)
@@ -77,6 +78,7 @@ for i in "$@"; do
       ;;
     -p=*|--path=*)
       _buildpath="${i#*=}"
+      _buildfolder="${_buildpath}/${_buildtype}"
       shift # past argument=value
       ;;
     --builddir=*)
@@ -137,9 +139,6 @@ for i in "$@"; do
       ;;
   esac
 done
-
-## Set again??
-_buildfolder="${_buildpath}/${_buildtype}"
 
 if ${_use_clang}; then
   export AR=llvm-ar
