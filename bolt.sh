@@ -123,6 +123,17 @@ BUILD_DIR="$PWD/build/Release"
 BOLT_DATA_DIR="$PWD/bolt-data"
 BOLT_BINARY_DIR="$PWD/bolt-binary"
 
+for i in "$@"; do
+  case $i in
+    --builddir=*)
+      BUILD_DIR="${i#*=}"
+      ;;
+    *)
+      # unknown option
+      ;;
+  esac
+done
+
 echo "==== Cleanup folders ===="
 rm -rf "${BUILD_DIR}"
 rm -rf "${BOLT_DATA_DIR}"
@@ -151,7 +162,7 @@ echo "==== Finished instrumenting ===="
 
 cd "${CURRENT_DIR}"
 
-MERGED_PROFILE="${BOLT_DATA_DIR}/${RANDOM}-combined.fdata"
+MERGED_PROFILE="${RANDOM}-combined.fdata"
 merge_instrumented_data "${BOLT_DATA_DIR}" "${MERGED_PROFILE}"
 
 echo "==== Start optimizing binary with merged profile ===="
