@@ -28,7 +28,8 @@ Options:
   --buildtype=, -t=            Specify build type.
   --prefix=                    Specify install prefix.
   --libdir=                    Specify lib directory.
-  --path=, -p=                 Specify build directory.
+  --path=, -p=                 Specify build path.
+  --builddir=                  Specify build directory.
   --use_clang                  Use Clang compiler.
   --use_bpf_proc               Use BPF as a proc listener.
   --enable_systemd             Enable systemd support.
@@ -48,6 +49,7 @@ _buildpath="build"
 _prefix="/usr/local"
 _libdir="lib"
 _buildtype="RelWithDebInfo"
+_buildfolder="${_buildpath}/${_buildtype}"
 _external_flags=false
 _use_clang=false
 _use_bpf_proc=false
@@ -75,6 +77,10 @@ for i in "$@"; do
       ;;
     -p=*|--path=*)
       _buildpath="${i#*=}"
+      shift # past argument=value
+      ;;
+    --builddir=*)
+      _buildfolder="${i#*=}"
       shift # past argument=value
       ;;
     --use_clang)
@@ -176,7 +182,7 @@ if ${_external_flags}; then
   _configure_flags+=("${@}")
 fi
 
-cmake -S . -B ${_buildpath}/${_buildtype} \
+cmake -S . -B ${_buildfolder} \
     -DENABLE_SANITIZER_ADDRESS=${_sanitizer_address} \
     -DENABLE_SANITIZER_UNDEFINED_BEHAVIOR=${_sanitizer_UB} \
     -DENABLE_SANITIZER_LEAK=${_sanitizer_leak} \
@@ -208,7 +214,7 @@ set -e
 
 cd "\`dirname "\$0"\`"
 
-cmake --build ${_buildpath}/${_buildtype} --parallel $(nproc)
+cmake --build ${_buildfolder} --parallel $(nproc)
 EOF
 
 chmod +x ./build.sh
