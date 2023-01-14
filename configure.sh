@@ -138,6 +138,9 @@ for i in "$@"; do
   esac
 done
 
+## Set again??
+_buildfolder="${_buildpath}/${_buildtype}"
+
 if ${_use_clang}; then
   export AR=llvm-ar
   export CC=clang
