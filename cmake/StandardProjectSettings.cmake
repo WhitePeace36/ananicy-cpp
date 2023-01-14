@@ -37,6 +37,7 @@ option(USE_BPF_PROC_IMPL "Use BPF as a proc listener impl" OFF)
 option(ENABLE_ANANICY_TESTS "Build AnanicyCpp tests" OFF)
 option(ENABLE_ANANICY_FUZZ_TESTS "Build AnanicyCpp fuzz tests" OFF)
 option(ENABLE_ANANICY_BENCHMARKS "Build AnanicyCpp benchmark" OFF)
+option(BUILD_WITH_RELOCS "Build ananicy-cpp with relocs included" OFF)
 
 option(ENABLE_IPO "Enable Interprocedural Optimization, aka Link Time Optimization (LTO)" OFF)
 
@@ -88,4 +89,13 @@ endif()
 # Use BPF as a proc listener
 if(USE_BPF_PROC_IMPL)
   add_definitions(-DUSE_BPF_PROC_IMPL)
+endif()
+
+# Build ananicy-cpp with relocs included
+if(BUILD_WITH_RELOCS)
+  add_link_options(-Wl,--emit-relocs)
+
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(-fno-reorder-blocks-and-partition)
+  endif()
 endif()

@@ -31,6 +31,7 @@ Options:
   --use_clang                  Use Clang compiler.
   --use_bpf_proc               Use BPF as a proc listener.
   --enable_systemd             Enable systemd support.
+  --enable_relocs              Build AnanicyCpp with relocs.
   --enable_tests               Enable AnanicyCpp tests.
   --enable_fuzz_tests          Enable AnanicyCpp Fuzz tests.
   --enable_benchmarks          Enable AnanicyCpp benchmarks.
@@ -49,6 +50,7 @@ _buildtype="RelWithDebInfo"
 _use_clang=false
 _use_bpf_proc=false
 _enable_systemd=false
+_enable_relocs=false
 _enable_tests=false
 _enable_fuzz_tests=false
 _enable_benchmarks=false
@@ -83,6 +85,10 @@ for i in "$@"; do
       ;;
     --enable_systemd)
       _enable_systemd=true
+      shift # past argument=value
+      ;;
+    --enable_relocs)
+      _enable_relocs=true
       shift # past argument=value
       ;;
     --enable_tests)
@@ -129,6 +135,10 @@ fi
 
 if ${_enable_systemd}; then
   _configure_flags+=('-DENABLE_SYSTEMD=ON')
+fi
+
+if ${_enable_relocs}; then
+  _configure_flags+=('-DBUILD_WITH_RELOCS=ON')
 fi
 
 if ${_enable_tests}; then
