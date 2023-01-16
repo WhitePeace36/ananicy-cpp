@@ -108,6 +108,9 @@ echo "==== Launching benchmarks ===="
 
 cd "${CURRENT_DIR}"
 
+echo "==== Cleanup build folder before rebuilding with generated profile ===="
+rm -rf "${BUILD_DIR}"
+
 ## GCC
 export CXXFLAGS="${SAVED_CXXFLAGS} -fprofile-dir=${PGO_DIR} -fprofile-use=${PGO_DIR} -fprofile-correction"
 ## Clang
