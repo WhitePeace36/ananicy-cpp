@@ -114,7 +114,8 @@ rm -rf "${BUILD_DIR}"
 ## GCC
 export CXXFLAGS="${SAVED_CXXFLAGS} -fprofile-dir=${PGO_DIR} -fprofile-use=${PGO_DIR} -fprofile-correction"
 ## Clang
-#export CXXFLAGS="${SAVED_CXXFLAGS} -fprofile-use=${PGO_DIR}"
+#export CXXFLAGS="${SAVED_CXXFLAGS} -fprofile-use=${PGO_DIR} -Wno-backend-plugin"
+#llvm-profdata merge -output="${PGO_DIR}/default.profdata" "${PGO_DIR}"/*.profraw
 
 echo "==== Starting configuration step with generated profiles ===="
 ## GCC
