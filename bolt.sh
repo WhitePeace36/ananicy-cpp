@@ -144,19 +144,20 @@ mkdir -p "${BOLT_DATA_DIR}"
 mkdir -p "${BOLT_BINARY_DIR}"
 
 echo "==== Starting configuration step ===="
-./configure.sh -t=Release --use_clang --enable_relocs --enable_tests "${@}" || die "configure.sh failed!"
+./configure.sh -t=Release --use_clang --enable_benchmarks --enable_relocs --enable_tests "${@}" || die "configure.sh failed!"
 echo "==== Starting build step ===="
 ./build.sh || die "build.sh failed!"
 
 echo "==== Start instrumenting ===="
 instrument_binary "${BUILD_DIR}/src/tests/test-core" "${BOLT_DATA_DIR}/test-core.fdata" "${BOLT_BINARY_DIR}/test-core"
 instrument_binary "${BUILD_DIR}/src/tests/test-utility" "${BOLT_DATA_DIR}/test-utility.fdata" "${BOLT_BINARY_DIR}/test-utility"
+instrument_binary "${BUILD_DIR}/benchmarks/ananicy_cpp_benchmarks" "${BOLT_DATA_DIR}/ananicy_cpp_benchmarks.fdata" "${BOLT_BINARY_DIR}/ananicy_cpp_benchmarks"
 
 echo "==== Launching test suite ===="
 "${BOLT_BINARY_DIR}"/test-core || die "core test failed!"
 "${BOLT_BINARY_DIR}"/test-utility || die "utility test failed!"
-#echo "==== Launching benchmarks ===="
-#./benchmarks/ananicy_cpp_benchmarks || die "failed on ananicy-cpp benchmarks!"
+echo "==== Launching benchmarks ===="
+"${BOLT_BINARY_DIR}"/ananicy_cpp_benchmarks || die "failed on ananicy-cpp benchmarks!"
 
 echo "==== Finished instrumenting ===="
 
