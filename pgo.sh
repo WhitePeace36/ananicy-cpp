@@ -85,16 +85,11 @@ rm -rf "${PGO_DIR}"
 echo "==== Creating necessary folders ===="
 mkdir -p "${PGO_DIR}"
 
-## GCC
-export CXXFLAGS="${SAVED_CXXFLAGS} -fprofile-dir=${PGO_DIR} -fprofile-generate=${PGO_DIR}"
-## Clang
-#export CXXFLAGS="${SAVED_CXXFLAGS} -fprofile-generate=${PGO_DIR}"
-
 echo "==== Starting configuration step ===="
 ## GCC
-./configure.sh -t=Release              --enable_benchmarks --enable_tests "${@}" || die "configure.sh failed!"
+./configure.sh -t=Release              --pgofolder="${PGO_DIR}" --generate_pgo --enable_benchmarks --enable_tests "${@}" || die "configure.sh failed!"
 ## Clang
-#./configure.sh -t=Release --use_clang --enable_benchmarks --enable_tests "${@}" || die "configure.sh failed!"
+#./configure.sh -t=Release --use_clang --pgofolder="${PGO_DIR}" --generate_pgo --enable_benchmarks --enable_tests "${@}" || die "configure.sh failed!"
 echo "==== Starting build step ===="
 ./build.sh || die "build.sh failed!"
 
@@ -111,16 +106,13 @@ cd "${CURRENT_DIR}"
 echo "==== Cleanup build folder before rebuilding with generated profile ===="
 rm -rf "${BUILD_DIR}"
 
-## GCC
-export CXXFLAGS="${SAVED_CXXFLAGS} -fprofile-dir=${PGO_DIR} -fprofile-use=${PGO_DIR} -fprofile-correction"
 ## Clang
-#export CXXFLAGS="${SAVED_CXXFLAGS} -fprofile-use=${PGO_DIR} -Wno-backend-plugin"
 #llvm-profdata merge -output="${PGO_DIR}/default.profdata" "${PGO_DIR}"/*.profraw
 
 echo "==== Starting configuration step with generated profiles ===="
 ## GCC
-./configure.sh -t=Release              --enable_benchmarks --enable_tests "${@}" || die "configure.sh failed!"
+./configure.sh -t=Release              --pgofolder="${PGO_DIR}" --use_pgo --enable_benchmarks --enable_tests "${@}" || die "configure.sh failed!"
 ## Clang
-#./configure.sh -t=Release --use_clang --enable_benchmarks --enable_tests "${@}" || die "configure.sh failed!"
+#./configure.sh -t=Release --use_clang --pgofolder="${PGO_DIR}" --use_pgo --enable_benchmarks --enable_tests "${@}" || die "configure.sh failed!"
 echo "==== Starting build step with generated profiles ===="
 ./build.sh || die "build.sh failed!"

@@ -37,6 +37,9 @@ Options:
   --enable_tests               Enable AnanicyCpp tests.
   --enable_fuzz_tests          Enable AnanicyCpp Fuzz tests.
   --enable_benchmarks          Enable AnanicyCpp benchmarks.
+  --generate_pgo               Generate PGO profile.
+  --use_pgo                    Use generated PGO profile.
+  --pgofolder=                 Specify PGO directory.
   --enable_sanitizer_address   Enable ASAN.
   --enable_sanitizer_ub        Enable UBSAN.
   --enable_sanitizer_leak      Enable LEAKSAN.
@@ -58,6 +61,9 @@ _enable_relocs=false
 _enable_tests=false
 _enable_fuzz_tests=false
 _enable_benchmarks=false
+_generate_pgo=false
+_use_pgo=false
+_pgofolder="$PWD/pgo-data"
 _sanitizer_address=OFF
 _sanitizer_UB=OFF
 _sanitizer_leak=OFF
@@ -111,6 +117,18 @@ for i in "$@"; do
       ;;
     --enable_benchmarks)
       _enable_benchmarks=true
+      shift # past argument=value
+      ;;
+    --generate_pgo)
+      _generate_pgo=true
+      shift # past argument=value
+      ;;
+    --use_pgo)
+      _use_pgo=true
+      shift # past argument=value
+      ;;
+    --pgofolder=*)
+      _pgofolder="${i#*=}"
       shift # past argument=value
       ;;
     --enable_sanitizer_address)
@@ -172,6 +190,13 @@ if ${_enable_benchmarks}; then
   _configure_flags+=('-DENABLE_ANANICY_BENCHMARKS=ON')
 fi
 
+if ${_generate_pgo}; then
+  _configure_flags+=('-DENABLE_PGO_BUILD=instrument')
+fi
+if ${_use_pgo}; then
+  _configure_flags+=('-DENABLE_PGO_BUILD=use')
+fi
+
 if command -v ninja &> /dev/null; then
   _configure_flags+=('-GNinja')
 fi
@@ -191,6 +216,7 @@ cmake -S . -B ${_buildfolder} \
     -DCMAKE_BUILD_TYPE=${_buildtype} \
     -DCMAKE_INSTALL_PREFIX=${_prefix} \
     -DCMAKE_INSTALL_LIBDIR=${_libdir} \
+    -DPROFILES_PGO_DIR=${_pgofolder} \
     "${_configure_flags[@]}"
 
 
