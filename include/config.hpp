@@ -5,15 +5,12 @@
 #ifndef ANANICY_CPP_CONFIG_HPP
 #define ANANICY_CPP_CONFIG_HPP
 
-#include <filesystem>
-#include <optional>
-#include <unordered_map>
-#include <utility>
-#include <string>
-#include <string_view>
-
-#include <fmt/format.h>
-#include <fmt/chrono.h>
+#include <chrono>        // for duration
+#include <filesystem>    // for path
+#include <optional>      // for optional
+#include <string>        // for string
+#include <string_view>   // for string_view
+#include <unordered_map> // for unordered_map
 
 #include <spdlog/spdlog.h>
 

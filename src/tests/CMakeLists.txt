@@ -24,7 +24,7 @@ list(APPEND test_SOURCES
 
 add_library(test_libreq STATIC ${test_SOURCES})
 target_include_directories(test_libreq PRIVATE ${CMAKE_BINARY_DIR}/include ${CMAKE_SOURCE_DIR}/include ${CMAKE_CURRENT_DIR})
-target_link_libraries(test_libreq PRIVATE stl_polyfill::format nlohmann_json::nlohmann_json spdlog::spdlog fmt::fmt)
+target_link_libraries(test_libreq PRIVATE nlohmann_json::nlohmann_json spdlog::spdlog fmt::fmt)
 if(USE_BPF_PROC_IMPL)
     target_link_libraries(test_libreq PRIVATE ananicy_cpp_bpf_cpp::ananicy_cpp_bpf_cpp ananicy_cpp_bpf_c::ananicy_cpp_bpf_c)
 else()
@@ -63,7 +63,7 @@ foreach(file ${files})
         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
     )
     target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include ${CMAKE_SOURCE_DIR}/include ${CMAKE_CURRENT_DIR})
-    target_link_libraries(${testcase} PRIVATE test_libreq stl_polyfill::format nlohmann_json::nlohmann_json spdlog::spdlog fmt::fmt doctest::doctest)
+    target_link_libraries(${testcase} PRIVATE test_libreq nlohmann_json::nlohmann_json spdlog::spdlog fmt::fmt doctest::doctest)
 
     add_test(NAME "${testcase}"
         COMMAND ${testcase} ${DOCTEST_TEST_FILTER} --no-skip
@@ -87,7 +87,7 @@ if(ENABLE_ANANICY_FUZZ_TESTS AND CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
         set_target_properties(${testcase} PROPERTIES LINK_OPTIONS "-fsanitize=address,fuzzer")
         target_compile_definitions(${testcase} PRIVATE TEST_DIR=${TEST_DIR})
         target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include ${CMAKE_SOURCE_DIR}/include ${CMAKE_CURRENT_DIR})
-        target_link_libraries(${testcase} PRIVATE test_libreq stl_polyfill::format nlohmann_json::nlohmann_json spdlog::spdlog fmt::fmt)
+        target_link_libraries(${testcase} PRIVATE test_libreq nlohmann_json::nlohmann_json spdlog::spdlog fmt::fmt)
     endforeach()
 elseif(ENABLE_ANANICY_FUZZ_TESTS)
     message(FATAL_ERROR "Clang compiler is required for fuzz tests")

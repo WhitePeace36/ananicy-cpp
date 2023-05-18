@@ -4,8 +4,8 @@
 #include "config.hpp"
 #include "core/cgroups.hpp"
 #include "core/priority.hpp"
-#include "core/rules.hpp"
 #include "core/process.hpp"
+#include "core/rules.hpp"
 #include "core/worker.hpp"
 #include "service.hpp"
 #include "utility/argument_parser.hpp"
@@ -21,6 +21,7 @@
 #include <iostream>
 #include <string_view>
 
+#include <fmt/chrono.h>
 #include <fmt/format.h>
 
 #include <spdlog/spdlog.h>

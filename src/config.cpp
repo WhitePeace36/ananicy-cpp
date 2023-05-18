@@ -5,9 +5,10 @@
 #include "config.hpp"
 #include "core/priority.hpp"
 
-#include <chrono>
+#include <chrono> // for system_clock::now
 #include <fstream>
 
+#include <fmt/chrono.h>
 #include <fmt/format.h>
 
 #include <spdlog/spdlog.h>
@@ -44,20 +45,21 @@ Config::Config(const std::filesystem::path &config_path) {
   config["apply_latnice"] = latnice_support_status;
 
   if (!exists(config_path)) {
-    spdlog::error(fmt::format("{}: file {} does not exist", __func__, std::string_view{config_path.c_str()}));
+    spdlog::error(fmt::format("{}: file {} does not exist", __func__,
+                              std::string_view{config_path.c_str()}));
 
     std::string config_string = static_cast<std::string>(*this);
     spdlog::info("{}: Default config:\n{:s}", __func__, config_string);
 
     spdlog::info(fmt::format("{}: Writing default config to {}", __func__,
-                 std::string_view{config_path.c_str()}));
+                             std::string_view{config_path.c_str()}));
 
     std::ofstream config_file(config_path);
     config_file << config_string << std::flush;
 
     if (!config_file) {
       spdlog::error(fmt::format("{}: Cannot write config to {}", __func__,
-                    std::string_view{config_path.c_str()}));
+                                std::string_view{config_path.c_str()}));
     }
 
     return;
