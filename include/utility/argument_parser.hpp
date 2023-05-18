@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <concepts>
-#include <format>
 #include <map>
 #include <optional>
 #include <string>
@@ -10,6 +9,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include <fmt/format.h>
 
 #include <spdlog/spdlog.h>
 
@@ -22,7 +23,7 @@ private:
 public:
   argparse_error() = default;
   explicit(false) argparse_error(std::string message)
-      : error_message(message){};
+      : error_message(std::move(message)){};
   explicit(false) operator bool() const { return error_message.has_value(); }
   [[nodiscard]] std::string what() const { return error_message.value_or(""); }
 };
@@ -39,7 +40,7 @@ public:
   operator std::optional<std::string>() const { return m_value; }
 
   template <std::integral T> std::optional<T> value() const {
-    spdlog::debug("{}: m_value = {}", __func__, m_value.value_or("N/A"));
+    spdlog::debug(fmt::format("{}: m_value = {}", __func__, m_value.value_or("N/A")));
 
     if (!m_value.has_value())
       return {};
@@ -129,7 +130,7 @@ public:
 };
 } // namespace argparse
 
-template <> struct std::formatter<argparse::argument> {
+template <> struct fmt::formatter<argparse::argument> {
   template <typename ParseContext> constexpr auto parse(ParseContext &ctx);
 
   template <typename FormatContext>
@@ -137,13 +138,13 @@ template <> struct std::formatter<argparse::argument> {
 };
 
 template <typename ParseContext>
-constexpr auto std::formatter<argparse::argument>::parse(ParseContext &ctx) {
+constexpr auto fmt::formatter<argparse::argument>::parse(ParseContext &ctx) {
   return ctx.begin();
 }
 
 template <typename FormatContext>
 constexpr auto
-std::formatter<argparse::argument>::format(const argparse::argument &arg,
+fmt::formatter<argparse::argument>::format(const argparse::argument &arg,
                                            FormatContext            &ctx) {
-  return std::format_to(ctx.out(), arg.operator std::string());
+  return fmt::format_to(ctx.out(), arg.operator std::string());
 }

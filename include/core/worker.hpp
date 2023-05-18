@@ -10,6 +10,7 @@
 #include "rules.hpp"
 #include "utility/synchronized_queue.hpp"
 #include "utility/utils.hpp"
+
 #include <thread>
 
 class Worker {

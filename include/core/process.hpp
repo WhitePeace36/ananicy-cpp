@@ -11,7 +11,7 @@
 #include "netlink_program.hpp"
 #endif
 #include "utility/synchronized_queue.hpp"
-#include "utility/utils.hpp"
+
 #include <string>
 #include <thread>
 

@@ -5,6 +5,8 @@
 #ifndef ANANICY_CPP_PRIORITY_HPP
 #define ANANICY_CPP_PRIORITY_HPP
 
+#include <sys/types.h>
+
 #include <string>
 #include <string_view>
 

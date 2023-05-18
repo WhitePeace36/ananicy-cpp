@@ -5,19 +5,25 @@
 #include "core/rules.hpp"
 #include "core/cgroups.hpp"
 
-#include <fstream>
-#include <iostream>
-#include <stack>
+#include <filesystem> // for path, recursive_directory_iterator
+#include <fstream> // for ifstream
+#include <iostream> // for cout
+#include <string> // for string, getline
+#include <string_view> // for string_view
+
+#include <fmt/format.h>
 
 #include <spdlog/spdlog.h>
 
 namespace fs = std::filesystem;
 
+using nlohmann::json;
+
 Rules::Rules(const fs::path &ruleset_directory, Config *config_src)
     : m_config(config_src) {
   if (!exists(ruleset_directory)) {
-    spdlog::error("{}: directory {} does not exist", __func__,
-                  ruleset_directory.string());
+    spdlog::error(fmt::format("{}: directory {} does not exist", __func__,
+                              std::string_view{ruleset_directory.c_str()}));
     return;
   }
   load_rules_from_directory(ruleset_directory);
@@ -69,12 +75,14 @@ bool Rules::load_rule_from_string(const std::string_view &line) {
       const auto &rule_cgroup = rule["cgroup"];
       m_cgroup_rules.insert_or_assign(rule_cgroup, rule);
     } else {
-      spdlog::error("Rule does not have a name, or name is not a string: {}",
-                    rule.dump());
+      spdlog::error(
+          fmt::format("Rule does not have a name, or name is not a string: {}",
+                      rule.dump()));
       return false;
     }
   } catch (const std::exception &e) {
-    spdlog::warn("Error parsing JSON: {}, line: {}", e.what(), line);
+    spdlog::warn(
+        fmt::format("Error parsing JSON: {}, line: {}", e.what(), line));
     return false;
   }
 
@@ -92,13 +100,14 @@ void Rules::load_rules_from_file(const fs::path &path) {
 
 void Rules::show_all_rules() const noexcept {
   for (const auto &rule : m_cgroup_rules) {
-    spdlog::debug("Cgroup: {}, {}", rule.first, rule.second.dump());
+    spdlog::debug(
+        fmt::format("Cgroup: {}, {}", rule.first, rule.second.dump()));
   }
   for (const auto &rule : m_type_rules) {
-    spdlog::debug("Type: {}, {}", rule.first, rule.second.dump());
+    spdlog::debug(fmt::format("Type: {}, {}", rule.first, rule.second.dump()));
   }
   for (const auto &rule : m_program_rules) {
-    spdlog::debug("Rule: {}, {}", rule.first, rule.second.dump());
+    spdlog::debug(fmt::format("Rule: {}, {}", rule.first, rule.second.dump()));
   }
 }
 
@@ -131,7 +140,8 @@ void Rules::load_rules_from_directory(const fs::path &dir_path) {
 
   for (const auto &dir_entry : fs::recursive_directory_iterator{dir_path}) {
     if (fs::is_directory(dir_entry)) {
-      spdlog::debug("Scanning directory {}", dir_entry.path().c_str());
+      spdlog::debug(fmt::format("Scanning directory {}",
+                                std::string_view{dir_entry.path().c_str()}));
       continue;
     }
 

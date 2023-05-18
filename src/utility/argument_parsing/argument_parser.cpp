@@ -1,21 +1,19 @@
 #include "utility/argument_parser.hpp"
 
+#include <algorithm>
 #include <cxxabi.h>
-#include <format>
 #include <functional>
 #include <iostream>
-#include <algorithm>
 #include <queue>
-#include <spdlog/spdlog.h>
 #include <utility>
 
 namespace argparse {
 
 argparse_error
 argument_parser::parse_args(const std::vector<std::string> &params) {
-  std::unordered_map<char, unsigned>        short_args{};
-  std::unordered_map<std::string, unsigned> long_args{};
-  std::queue<unsigned>                      positional_args{};
+  std::unordered_map<char, std::uint32_t>        short_args{};
+  std::unordered_map<std::string, std::uint32_t> long_args{};
+  std::queue<std::uint32_t>                      positional_args{};
 
   argparse_error return_result{};
 
@@ -45,13 +43,13 @@ argument_parser::parse_args(const std::vector<std::string> &params) {
       value = params[i + 1];
     }
 
-    //    std::cout << std::format("Examining param: {}", param) << std::endl;
+    //    std::cout << fmt::format("Examining param: {}", param) << std::endl;
 
     if (param[0] == '-' && param[1] == '-') {
       std::string param_name = param.substr(2);
       if (long_args.contains(param_name)) {
         argument &arg = m_args[long_args[param_name]];
-        //        std::cout << std::format("Long argument: {}, arg: {} ({})",
+        //        std::cout << fmt::format("Long argument: {}, arg: {} ({})",
         //                                 param,
         //                                 arg.get_long_names(),
         //                                 arg.get_short_names()) << std::endl;
@@ -61,12 +59,12 @@ argument_parser::parse_args(const std::vector<std::string> &params) {
           arg.set_value(value.value());
           i++;
         } else {
-          return_result = std::format(
+          return_result = fmt::format(
               "Expected argument for parameter '{}', none were found!",
               param_name);
         }
       } else {
-        return_result = std::format("Unknown argument {}!", param_name);
+        return_result = fmt::format("Unknown argument {}!", param_name);
       }
 
     } else if (param[0] == '-') {
@@ -80,25 +78,26 @@ argument_parser::parse_args(const std::vector<std::string> &params) {
             arg.set_value(value.value());
             i++;
           } else {
-            return_result = std::format(
+            return_result = fmt::format(
                 "Expected argument for parameter '{}', none were found!",
                 short_param);
           }
         } else {
-          return_result = std::format("Unknown argument {}!", short_param);
+          return_result = fmt::format("Unknown argument {}!", short_param);
         }
       }
     } else if (!positional_args.empty()) { // positional arg
       auto &arg = m_args[positional_args.front()];
 
-      spdlog::trace("Setting arg '{}' to {}", arg.get_name(), param);
+      spdlog::trace(
+          fmt::format("Setting arg '{}' to {}", arg.get_name(), param));
 
       arg.set_value(std::string(param));
 
       positional_args.pop();
 
     } else {
-      return_result = std::format("Argument '{}' does not exist!", param);
+      return_result = fmt::format("Argument '{}' does not exist!", param);
     }
   }
 
@@ -126,7 +125,8 @@ argument &argument_parser::add_argument(const std::string &name) {
   return m_args[arg.id];
 }
 
-argparse_error argument_parser::parse_args(const int32_t argc, const char **argv) {
+argparse_error argument_parser::parse_args(const int32_t argc,
+                                           const char  **argv) {
   std::vector<std::string> args;
   args.reserve(static_cast<std::size_t>(argc));
   for (int32_t i = 0; i < argc; ++i) {
@@ -141,24 +141,24 @@ argument_parser::argument_parser(std::string program_name)
 }
 
 std::optional<argument> argument_parser::get_arg(const std::string &name) {
-  auto&& result = std::find_if(m_args.begin(), m_args.end(), [name](auto&& arg) {
-    return (arg.second == name);
-  });
-  return (result != m_args.end()) ? std::optional{result->second} : std::nullopt;
+  auto &&result =
+      std::find_if(m_args.begin(), m_args.end(),
+                   [name](auto &&arg) { return (arg.second == name); });
+  return (result != m_args.end()) ? std::optional{result->second}
+                                  : std::nullopt;
 }
 
 argument_value argument_parser::operator[](const std::string &name) {
   const auto &arg = get_arg(name);
 
   if (!arg.has_value()) {
-    throw std::runtime_error(std::format("Unknown argument: {}", name));
+    throw std::runtime_error(fmt::format("Unknown argument: {}", name));
   }
 
   return {arg->get_value(), arg->get_type()};
 }
 
-[[gnu::pure]]
-argument_value::operator bool() const {
+[[gnu::pure]] argument_value::operator bool() const {
   if (!m_value.has_value())
     return false;
   if (m_type != typeid(bool))
@@ -183,7 +183,7 @@ void argument_parser::print_help() {
       if (arg.get_name() == "command")
         continue;
 
-      std::format_to(std::back_inserter(help_positionals_message),
+      fmt::format_to(std::back_inserter(help_positionals_message),
                      "\t{:32}\t\t{}\n", arg.get_name(),
                      arg.get_description().value_or(""));
     } else {
@@ -202,12 +202,12 @@ void argument_parser::print_help() {
           option_string.append(", ");
         }
       }
-      std::format_to(std::back_inserter(help_options_message),
+      fmt::format_to(std::back_inserter(help_options_message),
                      "\t{:32}\t\t{}\n", option_string,
                      arg.get_description().value_or(""));
     }
   }
-  std::cout << std::format("Usage: {} [options...] positionals\n"
+  std::cout << fmt::format("Usage: {} [options...] positionals\n"
                            "Options:\n"
                            "{}\n"
                            "Positionals:\n"

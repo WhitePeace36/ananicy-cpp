@@ -11,6 +11,8 @@
 #include <condition_variable>
 #include <mutex>
 #include <optional>
+#include <string>
+#include <string_view>
 
 class InterruptHandler {
 public:
@@ -35,7 +37,7 @@ private:
 
 std::optional<std::string> get_env(const std::string &name);
 
-std::string get_error_string(std::int32_t error_number);
+std::string_view get_error_string(std::int32_t error_number);
 
 std::string read_file(const std::string &path);
 

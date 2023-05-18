@@ -34,8 +34,8 @@ std::optional<std::string> get_env(const std::string &name) {
   return {};
 }
 
-std::string get_error_string(int error_number) {
-  return std::string{strerror(error_number)};
+std::string_view get_error_string(int error_number) {
+  return std::string_view{strerror(error_number)};
 }
 
 std::string read_file(const std::string &path) {

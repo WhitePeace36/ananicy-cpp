@@ -1,14 +1,11 @@
-#define _XOPEN_SOURCE 700 // NOLINT(bugprone-reserved-identifier)
-
+#define _XOPEN_SOURCE       700 // NOLINT(bugprone-reserved-identifier)
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
-#include <format>
-#include <spdlog/spdlog.h>
 
 #include "config.hpp"
 #include "core/cgroups.hpp"
 #include "core/priority.hpp"
-#include "core/process.hpp"
 #include "core/rules.hpp"
+#include "core/process.hpp"
 #include "core/worker.hpp"
 #include "service.hpp"
 #include "utility/argument_parser.hpp"
@@ -18,11 +15,15 @@
 #include "utility/utils.hpp"
 #include "version.hpp"
 
+#include <cerrno>
 #include <csignal>
-#include <cstdlib>
-#include <filesystem>
+
 #include <iostream>
-#include <mutex>
+#include <string_view>
+
+#include <fmt/format.h>
+
+#include <spdlog/spdlog.h>
 
 using namespace std::chrono_literals;
 
@@ -88,7 +89,7 @@ int main(const int argc, const char **argv) {
 
   argparse::argparse_error err = parser.parse_args(argc, argv);
   if (err) {
-    spdlog::critical("Argument parsing error: {}", err.what());
+    spdlog::critical(fmt::format("Argument parsing error: {}", err.what()));
     parser.print_help();
     return EXIT_FAILURE;
   }
@@ -99,15 +100,15 @@ int main(const int argc, const char **argv) {
   }
 
   if (parser["version"]) {
-    std::cout << std::format("Ananicy Cpp {}\n", VERSION);
+    std::cout << fmt::format("Ananicy Cpp {}\n", VERSION);
     return EXIT_SUCCESS;
   }
 
   SingletonProcess singleton("/AnanicyCppMutex");
   if (parser["force-remove-semaphore"]) {
     if (!SingletonProcess::remove(singleton.get_name())) {
-      std::cerr << std::format("Failed to remove semaphore! msg '{}'\n",
-                               strerror(errno));
+      std::cerr << fmt::format("Failed to remove semaphore! msg '{}'\n",
+                               std::string_view{strerror(errno)});
       return EXIT_FAILURE;
     }
     std::cerr << "Semaphore was successfully removed!\n";
@@ -144,10 +145,11 @@ int main(const int argc, const char **argv) {
     spdlog::info("Manual scanning enabled! Increasing Ananicy Nice value to "
                  "prevent lag.");
     priority::set_priority(get_pid(), 19);
-    spdlog::info("Checking frequency set to {}", conf.check_freq());
+    spdlog::info(
+        fmt::format("Checking frequency set to {}", conf.check_freq()));
   }
 
-  std::cout << std::format("Ananicy Cpp {}\n", VERSION) << std::flush;
+  std::cout << fmt::format("Ananicy Cpp {}\n", VERSION) << std::flush;
 
   Rules rules(config_dir_path, &conf);
 
@@ -259,7 +261,8 @@ int main(const int argc, const char **argv) {
       spdlog::info("Starting full-scan");
       processListener.full_scan();
     }
-    spdlog::debug("Processed processes: {}", worker.processed_processes());
+    spdlog::debug(
+        fmt::format("Processed processes: {}", worker.processed_processes()));
   }
   spdlog::info("Stopping Ananicy Cpp...");
   service::set_status(service::STOPPING);
@@ -277,8 +280,9 @@ int main(const int argc, const char **argv) {
   const std::chrono::duration<double, std::ratio<1, 1>> duration =
       std::chrono::system_clock::now() - start_time;
 
-  spdlog::info("Summary:\n{} processes processed, ran for {:%H:%M:%S} seconds",
-               worker.processed_processes(), duration);
+  spdlog::info(fmt::format(
+      "Summary:\n{} processes processed, ran for {:%H:%M:%S} seconds",
+      worker.processed_processes(), duration));
 
   return EXIT_SUCCESS;
 }

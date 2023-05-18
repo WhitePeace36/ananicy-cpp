@@ -134,12 +134,11 @@ set(CMAKE_MESSAGE_CONTEXT "")
 
 # std::format
 set(STL_FORMAT_USE_EXTERNAL_FMTLIB ON CACHE BOOL "" FORCE)
-if (NOT TARGET stl_polyfill::format)
-    add_subdirectory(external/std-format)
-endif()
-target_link_libraries(ananicy-cpp PRIVATE stl_polyfill::format)
-set(CMAKE_MESSAGE_CONTEXT "")
-
+#if (NOT TARGET stl_polyfill::format)
+#    add_subdirectory(external/std-format)
+#endif()
+#target_link_libraries(ananicy-cpp PRIVATE stl_polyfill::format)
+#set(CMAKE_MESSAGE_CONTEXT "")
 
 # spdlog
 set(CMAKE_MESSAGE_CONTEXT "spdlog")

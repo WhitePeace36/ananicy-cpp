@@ -13,12 +13,10 @@
 
 #include <nlohmann/json.hpp>
 
-using nlohmann::json;
-
-using ruleset = std::unordered_map<std::string, json>;
-
 class Rules {
 private:
+  using ruleset = std::unordered_map<std::string, nlohmann::json>;
+
   Config *m_config;
   ruleset m_program_rules{};
   ruleset m_type_rules{};
@@ -30,7 +28,7 @@ public:
   bool load_rule_from_string(const std::string_view &line);
   void load_rules_from_file(const std::filesystem::path &path);
   void load_rules_from_directory(const std::filesystem::path &dir_path);
-  json get_rule(const std::string &name) const noexcept;
+  nlohmann::json get_rule(const std::string &name) const noexcept;
 
   void create_cgroups() const noexcept;
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <sys/types.h>
+
 #include <filesystem>
 #include <string>
 #include <string_view>

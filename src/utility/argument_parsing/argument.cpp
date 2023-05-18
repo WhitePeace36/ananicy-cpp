@@ -2,12 +2,13 @@
 
 #include <cstdlib>
 #include <cxxabi.h>
-#include <format>
 #include <iostream>
 #include <memory>
 #include <queue>
 #include <string>
 #include <utility>
+
+#include <fmt/ranges.h>
 
 namespace argparse {
 std::atomic<unsigned> argument::_id = 0;
@@ -101,7 +102,7 @@ argument &argument::name(const std::string &name_value) {
 }
 
 argument::operator std::string() const {
-  return std::format("Argument-{}: {} {}, long: {}, short: {}, value: {}", id,
+  return fmt::format("Argument-{}: {} {}, long: {}, short: {}, value: {}", id,
                      demangle_symbol(m_value_type), m_name, get_long_names(),
                      get_short_names(), get_value().value_or("<undefined>"));
 }

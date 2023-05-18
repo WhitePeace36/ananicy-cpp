@@ -1,20 +1,18 @@
-#include <utility/process_info.hpp>
-
-#include "core/priority.hpp"
+#include "utility/process_info.hpp"
+#include "core/process.hpp"
+#include "process_helpers.hpp"
 #include "syscalls.h"
 #include "utility/utils.hpp"
 
 #include <concepts>
-#include <core/process.hpp>
 #include <filesystem>
-#include <format>
-#include <fstream>
-#include <iostream>
 #include <optional>
-#include <spdlog/spdlog.h>
+#include <string>
 #include <string_view>
 
-#include "process_helpers.hpp"
+#include <fmt/format.h>
+
+#include <spdlog/spdlog.h>
 
 namespace fs = std::filesystem;
 
@@ -63,7 +61,7 @@ nlohmann::json get_autogroup_map() {
 }
 
 static nlohmann::json parse_proc_status(process_id_t pid) {
-  std::ifstream  status_file{std::format("/proc/{}/status", pid)};
+  std::ifstream  status_file{fmt::format("/proc/{}/status", pid)};
   nlohmann::json status = nlohmann::json::object();
 
   std::string line;
@@ -161,7 +159,7 @@ static io_prio_attributes get_io_prio_attributes(process_id_t pid) {
 }
 
 static std::optional<process_info> get_process_info(process_id_t pid) {
-  if (!exists(fs::path(std::format("/proc/{}", pid))))
+  if (!exists(fs::path(fmt::format("/proc/{}", pid))))
     return {};
 
   process_info info = nlohmann::json::object();
@@ -179,18 +177,18 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
 
     info["tpid"] = pid;
 
-    info["exe"] = fs::read_symlink(std::format("/proc/{}/exe", pid), ec);
+    info["exe"] = fs::read_symlink(fmt::format("/proc/{}/exe", pid), ec);
     if (ec)
       info["exe"] = nullptr;
 
     std::string comm;
-    std::getline(std::ifstream(std::format("/proc/{}/comm", pid)), comm);
+    std::getline(std::ifstream(fmt::format("/proc/{}/comm", pid)), comm);
     info["comm"] = comm;
 
     info["cmd"] = get_command_from_pid(static_cast<pid_t>(pid));
 
     std::string stat;
-    std::getline(std::ifstream(std::format("/proc/{}/stat", pid)), stat);
+    std::getline(std::ifstream(fmt::format("/proc/{}/stat", pid)), stat);
     info["stat"] = stat;
 
     const auto stat_name_begin = stat.find_first_of('(') + 1;
@@ -200,7 +198,7 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
         stat.substr(stat_name_begin, stat_name_end - stat_name_begin);
 
     std::string autogroup_value;
-    std::getline(std::ifstream(std::format("/proc/{}/autogroup", pid)),
+    std::getline(std::ifstream(fmt::format("/proc/{}/autogroup", pid)),
                  autogroup_value);
     info["autogroup"] = get_autogroup_from_str(autogroup_value);
 
@@ -239,19 +237,21 @@ static std::optional<process_info> get_process_info(process_id_t pid) {
     }
 
     unsigned oom_score_adj = 0;
-    std::ifstream{std::format("/proc/{}/oom_score_adj", pid)} >> oom_score_adj;
+    std::ifstream{fmt::format("/proc/{}/oom_score_adj", pid)} >> oom_score_adj;
     info["oom_score_adj"] = oom_score_adj;
 
     info["cmdline"] = get_cmdline_from_pid(static_cast<int32_t>(pid));
 
   } catch (const fs::filesystem_error &e) {
-    spdlog::trace("{}: Error getting {} infos: {} ({}, {})", __func__, pid,
-                  e.what(), e.path1().string(), e.path2().string());
+    spdlog::trace(fmt::format("{}: Error getting {} infos: {} ({}, {})",
+                              __func__, static_cast<int32_t>(pid), e.what(),
+                              std::string_view{e.path1().c_str()},
+                              std::string_view{e.path2().c_str()}));
 
     info["incomplete"] = true;
   } catch (const std::exception &e) {
-    spdlog::trace("{:s}: Error getting {:d} infos: {}", __func__, pid,
-                  e.what());
+    spdlog::trace(fmt::format("{:s}: Error getting {:d} infos: {}", __func__,
+                              pid, e.what()));
     info["incomplete"] = true;
   }
 
@@ -264,7 +264,8 @@ nlohmann::json get_process_info_map() {
   const auto &is_valid_entry = [&process_map](auto &&entry_path) {
     const auto &entry_filename = entry_path.filename().c_str();
     if (!isdigit(entry_filename[0])) {
-      spdlog::trace("{}: Skipping entry '{}'", __func__, entry_path.c_str());
+      spdlog::trace(fmt::format("{}: Skipping entry '{}'", __func__,
+                                std::string_view{entry_path.c_str()}));
       return false;
     }
 
@@ -282,7 +283,7 @@ nlohmann::json get_process_info_map() {
     }
 
     try {
-      const auto &tasks_dir = std::format("{}/task", entry_path.c_str());
+      const auto &tasks_dir = fmt::format("{}/task", entry_path.c_str());
       for (const auto &dir_nested_entry : fs::directory_iterator(tasks_dir)) {
         const auto &nested_entry_path = dir_nested_entry.path();
         if (!is_valid_entry(nested_entry_path)) {

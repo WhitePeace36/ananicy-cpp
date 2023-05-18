@@ -1,10 +1,9 @@
 #include "service.hpp"
 
-#include <unistd.h>
-
-#include <spdlog/spdlog.h>
 #include <systemd/sd-daemon.h>
 #include <systemd/sd-login.h>
+
+#include <spdlog/spdlog.h>
 
 namespace service {
 status current_status = STARTING;

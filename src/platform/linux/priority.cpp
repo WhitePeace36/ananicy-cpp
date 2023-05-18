@@ -6,14 +6,11 @@
 #include "syscalls.h"
 #include "utility/utils.hpp"
 
-#include <cerrno>
-#include <sched.h>
+#include <filesystem>  // for directory_iterator
+#include <fstream>     // for ofstream
+#include <string_view> // for string_view
 
-#include <filesystem>
-#include <format>
-#include <fstream>
-#include <stdexcept>
-#include <type_traits>
+#include <fmt/format.h>
 
 #include <spdlog/spdlog.h>
 
@@ -30,12 +27,12 @@ static std::int32_t test_errno(std::int32_t            errcode,
     spdlog::warn("{}: Process not found: {}", func_name, pid);
     return 0;
   } else if (errcode == EACCES || errcode == EPERM) {
-    throw std::runtime_error(std::format(
+    throw std::runtime_error(fmt::format(
         "{}: Insufficient permission to set io-priority of process {}",
         func_name, pid));
   }
-  spdlog::error("{}: Unknown error, errno is {}({})", func_name,
-                strerror(errcode), errcode);
+  spdlog::error(fmt::format("{}: Unknown error, errno is {}({})", func_name,
+                            std::string_view{strerror(errcode)}, errcode));
   return -1;
 }
 
@@ -43,7 +40,7 @@ namespace priority {
 
 bool set_priority(pid_t pid, std::int32_t nice_value) {
   std::int32_t errcode = 0;
-  const auto  &task_path = std::format("/proc/{}/task", pid);
+  const auto  &task_path = fmt::format("/proc/{}/task", pid);
   try {
     for (const auto &dir_entry : fs::directory_iterator(task_path)) {
       const auto tid =
@@ -54,11 +51,12 @@ bool set_priority(pid_t pid, std::int32_t nice_value) {
       errcode = errno;
     }
   } catch (const fs::filesystem_error &e) {
-    spdlog::debug("{}: filesystem_error: {} (path: {})", __func__, e.what(),
-                  e.path1().string());
+    spdlog::debug(fmt::format("{}: filesystem_error: {} (path: {})", __func__,
+                              e.what(), std::string_view{e.path1().c_str()}));
     return 0;
   } catch (const std::exception &e) {
-    spdlog::critical("{}: unknown exception: {}", __func__, e.what());
+    spdlog::critical(
+        fmt::format("{}: unknown exception: {}", __func__, e.what()));
   }
 
   return test_errno(errcode, __func__, pid);
@@ -66,7 +64,7 @@ bool set_priority(pid_t pid, std::int32_t nice_value) {
 
 bool set_latency_nice(pid_t pid, std::int32_t latency_nice_value) {
   std::int32_t errcode = 0;
-  const auto  &task_path = std::format("/proc/{}/task", pid);
+  const auto  &task_path = fmt::format("/proc/{}/task", pid);
   try {
     for (const auto &dir_entry : fs::directory_iterator(task_path)) {
       const auto tid =
@@ -77,11 +75,12 @@ bool set_latency_nice(pid_t pid, std::int32_t latency_nice_value) {
       errcode = errno;
     }
   } catch (const fs::filesystem_error &e) {
-    spdlog::debug("{}: filesystem_error: {} (path: {})", __func__, e.what(),
-                  e.path1().string());
+    spdlog::debug(fmt::format("{}: filesystem_error: {} (path: {})", __func__,
+                              e.what(), std::string_view{e.path1().c_str()}));
     return 0;
   } catch (const std::exception &e) {
-    spdlog::critical("{}: unknown exception: {}", __func__, e.what());
+    spdlog::critical(
+        fmt::format("{}: unknown exception: {}", __func__, e.what()));
   }
 
   return test_errno(errcode, __func__, pid);
@@ -157,7 +156,7 @@ bool set_sched(pid_t pid, const std::string_view &sched_name,
 bool set_oom_score_adjust(pid_t pid, std::int32_t value) {
 
   try {
-    const auto oom_score_path{std::format("/proc/{}/oom_score_adj", pid)};
+    const auto oom_score_path{fmt::format("/proc/{}/oom_score_adj", pid)};
 
     std::ofstream oom_score_file{oom_score_path};
     if (oom_score_file.fail()) {
@@ -168,8 +167,9 @@ bool set_oom_score_adjust(pid_t pid, std::int32_t value) {
 
     oom_score_file << value;
   } catch (const fs::filesystem_error &e) {
-    spdlog::error("{}: Unknown filesystem error: {} (path: {})", __func__,
-                  e.what(), e.path1().string());
+    spdlog::error(fmt::format("{}: Unknown filesystem error: {} (path: {})",
+                              __func__, e.what(),
+                              std::string_view{e.path1().c_str()}));
     return false;
   }
 

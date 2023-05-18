@@ -11,10 +11,12 @@
 #include <cerrno>
 #endif
 
-#include <filesystem>
-#include <format>
-#include <fstream>
-#include <thread>
+#include <filesystem> // for path
+#include <fstream>    // for ifstream
+#include <thread>     // for jthread
+
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include <spdlog/spdlog.h>
 
@@ -81,8 +83,8 @@ static std::int32_t handle_events(BPFProgram                  *bpf_program,
   while (!g_exiting.load(std::memory_order_consume)) {
     status = bpf_program->pool_event();
     if (status < 0 && status != -EINTR) {
-      spdlog::error("Error received ({}): {}", status,
-                    get_error_string(-status));
+      spdlog::error(fmt::format("Error received ({}): {}", status,
+                                get_error_string(-status)));
       return EXIT_FAILURE;
     }
     /* reset err to return 0 if exiting */
@@ -129,12 +131,12 @@ static std::int32_t handle_events(NetlinkProgram              *netlink_program,
         continue;
       }
       if (errnum == ENOBUFS) {
-        spdlog::warn("Received message overrun - ({})",
-                     get_error_string(errnum));
+        spdlog::warn(fmt::format("Received message overrun - ({})",
+                                 get_error_string(errnum)));
         return EXIT_FAILURE;
       }
-      spdlog::error("Bad netlink status ({}): {}", errnum,
-                    get_error_string(errnum));
+      spdlog::error(fmt::format("Bad netlink status ({}): {}", errnum,
+                                get_error_string(errnum)));
       return EXIT_FAILURE;
     }
 
@@ -161,8 +163,8 @@ void ProcessQueue::init() noexcept {
   this->full_scan();
 
   if (!m_netlink_program.initialize()) {
-    spdlog::error("Failed to initialize the NETLINK program : {}",
-                  get_error_string(errno));
+    spdlog::error(fmt::format("Failed to initialize the NETLINK program : {}",
+                              get_error_string(errno)));
     m_status = false;
   }
 }
@@ -198,8 +200,8 @@ std::string get_command_from_pid(pid_t pid) {
     if (!cmdline.empty()) {
       auto exe_name_begin = cmdline[0].find_last_of('/');
 
-      spdlog::trace("{}: exe_name_begin: {}, cmdline: {}", __func__,
-                    exe_name_begin, cmdline);
+      spdlog::trace(fmt::format("{}: exe_name_begin: {}, cmdline: {}", __func__,
+                                exe_name_begin, cmdline));
 
       if (exe_name_begin != std::string::npos) {
         return cmdline[0].substr(exe_name_begin + 1);
@@ -208,8 +210,8 @@ std::string get_command_from_pid(pid_t pid) {
     }
 
   } catch (const fs::filesystem_error &e) {
-    spdlog::warn("{}: filesystem error: {} (path: {})", __func__, e.what(),
-                 e.path1().string());
+    spdlog::warn(fmt::format("{}: filesystem error: {} (path: {})", __func__,
+                             e.what(), std::string_view{e.path1().c_str()}));
   }
 
   // Exe method
@@ -220,7 +222,7 @@ std::string get_command_from_pid(pid_t pid) {
    */
   if (exe_fail_count < COMMAND_NAME_HEURISTIC_SKIP_EXE_FAILURES) {
     try {
-      const fs::path proc_path{std::format("/proc/{}/exe", pid)};
+      const fs::path proc_path{fmt::format("/proc/{}/exe", pid)};
 
       const fs::path exe_path = read_symlink(proc_path);
       auto           exe_name = exe_path.filename().string();
@@ -240,21 +242,21 @@ std::string get_command_from_pid(pid_t pid) {
       else if (errcode == EACCES || errcode == EPERM)
         exe_fail_count++;
 
-      spdlog::trace("{}: read symlink failed: {}, code: {}", __func__,
-                    e.code().message(), errcode);
+      spdlog::trace(fmt::format("{}: read symlink failed: {}, code: {}",
+                                __func__, e.code().message(), errcode));
     }
   }
 
   // Comm method
   try {
-    std::ifstream comm_file(std::format("/proc/{}/comm", pid));
+    std::ifstream comm_file(fmt::format("/proc/{}/comm", pid));
     std::string   comm;
 
     std::getline(comm_file, comm);
     return comm;
   } catch (const fs::filesystem_error &e) {
-    spdlog::error("{}: filesystem error: {} (path: {})", __func__, e.what(),
-                  e.path1().string());
+    spdlog::error(fmt::format("{}: filesystem error: {} (path: {})", __func__,
+                              e.what(), std::string_view{e.path1().c_str()}));
   }
 
   return {"<unknown>"};

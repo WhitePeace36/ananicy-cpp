@@ -1,13 +1,13 @@
 #include "utility/backtrace.hpp"
 
-#include <cstdlib>
-#include <cxxabi.h>
-#include <execinfo.h>
+#include <cstdlib> // for free
+#include <cxxabi.h> // for abi::__cxa_demangle
+#include <execinfo.h> // for backtrace, backtrace_symbols
 
-#include <exception>
-#include <format>
-#include <iostream>
-#include <stdexcept>
+#include <exception> // for current_exception, exception_ptr
+#include <iostream> // for cerr
+
+#include <fmt/format.h>
 
 static constexpr std::int32_t BACKTRACE_LENGTH = 20;
 
@@ -18,9 +18,9 @@ void print_trace() noexcept {
   int    size = backtrace(backtrace_buffer, BACKTRACE_LENGTH);
   char **lines = backtrace_symbols(backtrace_buffer, size);
   if (lines != nullptr) {
-    std::cerr << std::format("Obtained {} stack frames.\n", size);
+    std::cerr << fmt::format("Obtained {} stack frames.\n", size);
     for (int i = 0; i < size; ++i) {
-      std::cerr << std::format("({}) {}\n", i, lines[i]);
+      std::cerr << fmt::format("({}) {}\n", i, lines[i]);
     }
   }
 
@@ -40,14 +40,14 @@ void print_trace() noexcept {
       std::rethrow_exception(exception_ptr);
     }
   } catch (const std::exception &e) {
-    std::cerr << std::format("{} caught unhandled exception: {} {}",
+    std::cerr << fmt::format("{} caught unhandled exception: {} {}",
                              __PRETTY_FUNCTION__,
                              abi::__cxa_demangle(typeid(e).name(), nullptr,
                                                  nullptr, nullptr),
                              e.what())
               << std::endl;
   } catch (...) {
-    std::cerr << std::format("{} caught unknown/unhandled exception.",
+    std::cerr << fmt::format("{} caught unknown/unhandled exception.",
                              __PRETTY_FUNCTION__)
               << std::endl;
   }

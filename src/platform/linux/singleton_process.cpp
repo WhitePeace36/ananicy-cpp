@@ -6,6 +6,10 @@
 #include <sys/stat.h> /* For mode constants */
 #include <unistd.h>
 
+#include <string_view> // for string_view
+
+#include <fmt/format.h>
+
 #include <spdlog/spdlog.h>
 
 SingletonProcess::~SingletonProcess() {
@@ -23,7 +27,8 @@ bool SingletonProcess::try_create() {
   m_handle = shm_open(m_filename.data(), m_mode, unix_perm);
   if (m_handle == -1) {
     if (errno != EEXIST)
-      spdlog::error("Could not create: {}", std::strerror(errno));
+      spdlog::error(fmt::format("Could not create: {}",
+                                std::string_view{std::strerror(errno)}));
     return false;
   }
   // If successful change real permissions
@@ -42,7 +47,7 @@ bool SingletonProcess::try_open() {
 
   m_handle = shm_open(m_filename.data(), m_mode, unix_perm);
   if (m_handle == -1) {
-    spdlog::error("Could not open: {}", std::strerror(errno));
+    spdlog::error(fmt::format("Could not open: {}", std::strerror(errno)));
     return false;
   }
   return true;

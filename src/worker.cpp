@@ -18,7 +18,7 @@ using namespace std::chrono_literals;
 Worker::Worker(Rules *rules_, Config *config_,
                synchronized_queue<Process> *process_queue_)
     : rules(rules_), config(config_), process_queue(process_queue_) {
-  spdlog::info("Worker initialized with {} rules", rules->size());
+  spdlog::info(fmt::format("Worker initialized with {} rules", rules->size()));
 }
 
 void Worker::work(const std::stop_token &stop_token) {
@@ -39,10 +39,11 @@ void Worker::work(const std::stop_token &stop_token) {
       if (!rule.is_null()) {
         bool do_log_applied_rule = config->log_applied_rule();
         if constexpr (BUILD_TYPE == "Debug") {
-            do_log_applied_rule = true;
+          do_log_applied_rule = true;
         }
         if (spdlog::should_log(spdlog::level::debug)) {
-          spdlog::debug("Found rule for {}: {}", p.name, rule.dump());
+          spdlog::debug(
+              fmt::format("Found rule for {}: {}", p.name, rule.dump()));
         } else if (do_log_applied_rule) {
           spdlog::info("{}({})", p.name, p.pid);
         }
@@ -115,8 +116,9 @@ void Worker::work(const std::stop_token &stop_token) {
               continue;
           }
         } catch (const std::exception &e) {
-          spdlog::critical("{}: unhandled exception: {} (comm: {}, pid: {})",
-                           __func__, e.what(), p.name, p.pid);
+          spdlog::critical(
+              fmt::format("{}: unhandled exception: {} (comm: {}, pid: {})",
+                          __func__, e.what(), p.name, p.pid));
         }
       }
 
