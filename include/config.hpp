@@ -72,13 +72,15 @@ public:
   }
 
   void show();
+  void reload() noexcept;
   void set(const std::string &key, const std::string &value);
   std::optional<std::string> get(const std::string &key) const;
 
   explicit operator std::string() const;
 
 private:
-  ConfigMap config;
+  ConfigMap             config;
+  std::filesystem::path m_config_path{};
 };
 
 #endif // ANANICY_CPP_CONFIG_HPP

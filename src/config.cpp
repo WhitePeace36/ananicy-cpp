@@ -32,7 +32,8 @@ static std::string trim(const std::string &str) {
   return str.substr(first, (last - first + 1));
 }
 
-Config::Config(const std::filesystem::path &config_path) {
+Config::Config(const std::filesystem::path &config_path)
+    : m_config_path(config_path) {
   config = {};
 
   for (const auto &item : default_config) {
@@ -65,7 +66,13 @@ Config::Config(const std::filesystem::path &config_path) {
     return;
   }
 
-  std::ifstream is_file{config_path};
+  this->reload();
+}
+
+void Config::reload() noexcept {
+  const auto latnice_support_status = priority::test_latnice_support();
+
+  std::ifstream is_file{m_config_path};
 
   std::string line;
   while (std::getline(is_file, line)) {

@@ -56,6 +56,9 @@ int main(const int argc, const char **argv) {
       .name("--force-remove-semaphore")
       .description("Don't use it, unless you know what you are doing.");
   parser.add_argument()
+      .name("--reload")
+      .description("Reload configuration/rules");
+  parser.add_argument()
       .name("--benchmark")
       .description("Should we activate benchmark mode or not");
   parser.add_argument()
@@ -113,6 +116,15 @@ int main(const int argc, const char **argv) {
       return EXIT_FAILURE;
     }
     std::cerr << "Semaphore was successfully removed!\n";
+    return EXIT_SUCCESS;
+  }
+
+  if (parser["reload"]) {
+    if (!singleton.try_open()) {
+      std::cerr << "Unable to reload. Ananicy Cpp is not running!\n";
+      return EXIT_FAILURE;
+    }
+    singleton.try_write("RELOAD");
     return EXIT_SUCCESS;
   }
 
@@ -208,6 +220,8 @@ int main(const int argc, const char **argv) {
     return EXIT_FAILURE;
   }
 
+  singleton.start_read_queue([&] { conf.reload(); });
+
   rules.show_all_rules();
 
   control_groups::get_cgroup_version();
@@ -268,6 +282,8 @@ int main(const int argc, const char **argv) {
   spdlog::info("Stopping Ananicy Cpp...");
   service::set_status(service::STOPPING);
 
+  // Close shared memory before removing it.
+  singleton.close_shm();
   SingletonProcess::remove(singleton.get_name());
 
   processListener.stop();

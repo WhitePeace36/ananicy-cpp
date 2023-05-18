@@ -2,8 +2,10 @@
 #define ANANICY_CPP_SINGLETON_PROCESS_HPP
 
 #include <cstdint>
+#include <functional>
 #include <string_view>
 #include <sys/stat.h> // mode_t
+#include <thread>
 
 class SingletonProcess {
 public:
@@ -27,9 +29,19 @@ public:
   constexpr std::string_view get_name() const noexcept { return m_filename; }
 
   // Creates a shared memory object.
-  bool try_create();
+  bool try_create() noexcept;
   // Opens a shared memory object.
-  bool try_open();
+  bool try_open() noexcept;
+
+  // Writes data to a shared memory object.
+  bool try_write(std::string_view data) noexcept;
+
+  // Closes a shared memory object on the current instance.
+  // @returns false on error.
+  bool close_shm() noexcept;
+
+  // Starts listening on shared memory object.
+  void start_read_queue(const std::function<void()> &func_callback) noexcept;
 
   // Erases a shared memory object from the system.
   // @returns false on error.
@@ -40,9 +52,13 @@ public:
   SingletonProcess &operator=(const SingletonProcess &) noexcept = delete;
 
 private:
-  std::int32_t     m_handle{-1};
-  mode_t           m_mode{};
-  std::string_view m_filename{};
+  std::int32_t          m_handle{-1};
+  mode_t                m_mode{};
+  std::string_view      m_filename{};
+  std::jthread          m_worker_thread{};
+  std::function<void()> m_reload_callback{};
+
+  void read_queue(const std::stop_token &) noexcept;
 };
 
 #endif // ANANICY_CPP_SINGLETON_PROCESS_HPP
