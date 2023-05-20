@@ -37,6 +37,10 @@ then
     USE_BPF=OFF
 fi
 
+if [ "$EUID" -ne 0 ]; then
+    SUDO_CMD=sudo
+fi
+
 install_deps_ubuntu()
 {
     local packages="
@@ -63,7 +67,7 @@ install_deps_ubuntu()
         fi
     fi
 
-    sudo apt install $SYSDEP_ASSUME_YES $packages
+    $SUDO_CMD apt install $SYSDEP_ASSUME_YES $packages
 }
 
 install_deps_arch()
@@ -77,7 +81,7 @@ install_deps_arch()
     if [ x$USE_BPF = xON ]; then
         _packages+=('libelf' 'zlib' 'bpf' 'libbpf' 'llvm' 'clang')
     fi
-    sudo pacman -Sy "${_packages[@]}"
+    $SUDO_CMD pacman -Sy "${_packages[@]}"
 }
 
 install_deps_suse()
@@ -88,13 +92,23 @@ install_deps_suse()
         gcc-c++
         ninja
         libsystemd0
+        systemd-devel
     "
 
-    if [ x$USE_BPF = xON ]; then
-        packages="$packages libelf1 zlib bpftool libbpf-dev llvm clang"
+    RELEASE=`grep VERSION_ID /etc/os-release | cut -d= -f2 | tr -d '"'`
+
+    local NAME=`grep ^NAME /etc/os-release | cut -d= -f2 | cut -f1 | tr -d '"'`
+
+    if [ "${NAME}" = "openSUSE Leap" ]; then
+        echo "openSUSE Leap provides old compilers, thats are not able to compile ananicy-cpp"
+        exit 1
     fi
 
-    sudo zypper install $SYSDEP_ASSUME_YES $packages
+    if [ x$USE_BPF = xON ]; then
+        packages="$packages libelf1 zlib bpftool llvm clang"
+    fi
+
+    $SUDO_CMD zypper install $SYSDEP_ASSUME_YES $packages
 }
 
 install_deps_fedora()
@@ -111,7 +125,7 @@ install_deps_fedora()
         packages="$packages elfutils-libelf zlib-devel bpftool libbpf llvm clang"
     fi
 
-    sudo dnf install $SYSDEP_ASSUME_YES $packages
+    $SUDO_CMD dnf install $SYSDEP_ASSUME_YES $packages
 }
 
 main()
