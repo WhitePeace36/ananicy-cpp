@@ -1,32 +1,68 @@
 ---
-image: gcc
-
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
-
-default:
-  before_script:
-    - apt-get -y update
-    - apt-get -y install build-essential cmake git libsystemd-dev libelf-dev bpftool llvm clang
+stages:
+  - build
+  - test
+  - deploy
 
 build:
+  image: gcc
   stage: build
   script:
-    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_ANANICY_TESTS=ON -S .
-    - cmake --build build -j
-    - ./build/src/tests/test-core
-    - ./build/src/tests/test-utility --test-case-exclude="Process Info"
-
-build-static:
-  stage: build
-  script:
+    - apt-get -y update
+    - apt-get -y install build-essential cmake git libsystemd-dev libelf-dev bpftool llvm clang
     - cmake -B build -DCMAKE_BUILD_TYPE=Release -DSTATIC=ON -DENABLE_SYSTEMD=OFF -S .
     - cmake --build build -j
   artifacts:
     paths:
       - build/ananicy-cpp
     expire_in: 1 week
+
+ubuntu:
+  image: ubuntu:latest
+  stage: test
+  script:
+    - apt-get -y update
+    - env USE_BPF=ON SYSDEP_ASSUME_YES=ON ./install-deps.sh
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_ANANICY_TESTS=ON -S .
+    - cmake --build build -j
+    - ./build/src/tests/test-core
+    - ./build/src/tests/test-utility --test-case-exclude="Process Info"
+
+fedora:
+  image: fedora:latest
+  stage: test
+  script:
+    - dnf -y update
+    - env USE_BPF=ON SYSDEP_ASSUME_YES=ON ./install-deps.sh
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_ANANICY_TESTS=ON -S .
+    - cmake --build build -j
+    - ./build/src/tests/test-core
+    - ./build/src/tests/test-utility --test-case-exclude="Process Info"
+
+opensuse-tumbleweed:
+  image: opensuse/tumbleweed
+  stage: test
+  script:
+    - zypper refresh
+    - env USE_BPF=ON SYSDEP_ASSUME_YES=ON ./install-deps.sh
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_ANANICY_TESTS=ON -S .
+    - cmake --build build -j
+    - ./build/src/tests/test-core
+    - ./build/src/tests/test-utility --test-case-exclude="Process Info"
+
+arch:
+  image: archlinux:latest
+  stage: test
+  script:
+    - pacman -Syu --noconfirm
+    - pacman -S --noconfirm base-devel cmake git ninja libelf zlib bpf libbpf llvm clang
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_ANANICY_TESTS=ON -S .
+    - cmake --build build -j
+    - ./build/src/tests/test-core
+    - ./build/src/tests/test-utility --test-case-exclude="Process Info"
 
 # Inspired by https://stackoverflow.com/a/65478446/6061951
 persist-tag-artifacts:
