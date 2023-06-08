@@ -1,7 +1,12 @@
 # Created by .ignore support plugin (hsz.mobi)
 .idea/
+.cache
 cmake-build-*/
 include/version.hpp
+build
+build.sh
+cmake-build-*
+main
 
 ### C++ template
 # Prerequisites
