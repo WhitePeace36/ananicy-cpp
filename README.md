@@ -73,13 +73,12 @@ In order to actually build `ananicy-cpp`, open a terminal,
 clone the repository (or download a release archive), and do the following commands:
 
 - If using the `git` repo (development version):
-  - `git clone --recurse-submodules https://gitlab.com/ananicy-cpp/ananicy-cpp.git`
+  - `git clone https://gitlab.com/ananicy-cpp/ananicy-cpp.git`
   - `cd ananicy-cpp`
 - If using release archive:
-  - `wget https://gitlab.com/ananicy-cpp/ananicy-cpp/-/archive/v1.0.2/ananicy-cpp-v1.0.2.tar.gz`
-  - `tar -xvf ananicy-cpp-v1.0.2.tar.gz`
-  - `cd ananicy-cpp-v1.0.2`
-  - `git clone https://gitlab.com/vnepogodin/std-format.git external/std-format`
+  - `wget https://gitlab.com/ananicy-cpp/ananicy-cpp/-/archive/v1.1.0/ananicy-cpp-v1.1.0.tar.gz`
+  - `tar -xvf ananicy-cpp-v1.1.0.tar.gz`
+  - `cd ananicy-cpp-v1.1.0`
 
 ```
 cmake -B build \
@@ -91,7 +90,7 @@ sudo cmake --install build --component Runtime
 ```
 
 - If using install-deps.sh and configure.sh (example using BPF_PROC_IMPL)
-  - `git clone --recurse-submodules https://gitlab.com/ananicy-cpp/ananicy-cpp.git`
+  - `git clone https://gitlab.com/ananicy-cpp/ananicy-cpp.git`
   - `cd ananicy-cpp`
   - `env USE_BPF=ON ./install-deps.sh && ./configure.sh --use_bpf_proc && ./build.sh`
   - `sudo cmake --install build/RelWithDebInfo --component Runtime`

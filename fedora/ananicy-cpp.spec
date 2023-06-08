@@ -1,11 +1,10 @@
 Name:           ananicy-cpp
-Version:        1.0.2
+Version:        1.1.0
 Release:        %autorelease
 Summary:        Rewrite of ananicy in c++ for lower cpu and memory usage
 License:        GPLv3
 URL:            https://gitlab.com/ananicy-cpp/ananicy-cpp
 Source0:        %{url}/-/archive/v%{version}/ananicy-cpp-v%{version}.tar.gz
-#Source1:        https://gitlab.com/vnepogodin/std-format/-/archive/dfa4fdc87c7cb9bb1683125009baa7278bb85901/std-format-dfa4fdc87c7cb9bb1683125009baa7278bb85901.tar.gz
 
 ExcludeArch:    s390x i686 ppc64le
 
@@ -26,8 +25,6 @@ Rewrite of ananicy in c++ for lower cpu and memory usage
 
 %prep
 %autosetup -n ananicy-cpp-v%{version}
-#%autosetup -n std-format-dfa4fdc87c7cb9bb1683125009baa7278bb85901
-#mv std-format-dfa4fdc87c7cb9bb1683125009baa7278bb85901 ananicy-cpp-v%{version}
 
 %build
 %cmake \
