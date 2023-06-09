@@ -15,7 +15,7 @@ BuildRequires:  systemd-devel
 BuildRequires:  zlib-devel
 BuildRequires:  git
 BuildRequires:  bpftool
-BuildRequires:  libbpf
+BuildRequires:  libbpf-devel
 BuildRequires:  elfutils-libelf
 BuildRequires:  llvm
 BuildRequires:  clang
