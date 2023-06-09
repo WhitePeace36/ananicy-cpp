@@ -33,6 +33,7 @@ Rewrite of ananicy in c++ for lower cpu and memory usage
     -DUSE_BPF_PROC_IMPL=ON \
     -DBPF_BUILD_LIBBPF=OFF \
     -DENABLE_ANANICY_TESTS=ON \
+    -DBUILD_SHARED_LIBS=OFF \
     -DVERSION=%{version}
 %ninja_build -C %{_vpath_builddir}
 
