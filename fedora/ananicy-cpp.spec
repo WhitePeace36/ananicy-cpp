@@ -12,6 +12,7 @@ BuildRequires:  gcc-c++
 BuildRequires:  cmake
 BuildRequires:  ninja-build
 BuildRequires:  systemd-devel
+BuildRequires:  systemd-rpm-macros
 BuildRequires:  zlib-devel
 BuildRequires:  git
 BuildRequires:  bpftool
@@ -48,7 +49,7 @@ Rewrite of ananicy in c++ for lower cpu and memory usage
 %license LICENSE
 %doc README.md
 %{_bindir}/ananicy-cpp
-%{_libdir}/systemd/system/ananicy-cpp.service
+%{_unitdir}/ananicy-cpp.service
 
 %changelog
 %autochangelog
