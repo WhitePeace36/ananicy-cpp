@@ -76,9 +76,9 @@ clone the repository (or download a release archive), and do the following comma
   - `git clone https://gitlab.com/ananicy-cpp/ananicy-cpp.git`
   - `cd ananicy-cpp`
 - If using release archive:
-  - `wget https://gitlab.com/ananicy-cpp/ananicy-cpp/-/archive/v1.1.0/ananicy-cpp-v1.1.0.tar.gz`
-  - `tar -xvf ananicy-cpp-v1.1.0.tar.gz`
-  - `cd ananicy-cpp-v1.1.0`
+  - `wget https://gitlab.com/ananicy-cpp/ananicy-cpp/-/archive/v1.1.1/ananicy-cpp-v1.1.1.tar.gz`
+  - `tar -xvf ananicy-cpp-v1.1.1.tar.gz`
+  - `cd ananicy-cpp-v1.1.1`
 
 ```
 cmake -B build \

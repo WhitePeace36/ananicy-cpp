@@ -1,5 +1,5 @@
 Name:           ananicy-cpp
-Version:        1.1.0
+Version:        1.1.1
 Release:        %autorelease
 Summary:        Rewrite of ananicy in c++ for lower cpu and memory usage
 License:        GPLv3
