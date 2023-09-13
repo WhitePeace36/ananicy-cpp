@@ -227,7 +227,7 @@ If it is ever implemented in the Linux kernel, please create an issue.
 
 #### From the original project
 
-You can use the original Ananicy's rules by copying the `00-default`, `00-types.types` and `00-cgroups.cgroups` to you `ananicy.d` directory (by default, in `/etc`).
+You can use the original Ananicy's rules by copying the `00-default`, `00-types.types` and `00-cgroups.cgroups` to your `ananicy.d` directory (by default, in `/etc`).
 
 ## Why rewriting ananicy?
 I mostly used Ananicy on older computers to improve interactivity. However, having Ananicy use megabytes of RAM
