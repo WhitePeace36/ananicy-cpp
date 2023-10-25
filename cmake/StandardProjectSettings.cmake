@@ -37,6 +37,7 @@ option(USE_BPF_PROC_IMPL "Use BPF as a proc listener impl" OFF)
 option(ENABLE_ANANICY_TESTS "Build AnanicyCpp tests" OFF)
 option(ENABLE_ANANICY_FUZZ_TESTS "Build AnanicyCpp fuzz tests" OFF)
 option(ENABLE_ANANICY_BENCHMARKS "Build AnanicyCpp benchmark" OFF)
+option(ENABLE_REGEX_SUPPORT "Build regex support" OFF)
 option(BUILD_WITH_RELOCS "Build ananicy-cpp with relocs included" OFF)
 
 option(ENABLE_IPO "Enable Interprocedural Optimization, aka Link Time Optimization (LTO)" OFF)
@@ -84,6 +85,11 @@ endif()
 # Experimental impl
 if(USE_EXPERIMENTAL_IMPL)
   add_definitions(-DUSE_EXPERIMENTAL_IMPL)
+endif()
+
+# Regex support
+if(ENABLE_REGEX_SUPPORT)
+  add_definitions(-DENABLE_REGEX_SUPPORT)
 endif()
 
 # Use BPF as a proc listener

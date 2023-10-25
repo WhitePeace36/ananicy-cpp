@@ -37,6 +37,12 @@ then
     USE_BPF=OFF
 fi
 
+if [ x$ENABLE_REGEX = x ]
+then
+    ENABLE_REGEX=OFF
+fi
+
+
 if [ "$EUID" -ne 0 ]; then
     SUDO_CMD=sudo
 fi
@@ -67,6 +73,10 @@ install_deps_ubuntu()
         fi
     fi
 
+    if [ x$ENABLE_REGEX = xON ]; then
+        packages="$packages libpcre2-8-0 libpcre2-dev pkg-config"
+    fi
+
     $SUDO_CMD apt install $SYSDEP_ASSUME_YES $packages
 }
 
@@ -80,6 +90,9 @@ install_deps_arch()
     )
     if [ x$USE_BPF = xON ]; then
         _packages+=('libelf' 'zlib' 'bpf' 'libbpf' 'llvm' 'clang')
+    fi
+    if [ x$ENABLE_REGEX = xON ]; then
+        packages="$packages pcre2"
     fi
     $SUDO_CMD pacman -Sy "${_packages[@]}"
 }
@@ -107,6 +120,9 @@ install_deps_suse()
     if [ x$USE_BPF = xON ]; then
         packages="$packages libelf1 zlib bpftool llvm clang"
     fi
+    if [ x$ENABLE_REGEX = xON ]; then
+        packages="$packages libpcre2-8-0 pcre2-devel"
+    fi
 
     $SUDO_CMD zypper install $SYSDEP_ASSUME_YES $packages
 }
@@ -123,6 +139,9 @@ install_deps_fedora()
 
     if [ x$USE_BPF = xON ]; then
         packages="$packages elfutils-libelf zlib-devel bpftool libbpf llvm clang"
+    fi
+    if [ x$ENABLE_REGEX = xON ]; then
+        packages="$packages pcre2 pcre2-devel"
     fi
 
     $SUDO_CMD dnf install $SYSDEP_ASSUME_YES $packages
