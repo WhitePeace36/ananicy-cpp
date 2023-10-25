@@ -22,6 +22,11 @@ list(APPEND test_SOURCES
         ${CMAKE_SOURCE_DIR}/src/platform/linux/process_info.cpp
         ${CMAKE_SOURCE_DIR}/src/platform/linux/process.cpp)
 
+
+if(ENABLE_REGEX_SUPPORT)
+    list(APPEND test_SOURCES ${CMAKE_SOURCE_DIR}/src/regex_utils.cpp)
+endif()
+
 add_library(test_libreq STATIC ${test_SOURCES})
 target_include_directories(test_libreq PRIVATE ${CMAKE_BINARY_DIR}/include ${CMAKE_SOURCE_DIR}/include ${CMAKE_CURRENT_DIR})
 target_link_libraries(test_libreq PRIVATE nlohmann_json::nlohmann_json spdlog::spdlog fmt::fmt)
@@ -64,6 +69,10 @@ foreach(file ${files})
     )
     target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include ${CMAKE_SOURCE_DIR}/include ${CMAKE_CURRENT_DIR})
     target_link_libraries(${testcase} PRIVATE test_libreq nlohmann_json::nlohmann_json spdlog::spdlog fmt::fmt doctest::doctest)
+
+    if(ENABLE_REGEX_SUPPORT)
+        target_link_libraries(${testcase} PRIVATE PkgConfig::LIBPCRE2)
+    endif()
 
     add_test(NAME "${testcase}"
         COMMAND ${testcase} ${DOCTEST_TEST_FILTER} --no-skip

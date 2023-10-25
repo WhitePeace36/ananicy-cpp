@@ -55,6 +55,11 @@ list(APPEND LINUX_SOURCES
         src/platform/linux/singleton_process.cpp
         src/platform/linux/process_info.cpp)
 
+if(ENABLE_REGEX_SUPPORT)
+    list(APPEND SOURCES src/regex_utils.cpp)
+    list(APPEND HEADERS include/utility/regex_utils.hpp)
+endif()
+
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     message(STATUS "Linux system detected, adding specific sources files")
     list(APPEND SOURCES ${LINUX_SOURCES})
@@ -131,6 +136,21 @@ else()
     )
 endif()
 set(CMAKE_MESSAGE_CONTEXT "")
+
+if(ENABLE_REGEX_SUPPORT)
+    set(CMAKE_MESSAGE_CONTEXT "pcre2")
+    message(STATUS "Configuring pcre2")
+
+    # pcre2
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(
+      LIBPCRE2
+      REQUIRED
+      IMPORTED_TARGET
+      libpcre2-8)
+    target_link_libraries(ananicy-cpp PRIVATE PkgConfig::LIBPCRE2)
+    set(CMAKE_MESSAGE_CONTEXT "")
+endif()
 
 # std::format
 set(STL_FORMAT_USE_EXTERNAL_FMTLIB ON CACHE BOOL "" FORCE)

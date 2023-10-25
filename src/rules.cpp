@@ -5,10 +5,14 @@
 #include "core/rules.hpp"
 #include "core/cgroups.hpp"
 
-#include <filesystem> // for path, recursive_directory_iterator
-#include <fstream> // for ifstream
-#include <iostream> // for cout
-#include <string> // for string, getline
+#ifdef ENABLE_REGEX_SUPPORT
+#include "utility/regex_utils.hpp"
+#endif
+
+#include <filesystem>  // for path, recursive_directory_iterator
+#include <fstream>     // for ifstream
+#include <iostream>    // for cout
+#include <string>      // for string, getline
 #include <string_view> // for string_view
 
 #include <fmt/format.h>
@@ -66,6 +70,13 @@ bool Rules::load_rule_from_string(const std::string_view &line) {
     if (rule.contains("name") && rule["name"].is_string()) { /* Program rule */
       const auto &rule_name = rule["name"];
       m_program_rules.insert_or_assign(rule_name, rule);
+
+#ifdef ENABLE_REGEX_SUPPORT
+      if (rule.contains("name_regex") && rule["name_regex"].is_string()) {
+        m_regex_rules.emplace_back(rule_name,
+                                   rule["name_regex"].get<std::string>());
+      }
+#endif
     } else if (rule.contains("type") &&
                rule["type"].is_string()) { /* Type rule */
       const auto &rule_type = rule["type"];
@@ -165,17 +176,29 @@ void Rules::create_cgroups() const noexcept {
 
 json Rules::get_rule(const std::string &name) const noexcept {
   json rule;
+
   if (m_program_rules.contains(name)) {
     rule = m_program_rules.at(name);
-    if (rule.contains("type") && m_type_rules.contains(rule["type"])) {
-      json type_rule =
-          m_type_rules.at(rule["type"]); // We create a copy of the type rule to
-                                         // avoid overwriting it
-      type_rule.merge_patch(
-          rule); // We then merge the rule into it, overriding parameters from
-                 // the type with those explicitly specified in the rule
-      rule.merge_patch(type_rule); // We then merge it back into the rule
+#ifdef ENABLE_REGEX_SUPPORT
+  } else {
+    // get rule if the name is matching some regex in the ruleset
+    for (const auto &regex_rule : m_regex_rules) {
+      if (utils::regex::is_str_matching_regex(name, regex_rule.second)) {
+        rule = m_program_rules.at(regex_rule.first);
+        break;
+      }
     }
+#endif
+  }
+
+  if (rule.contains("type") && m_type_rules.contains(rule["type"])) {
+    json type_rule =
+        m_type_rules.at(rule["type"]); // We create a copy of the type rule to
+                                       // avoid overwriting it
+    type_rule.merge_patch(
+        rule); // We then merge the rule into it, overriding parameters from
+               // the type with those explicitly specified in the rule
+    rule.merge_patch(type_rule); // We then merge it back into the rule
   }
   return rule;
 }

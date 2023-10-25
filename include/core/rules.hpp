@@ -11,6 +11,11 @@
 #include <string>
 #include <unordered_map>
 
+#ifdef ENABLE_REGEX_SUPPORT
+#include <utility>
+#include <vector>
+#endif
+
 #include <nlohmann/json.hpp>
 
 class Rules {
@@ -21,6 +26,10 @@ private:
   ruleset m_program_rules{};
   ruleset m_type_rules{};
   ruleset m_cgroup_rules{};
+
+#ifdef ENABLE_REGEX_SUPPORT
+  std::vector<std::pair<std::string, std::string>> m_regex_rules{};
+#endif
 
 public:
   explicit Rules(const std::filesystem::path &ruleset_directory,

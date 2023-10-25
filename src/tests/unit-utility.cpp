@@ -5,6 +5,10 @@
 #include "utility/synchronized_queue.hpp"
 #include "utility/utils.hpp"
 
+#ifdef ENABLE_REGEX_SUPPORT
+#include "utility/regex_utils.hpp"
+#endif
+
 #include <chrono>
 #include <filesystem>
 
@@ -205,5 +209,12 @@ check_disks_schedulers=true
     REQUIRE(to_int<int64_t>("5000000000") == 5000000000);
     REQUIRE(to_int<uint64_t>("-5000000000") == 0);
   }
+
+#ifdef ENABLE_REGEX_SUPPORT
+  SECTION("Matching regex") {
+    REQUIRE(utils::regex::is_str_matching_regex("gcc-aarch64", "gcc-.*") == true);
+    REQUIRE(utils::regex::is_str_matching_regex("gcc-aarch64", "gfc-.*") == false);
+  }
+#endif
 }
 /* clang-format on */
