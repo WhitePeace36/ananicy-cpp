@@ -131,7 +131,7 @@ else()
         GITHUB_REPOSITORY fmtlib/fmt
         GIT_PROGRESS TRUE
         GIT_SHALLOW TRUE
-        GIT_TAG 10.1.0
+        GIT_TAG 10.1.1
         EXCLUDE_FROM_ALL YES
     )
 endif()
