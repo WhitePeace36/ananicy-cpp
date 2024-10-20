@@ -223,7 +223,7 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
   }
 
   if (!info.has_value()) {
-    std::ifstream mtab("/etc/mtab");
+    std::ifstream mtab("/proc/self/mounts");
     while (mtab) {
       std::string       word, line;
       fs::path          cgroup_path;
