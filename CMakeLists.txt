@@ -107,13 +107,7 @@ set(CMAKE_MESSAGE_CONTEXT "nlohmann_json")
 if (USE_EXTERNAL_JSON)
     find_package(nlohmann_json 3.9 REQUIRED)
 else()
-    CPMAddPackage(
-        NAME json
-        GITHUB_REPOSITORY ArthurSonzogni/nlohmann_json_cmake_fetchcontent
-        GIT_PROGRESS TRUE
-        GIT_SHALLOW TRUE
-        GIT_TAG v3.11.2
-        EXCLUDE_FROM_ALL YES)
+    CPMAddPackage("gh:nlohmann/json@3.11.3")
 endif()
 target_link_libraries(ananicy-cpp PRIVATE "nlohmann_json::nlohmann_json")
 set(CMAKE_MESSAGE_CONTEXT "")
