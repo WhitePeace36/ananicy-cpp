@@ -69,7 +69,7 @@ static int ioprio_get(__priority_which_t _which, id_t _who) {
 #define SCHED_FLAG_KEEP_POLICY          0x08
 #endif
 
-struct [[gnu::packed]] sched_attr {
+struct [[gnu::packed]] ananicy_sched_attr {
   uint32_t size;
 
   uint32_t sched_policy; // SCHED_(FIFO,RR,DEADLINE,OTHER,BATCH,IDLE, etc.)
@@ -94,20 +94,20 @@ struct [[gnu::packed]] sched_attr {
   int32_t sched_latency_nice;
 };
 
-static int sched_setattr(pid_t pid, const struct sched_attr *attr,
+static int ananicy_sched_setattr(pid_t pid, const struct ananicy_sched_attr *attr,
                          unsigned int flags) {
   return static_cast<int>(syscall(__NR_sched_setattr, pid, attr, flags));
 }
 
-static int sched_getattr(pid_t pid, struct sched_attr *attr, unsigned int size,
+static int ananicy_sched_getattr(pid_t pid, struct ananicy_sched_attr *attr, unsigned int size,
                          unsigned int flags) {
   return static_cast<int>(syscall(__NR_sched_getattr, pid, attr, size, flags));
 }
 
 static int get_latnice(pid_t pid) {
   // pid==0 refers to calling thread
-  struct sched_attr attr = { .size = sizeof(struct sched_attr) };
-  if (sched_getattr(pid, &attr, sizeof(attr), 0) < 0) {
+  struct ananicy_sched_attr attr = { .size = sizeof(struct ananicy_sched_attr) };
+  if (ananicy_sched_getattr(pid, &attr, sizeof(attr), 0) < 0) {
       std::perror("sched_getattr");
   }
   return attr.sched_latency_nice; // defaults to 0
@@ -115,12 +115,12 @@ static int get_latnice(pid_t pid) {
 
 static int set_latnice(pid_t pid, int latency_nice) {
   // pid==0 refers to calling thread
-  struct sched_attr attr = {
-    .size = sizeof(struct sched_attr),
+  struct ananicy_sched_attr attr = {
+    .size = sizeof(struct ananicy_sched_attr),
     .sched_flags = SCHED_FLAG_LATENCY_NICE | SCHED_FLAG_KEEP_PARAMS,
     .sched_latency_nice = latency_nice,
   };
-  const int err = sched_setattr(pid, &attr, 0);
+  const int err = ananicy_sched_setattr(pid, &attr, 0);
   if (err < 0) {
     // sched_setattr failed
     if (errno == EINVAL) {

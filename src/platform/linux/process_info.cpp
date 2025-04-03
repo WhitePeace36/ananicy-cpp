@@ -104,16 +104,16 @@ static std::string get_sched_policy_name(unsigned sched_policy) {
   }
 }
 
-static sched_attr get_sched_attributes(process_id_t pid) {
+static ananicy_sched_attr get_sched_attributes(process_id_t pid) {
 
-  ::sched_attr attr{};
-  sched_getattr(static_cast<pid_t>(pid), &attr, sizeof(attr), 0);
+  ::ananicy_sched_attr attr{};
+  ananicy_sched_getattr(static_cast<pid_t>(pid), &attr, sizeof(attr), 0);
 
   return attr;
 }
 
 bool is_realtime(process_id_t pid) {
-  const sched_attr attr = get_sched_attributes(pid);
+  const ananicy_sched_attr attr = get_sched_attributes(pid);
   return attr.sched_priority > 0;
 }
 

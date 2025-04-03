@@ -185,12 +185,12 @@ std::string_view test_latnice_support() noexcept {
 
   // Use this here instead of function,
   // to suppress errors from function call.
-  struct sched_attr attr = {
-      .size = sizeof(struct sched_attr),
+  struct ananicy_sched_attr attr = {
+      .size = sizeof(struct ananicy_sched_attr),
       .sched_flags = SCHED_FLAG_LATENCY_NICE | SCHED_FLAG_KEEP_PARAMS,
       .sched_latency_nice = latency_nice,
   };
-  const std::int32_t err = sched_setattr(pid, &attr, 0);
+  const std::int32_t err = ananicy_sched_setattr(pid, &attr, 0);
   bool               is_supported{};
   if (err == 0 && errno == 0) {
     set_latnice(pid, saved_latnice);
