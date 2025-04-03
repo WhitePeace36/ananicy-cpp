@@ -125,7 +125,7 @@ else()
         GITHUB_REPOSITORY fmtlib/fmt
         GIT_PROGRESS TRUE
         GIT_SHALLOW TRUE
-        GIT_TAG 10.1.1
+        GIT_TAG 10.2.1
         EXCLUDE_FROM_ALL YES
     )
 endif()
@@ -168,7 +168,7 @@ else()
         GITHUB_REPOSITORY gabime/spdlog
         GIT_PROGRESS TRUE
         GIT_SHALLOW TRUE
-        GIT_TAG v1.12.0
+        GIT_TAG v1.14.0
         EXCLUDE_FROM_ALL YES)
 endif()
 target_link_libraries(ananicy-cpp PRIVATE project_options spdlog::spdlog fmt::fmt rt)
