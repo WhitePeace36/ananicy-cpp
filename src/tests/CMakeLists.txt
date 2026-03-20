@@ -21,7 +21,9 @@ list(APPEND test_SOURCES
         ${CMAKE_SOURCE_DIR}/src/platform/linux/cgroups.cpp
         ${CMAKE_SOURCE_DIR}/src/platform/linux/process_info.cpp
         ${CMAKE_SOURCE_DIR}/src/platform/linux/mounts.cpp
-        ${CMAKE_SOURCE_DIR}/src/platform/linux/process.cpp)
+        ${CMAKE_SOURCE_DIR}/src/platform/linux/process.cpp
+        ${CMAKE_SOURCE_DIR}/src/platform/linux/cpuset.cpp
+        ${CMAKE_SOURCE_DIR}/src/platform/linux/x3d.cpp)
 
 
 if(ENABLE_REGEX_SUPPORT)

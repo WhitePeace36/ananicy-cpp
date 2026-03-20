@@ -266,7 +266,8 @@ void ProcessQueue::full_scan() {
   spdlog::info("Doing a full scan");
   std::uint32_t n_process_found{};
   for (const auto &dir_entry : fs::directory_iterator("/proc")) {
-    const auto &pid_str = dir_entry.path().filename().c_str();
+    const auto entry_filename = dir_entry.path().filename();
+    const auto pid_str = entry_filename.string();
     if (!isdigit(pid_str[0])) {
       continue;
     }

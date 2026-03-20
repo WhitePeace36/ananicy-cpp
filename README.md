@@ -16,6 +16,10 @@ _Beta status_
 - [X] Changing IO class and IO nice
 - [X] Setting OOM score
 - [X] Change default configuration file and rules directory using environment variables (`ANANICY_CPP_{CONF,CONFDIR}`)
+- [X] CPU affinity (cpuset)
+  - [X] Pin processes to specific CPU cores
+  - [X] AMD X3D V-Cache topology auto-detection
+  - [X] `amd_x3d_vcache` kernel driver integration
 - [X] Cgroups
   - [X] V1
   - [X] V2 (_Limited support, see #21_)
@@ -121,6 +125,36 @@ There is also binaries in `cachyos` and `chaotic-aur`, although `ananicy-cpp` is
 
 ### Global configuration
 
+Global settings are defined in `/etc/ananicy.d/ananicy-cpp.conf` (or the path set via `ANANICY_CPP_CONF`).
+Format is `key=value`, one per line.
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `check_freq` | `60` | Full process scan interval in seconds |
+| `apply_nice` | `true` | Apply nice values from rules |
+| `apply_sched` | `true` | Apply scheduling policy from rules |
+| `apply_ionice` | `true` | Apply I/O nice values from rules |
+| `apply_oom_score_adj` | `true` | Apply OOM score adjustments from rules |
+| `apply_latnice` | `true` | Apply latency nice values from rules |
+| `apply_cpuset` | `true` | Apply CPU affinity (cpuset) from rules |
+| `cgroup_load` | `true` | Load cgroup definitions |
+| `type_load` | `true` | Load type definitions |
+| `rule_load` | `true` | Load rule definitions |
+| `cgroup_realtime_workaround` | `true` | Enable cgroup realtime workaround |
+| `log_applied_rule` | `false` | Log each applied rule |
+| `loglevel` | `info` | Log level (`trace`, `debug`, `info`, `warn`, `error`, `critical`) |
+| `x3d_mode` | `auto` | AMD X3D driver mode: `auto` (don't touch), `cache`, or `frequency` |
+
+#### AMD X3D support
+
+On AMD X3D CPUs (e.g., 7800X3D, 7950X3D, 9800X3D, 9950X3D), ananicy-cpp automatically detects
+the V-Cache and frequency CCDs at startup by reading CPU topology and L3 cache sizes from sysfs.
+
+The `x3d_mode` option controls the `amd_x3d_vcache` kernel driver (if present):
+- `auto`: Do not change the driver mode (default).
+- `cache`: Set the driver to prefer the V-Cache CCD for scheduling.
+- `frequency`: Set the driver to prefer the high-frequency CCD for scheduling.
+
 ### Rules
 
 Add rules in `/etc/ananicy.d`. This path can be overridden with `ANANICY_CPP_CONFDIR`
@@ -131,6 +165,16 @@ For instance, to add a rule for GCC, you could do the following:
 - Create the `/etc/ananicy.d/10-compilers` folder.
 - Create the `/etc/ananicy.d/10-compilers/gcc.rules` file
 - Add `{"name": "gcc", "nice": 19, "latency_nice": 19, "sched": "batch", "ioclass": "idle"}` to the file.
+
+To pin a game to the V-Cache CCD on an AMD X3D system:
+~~~json
+{"name": "game-x", "cpuset": "x3d-cache", "nice": -5}
+~~~
+
+Or to pin to specific cores directly:
+~~~json
+{"name": "my-app", "cpuset": "0-3,8-11"}
+~~~
 
 You can then (re)start `ananicy-cpp.service`.
 
@@ -177,6 +221,13 @@ Define the IO scheduling policy. By default, it is `best-effort`.
 - `oom_score_adj: [-999, 999]`: Adjust the **O**ut **O**f **M**emory killer score of a process.
   Negative value decrease the score of the process, making it _less_ likely to be killed if available memory
   gets very low. It is recommended to use it on critical programs which must be killed last if you lack memory.
+- `cpuset`: Pin the process to the specified CPU cores using Linux cpuset notation.
+  Accepts ranges (`0-7`), comma-separated lists (`0,2,4`), or mixed (`0-3,8-11`).
+  Special aliases for AMD X3D CPUs:
+  - `x3d-cache`: Pins to the V-Cache CCD (large L3 cache, ideal for gaming and cache-sensitive workloads).
+  - `x3d-frequency`: Pins to the high-frequency CCD (ideal for compute-bound workloads).
+
+  These aliases are resolved at runtime based on auto-detected topology.
 - `cgroup`: Put the process in the specified cgroup. This can be any cgroup, including those created outside `ananicy-cpp`.
 - `type`: Set the type of the rule. All options defined in the type will be used as if written explicitly in the rule,
 although you can override each option if needed.

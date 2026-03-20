@@ -30,6 +30,7 @@ ubuntu:
     - cmake --build build -j
     - ./build/src/tests/test-core
     - ./build/src/tests/test-utility --test-case-exclude="Process Info"
+    - ./build/src/tests/test-cpuset
 
 fedora:
   image: fedora:latest
@@ -41,6 +42,7 @@ fedora:
     - cmake --build build -j
     - ./build/src/tests/test-core
     - ./build/src/tests/test-utility --test-case-exclude="Process Info"
+    - ./build/src/tests/test-cpuset
 
 opensuse-tumbleweed:
   image: opensuse/tumbleweed
@@ -52,6 +54,7 @@ opensuse-tumbleweed:
     - cmake --build build -j
     - ./build/src/tests/test-core
     - ./build/src/tests/test-utility --test-case-exclude="Process Info"
+    - ./build/src/tests/test-cpuset
 
 arch:
   image: archlinux:latest
@@ -63,6 +66,7 @@ arch:
     - cmake --build build -j
     - ./build/src/tests/test-core
     - ./build/src/tests/test-utility --test-case-exclude="Process Info"
+    - ./build/src/tests/test-cpuset
 
 # Inspired by https://stackoverflow.com/a/65478446/6061951
 persist-tag-artifacts:
