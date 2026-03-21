@@ -20,6 +20,7 @@ list(APPEND test_SOURCES
         ${CMAKE_SOURCE_DIR}/src/platform/linux/priority.cpp
         ${CMAKE_SOURCE_DIR}/src/platform/linux/cgroups.cpp
         ${CMAKE_SOURCE_DIR}/src/platform/linux/process_info.cpp
+        ${CMAKE_SOURCE_DIR}/src/platform/linux/mounts.cpp
         ${CMAKE_SOURCE_DIR}/src/platform/linux/process.cpp)
 
 
