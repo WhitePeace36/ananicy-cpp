@@ -1,6 +1,7 @@
 #include "doctest_compatibility.h"
 
 #include "utility/argument_parser.hpp"
+#include "utility/mounts.hpp"
 #include "utility/process_info.hpp"
 #include "utility/synchronized_queue.hpp"
 #include "utility/utils.hpp"
@@ -91,6 +92,61 @@ TEST_CASE("Argument Parser")
         REQUIRE(config.value().empty());
       }
     }
+  }
+}
+
+TEST_CASE("Mounts")
+{
+    static const std::string_view MTAB_SYSTEMD_SYSTEM_TEST = R"(
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+
+# test string
+cgroup2 /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime,nsdelegate,memory_recursiveprot 0 0
+ # test something
+systemd-1 /proc/sys/fs/binfmt_misc autofs rw,relatime,fd=39,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=4748 0 0
+tmpfs /tmp tmpfs rw,nosuid,nodev,nr_inodes=1048576,inode64 0 0
+run /run/firejail/firejail.ro.file tmpfs ro,nosuid,nodev,relatime,mode=755,inode64 0 0
+)";
+    static const std::string_view MTAB_OPENRC_SYSTEM_TEST = R"(
+none /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime,nsdelegate,memory_recursiveprot 0 0
+)";
+
+
+  SECTION("Running systemd system")
+  {
+    const auto& mounts = mounts::parse_mtab_content(MTAB_SYSTEMD_SYSTEM_TEST);
+    REQUIRE_FALSE(mounts.empty());
+    REQUIRE_EQ(mounts.size(), 5);
+
+    REQUIRE_EQ(mounts[0].device, "proc");
+    REQUIRE_EQ(mounts[0].mountpoint, "/proc");
+    REQUIRE_EQ(mounts[0].fs_type, "proc");
+
+    REQUIRE_EQ(mounts[1].device, "cgroup2");
+    REQUIRE_EQ(mounts[1].mountpoint, "/sys/fs/cgroup");
+    REQUIRE_EQ(mounts[1].fs_type, "cgroup2");
+
+    REQUIRE_EQ(mounts[2].device, "systemd-1");
+    REQUIRE_EQ(mounts[2].mountpoint, "/proc/sys/fs/binfmt_misc");
+    REQUIRE_EQ(mounts[2].fs_type, "autofs");
+
+    REQUIRE_EQ(mounts[3].device, "tmpfs");
+    REQUIRE_EQ(mounts[3].mountpoint, "/tmp");
+    REQUIRE_EQ(mounts[3].fs_type, "tmpfs");
+
+    REQUIRE_EQ(mounts[4].device, "run");
+    REQUIRE_EQ(mounts[4].mountpoint, "/run/firejail/firejail.ro.file");
+    REQUIRE_EQ(mounts[4].fs_type, "tmpfs");
+  }
+  SECTION("Cgroups on openrc")
+  {
+    const auto& mounts = mounts::parse_mtab_content(MTAB_OPENRC_SYSTEM_TEST);
+    REQUIRE_FALSE(mounts.empty());
+    REQUIRE_EQ(mounts.size(), 1);
+
+    REQUIRE_EQ(mounts[0].device, "none");
+    REQUIRE_EQ(mounts[0].mountpoint, "/sys/fs/cgroup");
+    REQUIRE_EQ(mounts[0].fs_type, "cgroup2");
   }
 }
 

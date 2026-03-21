@@ -43,6 +43,7 @@ list(APPEND HEADERS
         include/utility/backtrace.hpp
         include/utility/argument_parser.hpp
         include/utility/debug.hpp
+        include/utility/mounts.hpp
         include/utility/process_info.hpp)
 
 list(APPEND LINUX_SOURCES
@@ -53,6 +54,7 @@ list(APPEND LINUX_SOURCES
         src/platform/linux/cgroups.cpp
         src/platform/linux/debug.cpp
         src/platform/linux/singleton_process.cpp
+        src/platform/linux/mounts.cpp
         src/platform/linux/process_info.cpp)
 
 if(ENABLE_REGEX_SUPPORT)

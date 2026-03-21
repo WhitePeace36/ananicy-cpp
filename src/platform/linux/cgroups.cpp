@@ -1,4 +1,5 @@
 #include "core/cgroups.hpp"
+#include "utility/mounts.hpp"
 
 #include <filesystem>  // for path
 #include <fstream>     // for ifstream
@@ -222,116 +223,111 @@ control_groups::cgroup_info control_groups::get_cgroup_version(bool reset) {
     info = std::nullopt;
   }
 
-  if (!info.has_value()) {
-    std::ifstream mtab("/proc/self/mounts");
-    while (mtab) {
-      std::string       device, fs_type, line;
-      fs::path          cgroup_path;
-      std::stringstream ss;
-      std::getline(mtab, line);
-      spdlog::trace("{}: line = {}", __func__, line);
-      ss << line;
-      ss >> device;
-      ss >> cgroup_path;
-      ss >> fs_type;
+  // return cached value
+  if (info.has_value()) {
+    return info.value();
+  }
 
-      try {
-        if (fs_type == "cgroup2") {
-          fs::path test_cgroup(cgroup_path);
-          test_cgroup /= "ananicy_test_cgroup2";
+  auto mounts = mounts::parse_mounts();
+  if (!mounts) {
+    spdlog::warn("Failed to parse mounts, returning default cgroup_info");
+    return {.path = {""}, .version = cgroup_info::cgroup_version::none};
+  }
 
-          if (fs::exists(test_cgroup)) {
-            if (!fs::remove(test_cgroup)) {
-              spdlog::warn(
-                  fmt::format("Couldn't delete {}",
-                              std::string_view{test_cgroup.c_str()}));
-            }
+  for (const auto &mount : *mounts) {
+    try {
+      if (mount.fs_type == "cgroup2") {
+        fs::path test_cgroup(mount.mountpoint);
+        test_cgroup /= "ananicy_test_cgroup2";
+
+        if (std::error_code remove_err{};
+            fs::exists(test_cgroup) && !fs::remove(test_cgroup, remove_err)) {
+          spdlog::warn(fmt::format("Couldn't delete {}: {}",
+                                   std::string_view{test_cgroup.c_str()},
+                                   remove_err.message()));
+        }
+
+        if (!create_directory(test_cgroup)) {
+          spdlog::warn(fmt::format("can't create new cgroup(2) at {}, skipping",
+                                   mount.mountpoint));
+          break;
+        }
+
+        const auto controllers_path =
+            fs::path{test_cgroup} / "cgroup.controllers";
+        std::ifstream controllers_file{controllers_path};
+        // controllers_file.exceptions(std::fstream::failbit);
+
+        bool has_cpu_controller = false;
+        while (controllers_file) {
+          std::string word;
+          controllers_file >> word;
+          if (word == "cpu") {
+            spdlog::trace(
+                fmt::format("{}: Found {} controller in {}", __func__, word,
+                            std::string_view{controllers_path.c_str()}));
+            has_cpu_controller = true;
+            break;
           }
+        }
 
-          if (!create_directory(test_cgroup)) {
+        if (!has_cpu_controller) {
+          spdlog::warn(
+              fmt::format("cgroup2 at {} doesn't have a cpu controller "
+                          "available, skipping",
+                          std::string_view{test_cgroup.c_str()}));
+          break;
+        }
+
+        const auto &test_cgroup_cpumax = fs::path{test_cgroup} / "cpu.max";
+        if (!fs::exists(test_cgroup_cpumax)) {
+          spdlog::warn(fmt::format("cgroup2 at {} lacks cpu.max, skipping",
+                                   std::string_view{test_cgroup.c_str()}));
+          break;
+        }
+        // Cleanup the cgroup we created
+        std::error_code err{};
+        fs::remove(test_cgroup, err);
+        info = {.path = mount.mountpoint,
+                .version = cgroup_info::cgroup_version::v2};
+        spdlog::trace(fmt::format("Found cgroup v2 at {}", mount.mountpoint));
+        break;
+      } else if (mount.fs_type == "cgroup") {
+        if (!info.has_value()) {
+          const auto cgroup_path =
+              fs::path{mount.mountpoint}.parent_path().string();
+          if (!fs::exists(fs::path{cgroup_path} / "cpu")) {
             spdlog::warn(
-                fmt::format("can't create new cgroup(2) at {}, skipping",
+                fmt::format("cgroup at {} lack cpu controller, skipping",
                             std::string_view{cgroup_path.c_str()}));
             break;
           }
-
-          const auto controllers_path =
-              fs::path{test_cgroup} / "cgroup.controllers";
-          std::ifstream controllers_file{controllers_path};
-          // controllers_file.exceptions(std::fstream::failbit);
-
-          bool has_cpu_controller = false;
-          while (controllers_file) {
-            std::string word;
-            controllers_file >> word;
-            if (word == "cpu") {
-              spdlog::trace(
-                  fmt::format("{}: Found {} controller in {}", __func__, word,
-                              std::string_view{controllers_path.c_str()}));
-              has_cpu_controller = true;
-              break;
-            }
-          }
-
-          if (!has_cpu_controller) {
-            spdlog::warn(
-                fmt::format("cgroup2 at {} doesn't have a cpu controller "
-                            "available, skipping",
-                            std::string_view{test_cgroup.c_str()}));
-            break;
-          }
-
-          const auto &test_cgroup_cpumax = fs::path{test_cgroup} / "cpu.max";
-          if (!fs::exists(test_cgroup_cpumax)) {
-            spdlog::warn(fmt::format("cgroup2 at {} lacks cpu.max, skipping",
-                                     std::string_view{test_cgroup.c_str()}));
-            break;
-          }
-          // Cleanup the cgroup we created
-          std::error_code err{};
-          fs::remove(test_cgroup, err);
           info = {.path = cgroup_path,
-                  .version = cgroup_info::cgroup_version::v2};
-          spdlog::trace(fmt::format("Found cgroup v2 at {}",
+                  .version = cgroup_info::cgroup_version::v1};
+          spdlog::trace(fmt::format("Found cgroup v1 at {}",
                                     std::string_view{cgroup_path.c_str()}));
-          break;
-        } else if (fs_type == "cgroup") {
-          if (!info.has_value()) {
-            cgroup_path = cgroup_path.parent_path();
-            if (!fs::exists(fs::path{cgroup_path} / "cpu")) {
-              spdlog::warn(
-                  fmt::format("cgroup at {} lack cpu controller, skipping",
-                              std::string_view{cgroup_path.c_str()}));
-              break;
-            }
-            info = {.path = cgroup_path,
-                    .version = cgroup_info::cgroup_version::v1};
-            spdlog::trace(fmt::format("Found cgroup v1 at {}",
-                                      std::string_view{cgroup_path.c_str()}));
-          }
         }
-      } catch (const fs::filesystem_error &e) {
-        spdlog::warn(fmt::format("{}: {} at {}", __func__, e.what(),
-                                 std::string_view{e.path1().c_str()}));
-        break;
-      } catch (const std::ios::failure &e) {
-        spdlog::warn(fmt::format("{}: {}, message: {}", __func__, e.what(),
-                                 e.code().message()));
-        break;
       }
-      if (info.has_value()) {
-        break;
-      }
+    } catch (const fs::filesystem_error &e) {
+      spdlog::warn(fmt::format("{}: {} at {}", __func__, e.what(),
+                               std::string_view{e.path1().c_str()}));
+      break;
+    } catch (const std::ios::failure &e) {
+      spdlog::warn(fmt::format("{}: {}, message: {}", __func__, e.what(),
+                               e.code().message()));
+      break;
     }
-    if (!info.has_value()) {
-      spdlog::debug("No cgroup info, setting defaults");
-      info = {.path = {""}, .version = cgroup_info::cgroup_version::none};
+    if (info.has_value()) {
+      break;
     }
-    spdlog::debug(fmt::format("Cgroup info: {}, path: {}",
-                              static_cast<int>(info->version),
-                              std::string_view{info->path.c_str()}));
   }
-
+  if (!info.has_value()) {
+    spdlog::debug("No cgroup info, setting defaults");
+    info = {.path = {""}, .version = cgroup_info::cgroup_version::none};
+  }
+  spdlog::debug(fmt::format("Cgroup info: {}, path: {}",
+                            static_cast<int>(info->version),
+                            std::string_view{info->path.c_str()}));
   return info.value();
 }
 
