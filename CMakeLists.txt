@@ -39,7 +39,9 @@ list(APPEND HEADERS
         include/core/worker.hpp
         include/core/cgroups.hpp
         include/core/cpuset.hpp
+        include/core/topology.hpp
         include/core/x3d.hpp
+        include/utility/sysfs.hpp
         include/version.hpp
         include/service.hpp
         include/utility/backtrace.hpp
@@ -55,6 +57,8 @@ list(APPEND LINUX_SOURCES
         src/platform/linux/backtrace.cpp
         src/platform/linux/cgroups.cpp
         src/platform/linux/cpuset.cpp
+        src/platform/linux/sysfs.cpp
+        src/platform/linux/topology.cpp
         src/platform/linux/x3d.cpp
         src/platform/linux/debug.cpp
         src/platform/linux/singleton_process.cpp

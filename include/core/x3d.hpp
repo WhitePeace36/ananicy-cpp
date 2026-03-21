@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <string>
 
@@ -13,17 +14,17 @@ struct X3DTopology {
 
 /// Detect AMD X3D topology at startup.
 /// Returns nullopt if not an X3D CPU or detection fails.
-std::optional<X3DTopology> detect() noexcept;
+[[nodiscard]] auto detect() noexcept -> std::optional<X3DTopology>;
 
-enum class X3DMode { cache, frequency };
+enum class X3DMode : std::uint8_t { cache, frequency };
 
 /// Find the sysfs path for the amd_x3d_vcache driver device.
-std::string find_driver_sysfs_path() noexcept;
+[[nodiscard]] auto find_driver_sysfs_path() noexcept -> std::string;
 
 /// Read current X3D mode from the kernel driver.
-std::optional<X3DMode> get_driver_mode() noexcept;
+[[nodiscard]] auto get_driver_mode() noexcept -> std::optional<X3DMode>;
 
 /// Set X3D mode via the kernel driver.
-bool set_driver_mode(X3DMode mode) noexcept;
+[[nodiscard]] auto set_driver_mode(X3DMode mode) noexcept -> bool;
 
 } // namespace x3d
