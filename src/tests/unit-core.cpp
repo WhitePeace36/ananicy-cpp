@@ -154,6 +154,7 @@ TEST_CASE("Config")
     CHECK(!conf.apply_ionice());
     CHECK(!conf.apply_oom_score_adj());
     CHECK(!conf.apply_cgroups());
+    CHECK(!conf.apply_cpuset());
 
     // Check "load" options.
     CHECK(!conf.cgroup_load());
@@ -167,6 +168,9 @@ TEST_CASE("Config")
     // Check frequency.
     const auto conf_check_freq = conf.check_freq().count();
     CHECK(conf_check_freq == 5);
+
+    // Check x3d.
+    CHECK(conf.x3d_mode() == "frequency");
 
     // Check workaround.
     CHECK(!conf.cgroup_realtime_workaround());

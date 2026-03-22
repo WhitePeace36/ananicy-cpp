@@ -38,6 +38,7 @@ public:
   bool apply_ionice() { return check_rule("apply_ionice"); }
   bool apply_oom_score_adj() { return check_rule("apply_oom_score_adj"); }
   bool apply_cgroups() { return check_rule("apply_cgroup"); }
+  bool apply_cpuset() { return check_rule("apply_cpuset"); }
   bool log_applied_rule() { return check_rule("log_applied_rule"); }
   bool cgroup_load() { return check_rule("cgroup_load"); }
   bool type_load() { return check_rule("type_load"); }
@@ -69,6 +70,12 @@ public:
     }
 
     return level_enum::info;
+  }
+
+  std::string x3d_mode() {
+    if (config.contains("x3d_mode"))
+      return config["x3d_mode"];
+    return "auto";
   }
 
   void show();

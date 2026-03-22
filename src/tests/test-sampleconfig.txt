@@ -11,7 +11,10 @@ apply_ionice=false
 apply_sched=false
 apply_oom_score_adj=false
 apply_cgroup=false
+apply_cpuset=false
 
 cgroup_realtime_workaround=false
+
+x3d_mode=frequency
 log_applied_rule=true
 loglevel=error

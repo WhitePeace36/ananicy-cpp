@@ -20,6 +20,7 @@ const Config::ConfigInit &&Config::default_config = {
     {"apply_latnice", "true"}, {"log_applied_rule", "false"},
     {"cgroup_load", "true"},  {"type_load", "true"},
     {"rule_load", "true"},    {"cgroup_realtime_workaround", "true"},
+    {"apply_cpuset", "true"}, {"x3d_mode", "auto"},
     {"loglevel", "info"},     {"check_freq", "60"}};
 /* clang-format on */
 

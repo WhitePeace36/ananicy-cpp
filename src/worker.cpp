@@ -4,6 +4,7 @@
 
 #include "core/worker.hpp"
 #include "core/cgroups.hpp"
+#include "core/cpuset.hpp"
 #include "core/priority.hpp"
 #include "utility/process_info.hpp"
 #include "version.hpp"
@@ -16,8 +17,10 @@
 using namespace std::chrono_literals;
 
 Worker::Worker(Rules *rules_, Config *config_,
-               synchronized_queue<Process> *process_queue_)
-    : rules(rules_), config(config_), process_queue(process_queue_) {
+               synchronized_queue<Process> *process_queue_,
+               std::optional<x3d::X3DTopology> x3d_topology_)
+    : rules(rules_), config(config_), process_queue(process_queue_),
+      m_x3d_topology(std::move(x3d_topology_)) {
   spdlog::info(fmt::format("Worker initialized with {} rules", rules->size()));
 }
 
@@ -114,6 +117,39 @@ void Worker::work(const std::stop_token &stop_token) {
                           rule_cgroup);
             if (!control_groups::add_pid_to_cgroup(p.pid, rule_cgroup))
               continue;
+          }
+
+          if (config->apply_cpuset() && rule.contains("cpuset")) {
+            std::string rule_cpuset = rule["cpuset"];
+            bool        skip_cpuset = false;
+
+            // Resolve X3D aliases
+            if (rule_cpuset == "x3d-cache" ||
+                rule_cpuset == "x3d-frequency") {
+              if (!m_x3d_topology.has_value()) {
+                spdlog::warn("Rule for {} uses '{}' but X3D not detected, "
+                             "skipping cpuset",
+                             p.name, rule_cpuset);
+                skip_cpuset = true;
+              } else {
+                rule_cpuset = (rule_cpuset == "x3d-cache")
+                                  ? m_x3d_topology->cache_cores_str
+                                  : m_x3d_topology->frequency_cores_str;
+              }
+            }
+
+            if (!skip_cpuset) {
+              spdlog::debug("Setting cpuset of {}({}) to {}", p.name, p.pid,
+                            rule_cpuset);
+              auto parsed = cpuset::parse_cpuset_string(rule_cpuset);
+              if (parsed.has_value()) {
+                if (!cpuset::set_affinity(p.pid, parsed.value()))
+                  continue;
+              } else {
+                spdlog::warn("Invalid cpuset string '{}' for {}", rule_cpuset,
+                             p.name);
+              }
+            }
           }
         } catch (const std::exception &e) {
           spdlog::critical(

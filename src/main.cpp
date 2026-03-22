@@ -7,6 +7,7 @@
 #include "core/process.hpp"
 #include "core/rules.hpp"
 #include "core/worker.hpp"
+#include "core/x3d.hpp"
 #include "service.hpp"
 #include "utility/argument_parser.hpp"
 #include "utility/debug.hpp"
@@ -247,7 +248,38 @@ int main(const int argc, const char **argv) {
 
   processListener.start();
 
-  Worker worker(&rules, &conf, &processListener.process_queue);
+  // Detect AMD X3D topology
+  auto x3d_topology = x3d::detect();
+  if (x3d_topology.has_value()) {
+    spdlog::info("AMD X3D detected: cache cores={}, frequency cores={}",
+                 x3d_topology->cache_cores_str,
+                 x3d_topology->frequency_cores_str);
+  }
+
+  // Apply X3D driver mode if configured
+  std::optional<x3d::X3DMode> saved_x3d_mode;
+  {
+    const auto x3d_mode_str = conf.x3d_mode();
+    if (x3d_mode_str != "auto") {
+      saved_x3d_mode = x3d::get_driver_mode();
+      if (saved_x3d_mode.has_value()) {
+        x3d::X3DMode target = (x3d_mode_str == "cache")
+                                  ? x3d::X3DMode::cache
+                                  : x3d::X3DMode::frequency;
+        if (x3d::set_driver_mode(target)) {
+          spdlog::info("Set X3D mode to '{}'", x3d_mode_str);
+        } else {
+          spdlog::warn("Failed to set X3D mode to '{}'", x3d_mode_str);
+          saved_x3d_mode = std::nullopt;
+        }
+      } else {
+        spdlog::info("X3D driver not present, x3d_mode config ignored");
+      }
+    }
+  }
+
+  Worker worker(&rules, &conf, &processListener.process_queue,
+                std::move(x3d_topology));
   worker.start();
 
   if (conf.cgroup_realtime_workaround()) {
@@ -291,6 +323,15 @@ int main(const int argc, const char **argv) {
 
   worker.stop();
   spdlog::debug("Stopped process worker");
+
+  // Restore X3D mode on shutdown
+  if (saved_x3d_mode.has_value()) {
+    if (x3d::set_driver_mode(saved_x3d_mode.value())) {
+      spdlog::info("Restored X3D mode on shutdown");
+    } else {
+      spdlog::warn("Failed to restore X3D mode on shutdown");
+    }
+  }
 
   ih.stop();
 
