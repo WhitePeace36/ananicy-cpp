@@ -8,6 +8,7 @@
 #include "utility/utils.hpp"
 
 #include <filesystem>
+#include <fstream>
 
 #include <spdlog/spdlog.h>
 
@@ -223,5 +224,54 @@ TEST_CASE("Rules")
     // missing both brackets
     CHECK(!rules.load_rule_from_string("\"name\": \"icct\", \"type\":\"Dc-Vw\" "));
     CHECK(rules.size() == 4);
+  }
+
+  SECTION("Whitespace-only lines are skipped")
+  {
+    Rules rules("", &conf);
+    CHECK(!rules.load_rule_from_string("      "));
+    CHECK(!rules.load_rule_from_string("\t\t\t"));
+    CHECK(!rules.load_rule_from_string("  \t  \t  "));
+    CHECK(!rules.load_rule_from_string(""));
+    CHECK(rules.size() == 0);
+  }
+
+  SECTION("Trailing carriage return is handled")
+  {
+    Rules rules("", &conf);
+    CHECK(!rules.load_rule_from_string("\r"));
+    CHECK(!rules.load_rule_from_string("   \r"));
+    CHECK(!rules.load_rule_from_string("# this is a comment\r"));
+    // \r after } simulates std::getline on a CRLF file
+    CHECK(rules.load_rule_from_string("{ \"name\": \"crlftest\", \"type\": \"Game\" }\r"));
+    CHECK(!rules.get_rule("crlftest").is_null());
+    CHECK(rules.size() == 1);
+  }
+
+  SECTION("Nested JSON objects parse correctly")
+  {
+    Rules rules("", &conf);
+    CHECK(rules.load_rule_from_string("{ \"name\": \"nested\", \"type\": \"Game\", \"extra\": { \"key\": \"val\" } }"));
+    CHECK(!rules.get_rule("nested").is_null());
+    CHECK(rules.size() == 1);
+  }
+
+  SECTION("Load rules from CRLF file")
+  {
+    Rules rules("", &conf);
+    // Write a temp rules file with Windows line endings
+    const fs::path tmp_path = fs::temp_directory_path() / "test-crlf.rules";
+    {
+      std::ofstream f(tmp_path, std::ios::binary);
+      f << "# comment line\r\n"
+        << "\r\n"
+        << "{ \"type\": \"TestType\", \"nice\": -1 }\r\n"
+        << "   \r\n"
+        << "{ \"name\": \"crlfprog\", \"type\": \"TestType\" }\r\n";
+    }
+    rules.load_rules_from_file(tmp_path);
+    CHECK(!rules.get_rule("crlfprog").is_null());
+    CHECK(rules.size() == 1);
+    fs::remove(tmp_path);
   }
 }

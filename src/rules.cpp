@@ -41,7 +41,7 @@ bool Rules::load_rule_from_string(const std::string_view &line) {
     const auto &is_comment_str = [](auto &&s) {
       std::string_view hash_str{s};
       hash_str.remove_prefix(
-          std::min(hash_str.find_first_not_of(' '), hash_str.size()));
+          std::min(hash_str.find_first_not_of(" \t\r"), hash_str.size()));
       return hash_str.empty() || (hash_str[0] == '#');
     };
     return s.empty() || is_comment_str(s);
@@ -51,7 +51,7 @@ bool Rules::load_rule_from_string(const std::string_view &line) {
   }
 
   auto &&first_pair = line.find_first_of('{');
-  auto &&second_pair = line.find_first_of('}');
+  auto &&second_pair = line.find_last_of('}');
 
   // Return if not found brackets in the given string.
   if (first_pair == std::string_view::npos ||
@@ -62,7 +62,7 @@ bool Rules::load_rule_from_string(const std::string_view &line) {
 
   // Remove trailing characters.
   auto &&clean_line =
-      std::string_view{line.substr(first_pair).substr(0, second_pair + 1)};
+      std::string_view{line.substr(first_pair, second_pair - first_pair + 1)};
 
   try {
     auto &&rule = json::parse(clean_line);
@@ -105,6 +105,10 @@ void Rules::load_rules_from_file(const fs::path &path) {
   std::ifstream rule_file{path};
   while (rule_file.good()) {
     std::getline(rule_file, line);
+    // Rule files may be edited on Windows; tolerate CRLF line endings.
+    if (!line.empty() && line.back() == '\r') {
+      line.pop_back();
+    }
     load_rule_from_string(line);
   }
 }
