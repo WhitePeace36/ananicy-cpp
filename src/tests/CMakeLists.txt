@@ -23,6 +23,8 @@ list(APPEND test_SOURCES
         ${CMAKE_SOURCE_DIR}/src/platform/linux/mounts.cpp
         ${CMAKE_SOURCE_DIR}/src/platform/linux/process.cpp
         ${CMAKE_SOURCE_DIR}/src/platform/linux/cpuset.cpp
+        ${CMAKE_SOURCE_DIR}/src/platform/linux/sysfs.cpp
+        ${CMAKE_SOURCE_DIR}/src/platform/linux/topology.cpp
         ${CMAKE_SOURCE_DIR}/src/platform/linux/x3d.cpp)
 
 

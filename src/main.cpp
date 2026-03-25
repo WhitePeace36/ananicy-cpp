@@ -6,6 +6,7 @@
 #include "core/priority.hpp"
 #include "core/process.hpp"
 #include "core/rules.hpp"
+#include "core/topology.hpp"
 #include "core/worker.hpp"
 #include "core/x3d.hpp"
 #include "service.hpp"
@@ -248,6 +249,16 @@ int main(const int argc, const char **argv) {
 
   processListener.start();
 
+  // Detect full CPU topology
+  auto cpu_topology = topology::detect();
+  if (cpu_topology.has_big_little) {
+    spdlog::info("Performance cores: {}", cpu_topology.big_cores_str);
+    spdlog::info("Efficiency cores: {}", cpu_topology.little_cores_str);
+    if (!cpu_topology.turbo_cores_str.empty()) {
+      spdlog::info("Turbo cores: {}", cpu_topology.turbo_cores_str);
+    }
+  }
+
   // Detect AMD X3D topology
   auto x3d_topology = x3d::detect();
   if (x3d_topology.has_value()) {
@@ -279,7 +290,7 @@ int main(const int argc, const char **argv) {
   }
 
   Worker worker(&rules, &conf, &processListener.process_queue,
-                std::move(x3d_topology));
+                std::move(cpu_topology), std::move(x3d_topology));
   worker.start();
 
   if (conf.cgroup_realtime_workaround()) {

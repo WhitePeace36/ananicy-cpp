@@ -18,6 +18,9 @@ _Beta status_
 - [X] Change default configuration file and rules directory using environment variables (`ANANICY_CPP_{CONF,CONFDIR}`)
 - [X] CPU affinity (cpuset)
   - [X] Pin processes to specific CPU cores
+  - [X] Full CPU topology detection (NUMA nodes, LLC domains, core types)
+  - [X] Intel big.LITTLE / AMD heterogeneous core detection
+  - [X] Named cpuset aliases (`big-cores`, `little-cores`, `llc-N`, `node-N`, etc.)
   - [X] AMD X3D V-Cache topology auto-detection
   - [X] `amd_x3d_vcache` kernel driver integration
 - [X] Cgroups
@@ -145,6 +148,19 @@ Format is `key=value`, one per line.
 | `loglevel` | `info` | Log level (`trace`, `debug`, `info`, `warn`, `error`, `critical`) |
 | `x3d_mode` | `auto` | AMD X3D driver mode: `auto` (don't touch), `cache`, or `frequency` |
 
+#### CPU topology detection
+
+At startup, ananicy-cpp probes sysfs to build a full CPU topology:
+- **NUMA nodes** and **LLC (last-level cache) domains** are identified and grouped.
+- **Core types** (BigTurbo, Big, Little) are classified using CPU capacity values from sysfs.
+  Five capacity sources are probed in priority order: `amd_pstate_prefcore_ranking`,
+  `amd_pstate_highest_perf`, `acpi_cppc/highest_perf`, `cpu_capacity`, `cpuinfo_max_freq`.
+- **big.LITTLE detection**: If the highest-capacity CPU exceeds 1.3x the lowest, the system
+  is classified as heterogeneous and cores are split into Big/Little groups.
+- **SMT** (simultaneous multithreading) status is detected.
+
+This topology information drives the named cpuset aliases described above.
+
 #### AMD X3D support
 
 On AMD X3D CPUs (e.g., 7800X3D, 7950X3D, 9800X3D, 9950X3D), ananicy-cpp automatically detects
@@ -169,6 +185,21 @@ For instance, to add a rule for GCC, you could do the following:
 To pin a game to the V-Cache CCD on an AMD X3D system:
 ~~~json
 {"name": "game-x", "cpuset": "x3d-cache", "nice": -5}
+~~~
+
+To pin a workload to performance cores (Intel P-cores or AMD high-capacity cores):
+~~~json
+{"name": "my-game", "cpuset": "performance-cores", "nice": -5}
+~~~
+
+To restrict a background task to efficiency cores:
+~~~json
+{"name": "file-indexer", "cpuset": "efficiency-cores", "nice": 19, "sched": "idle"}
+~~~
+
+To pin to a specific LLC domain or NUMA node:
+~~~json
+{"name": "database", "cpuset": "node-0"}
 ~~~
 
 Or to pin to specific cores directly:
@@ -223,11 +254,23 @@ Define the IO scheduling policy. By default, it is `best-effort`.
   gets very low. It is recommended to use it on critical programs which must be killed last if you lack memory.
 - `cpuset`: Pin the process to the specified CPU cores using Linux cpuset notation.
   Accepts ranges (`0-7`), comma-separated lists (`0,2,4`), or mixed (`0-3,8-11`).
-  Special aliases for AMD X3D CPUs:
-  - `x3d-cache`: Pins to the V-Cache CCD (large L3 cache, ideal for gaming and cache-sensitive workloads).
-  - `x3d-frequency`: Pins to the high-frequency CCD (ideal for compute-bound workloads).
 
-  These aliases are resolved at runtime based on auto-detected topology.
+  Named aliases are resolved at runtime based on auto-detected topology:
+
+  | Alias | Description |
+  |-------|-------------|
+  | `big-cores` | High-performance cores (Big + BigTurbo) |
+  | `little-cores` | Efficiency cores (Little) |
+  | `turbo-cores` | Highest-capacity cores only (BigTurbo) |
+  | `performance-cores` | `turbo-cores` if available, otherwise `big-cores` |
+  | `efficiency-cores` | Same as `little-cores` |
+  | `all-cores` | All online CPUs |
+  | `x3d-cache` | CPUs on the LLC(s) with the largest L3 cache (works on any CPU) |
+  | `x3d-frequency` | AMD X3D high-frequency CCD (X3D only) |
+  | `llc-N` | CPUs sharing LLC domain N (e.g., `llc-0`, `llc-1`) |
+  | `node-N` | CPUs on NUMA node N (e.g., `node-0`, `node-1`) |
+
+  On systems without heterogeneous cores, `big-cores` and `all-cores` resolve to the same set.
 - `cgroup`: Put the process in the specified cgroup. This can be any cgroup, including those created outside `ananicy-cpp`.
 - `type`: Set the type of the rule. All options defined in the type will be used as if written explicitly in the rule,
 although you can override each option if needed.
