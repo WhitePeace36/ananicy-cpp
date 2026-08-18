@@ -2,6 +2,7 @@
 
 #include <cerrno>
 #include <chrono>
+#include <cstring>
 #include <fcntl.h> /* For O_* constants */
 #include <sys/ipc.h>
 #include <sys/mman.h>

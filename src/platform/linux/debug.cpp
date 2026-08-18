@@ -1,4 +1,5 @@
 #include "utility/debug.hpp"
+
 #include "core/cgroups.hpp"
 #include "service.hpp"
 #include "utility/utils.hpp"
@@ -7,6 +8,7 @@
 #include <iostream>    // for cout
 #include <string>      // for string
 #include <string_view> // for string_view
+#include <unistd.h>
 
 #include <fmt/format.h>
 

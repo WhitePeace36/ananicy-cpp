@@ -5,6 +5,7 @@
 #include "core/x3d.hpp"
 
 #include <spdlog/spdlog.h>
+#include <unistd.h>
 
 TEST_SUITE_BEGIN("CpuSet");
 

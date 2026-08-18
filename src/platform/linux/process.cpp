@@ -14,6 +14,7 @@
 #include <filesystem> // for path
 #include <fstream>    // for ifstream
 #include <thread>     // for jthread
+#include <unistd.h>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>

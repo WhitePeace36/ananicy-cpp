@@ -1,6 +1,7 @@
 #include "core/cgroups.hpp"
 #include "utility/mounts.hpp"
 
+#include <cstdint>
 #include <filesystem>  // for path
 #include <fstream>     // for ifstream
 #include <mutex>       // for mutex, lock_guard
