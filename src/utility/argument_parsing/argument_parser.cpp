@@ -1,6 +1,7 @@
 #include "utility/argument_parser.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <cxxabi.h>
 #include <functional>
 #include <iostream>

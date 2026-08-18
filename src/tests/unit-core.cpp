@@ -9,6 +9,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <unistd.h>
 
 #include <spdlog/spdlog.h>
 

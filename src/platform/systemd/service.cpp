@@ -2,6 +2,7 @@
 
 #include <systemd/sd-daemon.h>
 #include <systemd/sd-login.h>
+#include <unistd.h>
 
 #include <spdlog/spdlog.h>
 

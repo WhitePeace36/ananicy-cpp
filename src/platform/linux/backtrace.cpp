@@ -1,5 +1,6 @@
 #include "utility/backtrace.hpp"
 
+#include <cstdint>
 #include <cstdlib>    // for free
 #include <cxxabi.h>   // for abi::__cxa_demangle
 #include <execinfo.h> // for backtrace, backtrace_symbols

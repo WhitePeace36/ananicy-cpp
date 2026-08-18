@@ -6,6 +6,7 @@
 #include "core/priority.hpp"
 
 #include <chrono> // for system_clock::now
+#include <cstdint>
 #include <fstream>
 
 #include <fmt/chrono.h>
