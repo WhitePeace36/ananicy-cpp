@@ -59,11 +59,6 @@ extern "C" void handle_event(void *ctx, int32_t cpu, void *data,
   }
 
   std::string &&command = get_command_from_pid(e->pid);
-  if (command.ends_with(".exe")) {
-    std::replace(command.begin(), command.end(), '\\', '/');
-    fs::path cmd_path{command.c_str()};
-    command = cmd_path.filename().string();
-  }
 
   Process process{
       .delta_us = e->delta_us, .pid = e->pid, .name = std::move(command)};
@@ -199,7 +194,13 @@ std::string get_command_from_pid(pid_t pid) {
   try {
     std::vector<std::string> cmdline = process_info::get_cmdline_from_pid(pid);
     if (!cmdline.empty()) {
-      auto exe_name_begin = cmdline[0].find_last_of('/');
+      // Wine/Proton processes show the Windows path of the image as argv[0]
+      // (e.g. "C:\\Games\\game.exe"), so split on backslashes as well.
+      // Done here so the full scan and the netlink backend match .exe rules
+      // too, not only the BPF event path.
+      auto exe_name_begin = cmdline[0].ends_with(".exe")
+                                ? cmdline[0].find_last_of("/\\")
+                                : cmdline[0].find_last_of('/');
 
       spdlog::trace(fmt::format("{}: exe_name_begin: {}, cmdline: {}", __func__,
                                 exe_name_begin, cmdline));
