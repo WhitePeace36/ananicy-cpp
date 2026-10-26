@@ -1,0 +1,81 @@
+---
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+stages:
+  - build
+  - test
+  - deploy
+
+build:
+  image: gcc
+  stage: build
+  script:
+    - apt-get -y update
+    - apt-get -y install build-essential cmake git libsystemd-dev libelf-dev bpftool llvm clang
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DSTATIC=ON -DENABLE_SYSTEMD=OFF -S .
+    - cmake --build build -j
+  artifacts:
+    paths:
+      - build/ananicy-cpp
+    expire_in: 1 week
+
+ubuntu:
+  image: ubuntu:latest
+  stage: test
+  script:
+    - apt-get -y update
+    - env USE_BPF=ON ENABLE_REGEX=ON SYSDEP_ASSUME_YES=ON ./install-deps.sh
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_ANANICY_TESTS=ON -DENABLE_REGEX_SUPPORT=ON -S .
+    - cmake --build build -j
+    - ./build/src/tests/test-core
+    - ./build/src/tests/test-utility --test-case-exclude="Process Info"
+    - ./build/src/tests/test-cpuset
+
+fedora:
+  image: fedora:latest
+  stage: test
+  script:
+    - dnf -y update
+    - env USE_BPF=ON ENABLE_REGEX=ON SYSDEP_ASSUME_YES=ON ./install-deps.sh
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_ANANICY_TESTS=ON -DENABLE_REGEX_SUPPORT=ON -S .
+    - cmake --build build -j
+    - ./build/src/tests/test-core
+    - ./build/src/tests/test-utility --test-case-exclude="Process Info"
+    - ./build/src/tests/test-cpuset
+
+opensuse-tumbleweed:
+  image: opensuse/tumbleweed
+  stage: test
+  script:
+    - zypper refresh
+    - env USE_BPF=ON ENABLE_REGEX=ON SYSDEP_ASSUME_YES=ON ./install-deps.sh
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_ANANICY_TESTS=ON -DENABLE_REGEX_SUPPORT=ON -S .
+    - cmake --build build -j
+    - ./build/src/tests/test-core
+    - ./build/src/tests/test-utility --test-case-exclude="Process Info"
+    - ./build/src/tests/test-cpuset
+
+arch:
+  image: archlinux:latest
+  stage: test
+  script:
+    - pacman -Syu --noconfirm
+    - pacman -S --noconfirm base-devel cmake git ninja libelf zlib bpf libbpf pcre2 llvm clang
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_ANANICY_TESTS=ON -DENABLE_REGEX_SUPPORT=ON -S .
+    - cmake --build build -j
+    - ./build/src/tests/test-core
+    - ./build/src/tests/test-utility --test-case-exclude="Process Info"
+    - ./build/src/tests/test-cpuset
+
+# Inspired by https://stackoverflow.com/a/65478446/6061951
+persist-tag-artifacts:
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_TAG != null'
+  script:
+    - echo "Persisting artifacts for tag pipelines"
+  artifacts:
+    paths:
+      - build/ananicy-cpp
+    expire_in: never
