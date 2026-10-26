@@ -42,3 +42,6 @@ main
 *.out
 *.app
 
+/.makepkg/
+*.pkg.tar.*
+
